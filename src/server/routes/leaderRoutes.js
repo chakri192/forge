@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { UserService } from '../services/userService.js';
 import { requirePermission } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validation.js';
 
 const router = Router();
 
-router.get('/student-leaders', validate({}), (_req, res, next) => {
+router.get('/student-leaders', requireAuth, validate({}), (_req, res, next) => {
   try {
     res.json(UserService.getActiveLeaders());
   } catch (err) {

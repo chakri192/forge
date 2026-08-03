@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { OWNER_ID, ADMIN_ROLES } from '../config/constants.js';
 import { UserModel } from '../models/User.js';
-import { sanitizeUser } from '../utils/sanitize.js';
+import { directoryUser, visibleToDirectory, sanitizeUser } from '../utils/sanitize.js';
 import { ActivityService } from './activity.js';
 
 export const UserService = {
@@ -74,9 +74,9 @@ export const UserService = {
     return { success: true, message: 'Password updated successfully' };
   },
 
-  getAllUsers(role) {
+  getAllUsers(role, viewer = null) {
     const users = UserModel.getAll(role);
-    return users.map(sanitizeUser);
+    return visibleToDirectory(users, viewer).map((u) => directoryUser(u, viewer));
   },
 
   createUser({ id, name, username, email, phone, password_hash, role, tag }) {

@@ -46,9 +46,21 @@ export const UserModel = {
   },
 
   update(id, fields) {
+    // Column names are interpolated into SQL, so they can never come from a
+    // caller's object keys. Every caller today passes a fixed set; this makes
+    // that a rule rather than a habit.
+    const WRITABLE = new Set([
+      'name', 'username', 'email', 'phone', 'password_hash', 'role', 'tag',
+      'bio', 'skills', 'github_url', 'portfolio_url',
+      'is_public', 'public_slug', 'theme_preset', 'theme_accents'
+    ]);
+
     const updates = [];
     const values = [];
     for (const [key, val] of Object.entries(fields)) {
+      if (!WRITABLE.has(key)) {
+        throw new Error(`UserModel.update: refusing to write unknown column "${key}"`);
+      }
       if (val !== undefined) {
         updates.push(`${key} = ?`);
         values.push(val);
