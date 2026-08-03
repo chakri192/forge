@@ -8,12 +8,21 @@ export const HallOfFameModel = {
       WHERE role != 'DEV_STEALTH'
     `).all();
 
+    const xpTotals = Object.fromEntries(
+      db.prepare(`SELECT user_id, COALESCE(SUM(amount), 0) AS total FROM xp_history GROUP BY user_id`)
+        .all()
+        .map((r) => [r.user_id, r.total])
+    );
+
     const leaderboard = users.map(user => {
+      // Task status is stored lowercase ('completed'); SQLite string comparison
+      // is case-sensitive, so these must be compared case-insensitively or no
+      // points are ever counted.
       const teamTasks = db.prepare(`
         SELECT t.total_points, tm.custom_point_share
         FROM team_memberships tm
         JOIN tasks t ON tm.team_id = t.assigned_team_id
-        WHERE tm.user_id = ? AND t.status = 'COMPLETED'
+        WHERE tm.user_id = ? AND UPPER(t.status) = 'COMPLETED'
       `).all(user.id);
 
       let teamPoints = 0;
@@ -24,7 +33,7 @@ export const HallOfFameModel = {
       const indivTasks = db.prepare(`
         SELECT SUM(total_points) as total
         FROM tasks
-        WHERE assigned_user_id = ? AND status = 'COMPLETED'
+        WHERE assigned_user_id = ? AND UPPER(status) = 'COMPLETED'
       `).get(user.id);
 
       const indivPoints = (indivTasks && indivTasks.total) ? indivTasks.total : 0;
@@ -38,11 +47,15 @@ export const HallOfFameModel = {
         tag: user.tag,
         role: publicRole,
         public_role: publicRole,
-        points: totalPoints
+        points: totalPoints,
+        xp: xpTotals[user.id] || 0
       };
     });
 
-    return leaderboard.sort((a, b) => b.points - a.points);
+    // XP is the authoritative progression ledger; points remain a secondary,
+    // team-weighted figure. Ranking by a single number avoids the confusion of
+    // two competing scores across the Hall of Fame and the progress view.
+    return leaderboard.sort((a, b) => b.xp - a.xp || b.points - a.points);
   },
 
   getTitles() {
