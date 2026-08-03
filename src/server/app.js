@@ -1,8 +1,11 @@
+// Must be first: side-effect import, so .env is populated before any module
+// below reads process.env at evaluation time.
+import 'dotenv/config';
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 
 import { initSchema } from './db/database.js';
 import { authenticateUser } from './middleware/auth.js';
@@ -36,8 +39,6 @@ import profileRoutes, { publicProfileRouter } from './routes/profileRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
 import { seedProgression } from './db/seedProgression.js';
 import { TaskModel } from './models/Task.js';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
