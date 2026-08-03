@@ -98,13 +98,15 @@ as a column, so a crash can never leave a purchase without its debit, and the
 balance check and the debit share one transaction so two requests racing
 cannot both overdraw.
 
-**Duels** put one person against two. The challenger sets the stake and the
-two opponents agree the topic between them, so neither side controls both what
-is fought over and what it is worth — a duel only starts once both opponents
-have named the same topic. Stakes are escrowed as ledger rows the moment
-someone commits, refunded in full if anyone declines, and the whole pot goes to
-whoever a leader or above declares the winner. Nothing is minted or burned:
-three stakes go in and three stakes come out.
+**Duels** are one on one. The challenger sets the stake and the person
+challenged chooses the topic, so neither side picks both what is fought over
+and what it is worth. Stakes are escrowed as ledger rows the moment someone
+commits, refunded in full if the challenge is declined, and the whole pot goes
+to whoever a leader or above declares the winner. Nothing is minted or burned:
+two stakes go in and two stakes come out.
+
+Dev-assigned challenges are a separate thing — an admin hosts a challenge with
+its own XP and point rewards, and whoever completes it is paid.
 
 **The store** sells avatar rings, titles, and profile banners. Cosmetics store
 a colour and nothing else, validated as a hex on the way in and again before

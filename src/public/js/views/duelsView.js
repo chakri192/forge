@@ -1,5 +1,5 @@
-// Duels: one challenger against two opponents. The challenger sets the stake,
-// the two opponents agree the topic between them.
+// Duels: one challenger, one opponent. The challenger sets the stake and the
+// person challenged chooses the topic.
 import { fetchDuels, createDuel, respondToDuel, resolveDuel, fetchAllUsers } from '../services/api.js';
 import { showToast } from '../components/toast.js';
 import { openModal } from '../components/modal.js';
@@ -24,10 +24,10 @@ export function renderDuelsView(state) {
         <div>
           <h1 class="title">Duels</h1>
           <p class="subtitle">
-            Take on two people at once. You set the stake, the two of them agree the topic.
+            Challenge someone head to head. You set the stake, they choose the topic.
           </p>
         </div>
-        <button class="btn btn--primary" id="btnNewDuel">Challenge two people</button>
+        <button class="btn btn--primary" id="btnNewDuel">Challenge someone</button>
       </header>
       <div id="duelsRoot">${renderSkeleton('card', { className: '' })}</div>
     </div>`;
@@ -62,7 +62,7 @@ export function attachDuelsEvents(state) {
           ? `<div class="duels">${data.duels.map(duelHtml).join('')}</div>`
           : `<div class="empty">
               <p class="empty__title">No duels yet</p>
-              <p class="empty__text">Pick two people, put something on it, and let them choose the ground.</p>
+              <p class="empty__text">Pick someone, put something on it, and let them choose the ground.</p>
             </div>`
       }`;
     bind();
@@ -70,7 +70,7 @@ export function attachDuelsEvents(state) {
 
   function duelHtml(duel) {
     const challenger = duel.participants.find((p) => p.side === 'CHALLENGER');
-    const opponents = duel.participants.filter((p) => p.side === 'OPPONENT');
+    const opponent = duel.participants.find((p) => p.side === 'OPPONENT');
     const mine = duel.viewer;
 
     return `
@@ -86,17 +86,14 @@ export function attachDuelsEvents(state) {
         <p class="duel__line">
           <strong>${escapeHtml(challenger?.name || 'Someone')}</strong>
           <span class="duel__vs">vs</span>
-          ${opponents.map((o) => `<strong>${escapeHtml(o.name)}</strong>`).join(' &amp; ')}
+          <strong>${escapeHtml(opponent?.name || 'someone')}</strong>
         </p>
 
         <p class="duel__topic">
           ${
             duel.topic
               ? `Topic: <strong>${escapeHtml(duel.topic)}</strong>`
-              : duel.awaitingTopic
-                ? `The two of them have not agreed a topic yet —
-                   ${opponents.map((o) => `${escapeHtml(o.name)} wants ${escapeHtml(o.topicChoice || '?')}`).join(', ')}.`
-                : 'Topic is up to the two challenged.'
+              : `Waiting on ${escapeHtml(opponent?.name || 'them')} to choose the topic.`
           }
         </p>
 
@@ -112,7 +109,7 @@ export function attachDuelsEvents(state) {
           ${
             duel.status === 'PENDING' && mine?.side === 'OPPONENT'
               ? `<button class="btn btn--primary btn--sm" data-accept="${duel.id}">
-                   ${mine.accepted ? 'Change topic' : 'Accept and pick topic'}
+                   Accept and choose the topic
                  </button>
                  <button class="btn btn--sm" data-decline="${duel.id}">Decline</button>`
               : ''
@@ -153,7 +150,8 @@ export function attachDuelsEvents(state) {
       contentHtml: `
         <div class="col">
           <p class="text-muted" style="font-size:.875rem">
-            Both of you have to name the same topic before the duel starts.
+            You were challenged, so the topic is yours to pick. Accepting starts
+            the duel and holds your stake.
           </p>
           <div class="field">
             <label class="field__label" for="duelTopic">Topic</label>
@@ -184,14 +182,7 @@ export function attachDuelsEvents(state) {
         }
         try {
           const res = await respondToDuel(duelId, 'accept', { topic });
-          showToast({
-            title: res.status === 'ACTIVE' ? 'Duel is on' : 'Topic recorded',
-            message:
-              res.status === 'ACTIVE'
-                ? `Agreed: ${res.topic}`
-                : 'Waiting for the other opponent to name the same topic.',
-            type: res.status === 'ACTIVE' ? 'success' : 'info'
-          });
+          showToast({ title: 'Duel is on', message: `Topic: ${res.topic}`, type: 'success' });
           load();
           return true;
         } catch (_) {
@@ -254,23 +245,17 @@ export function attachDuelsEvents(state) {
     } catch (_) {}
 
     openModal({
-      title: 'Challenge two people',
+      title: 'Challenge someone',
       confirmLabel: 'Send it',
       contentHtml: `
         <div class="col">
           <p class="text-muted" style="font-size:.875rem">
-            You set what is on the line. They agree what it is about.
+            You set what is on the line. They decide what it is about.
           </p>
           <div class="field">
-            <label class="field__label" for="duelOpp1">First opponent</label>
-            <select class="select" id="duelOpp1">
+            <label class="field__label" for="duelOpponent">Who are you challenging?</label>
+            <select class="select" id="duelOpponent">
               ${people.map((u) => `<option value="${u.id}">${escapeHtml(u.name)}</option>`).join('')}
-            </select>
-          </div>
-          <div class="field">
-            <label class="field__label" for="duelOpp2">Second opponent</label>
-            <select class="select" id="duelOpp2">
-              ${people.map((u, i) => `<option value="${u.id}" ${i === 1 ? 'selected' : ''}>${escapeHtml(u.name)}</option>`).join('')}
             </select>
           </div>
           <div class="row row--tight">
@@ -284,23 +269,22 @@ export function attachDuelsEvents(state) {
             </div>
           </div>
           <p class="field__hint">
-            Everyone puts in the same amount. The winner takes all three stakes.
+            You both put in the same amount. The winner takes both stakes.
           </p>
         </div>`,
       onConfirm: async (overlay) => {
-        const a = overlay.querySelector('#duelOpp1').value;
-        const b = overlay.querySelector('#duelOpp2').value;
-        if (!a || !b || a === b) {
-          showToast({ title: 'Pick two different people', type: 'error' });
+        const opponentId = overlay.querySelector('#duelOpponent').value;
+        if (!opponentId) {
+          showToast({ title: 'Pick someone to challenge', type: 'error' });
           return false;
         }
         try {
           await createDuel({
-            opponentIds: [a, b],
+            opponentId,
             stakePoints: Number(overlay.querySelector('#duelPoints').value) || 0,
             stakeXp: Number(overlay.querySelector('#duelXp').value) || 0
           });
-          showToast({ title: 'Challenge sent', message: 'They pick the topic now.', type: 'success' });
+          showToast({ title: 'Challenge sent', message: 'They choose the topic now.', type: 'success' });
           load();
           return true;
         } catch (_) {

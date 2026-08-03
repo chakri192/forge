@@ -1,8 +1,8 @@
--- A duel is one challenger against two opponents.
+-- A duel is one challenger against one opponent.
 --
--- The two sides deliberately control different variables: the challenger sets
--- the stake, and the two opponents agree the topic between them. Nobody gets
--- to pick both what is fought over and what it is worth.
+-- The two sides control different variables on purpose: the challenger sets
+-- the stake, and the person challenged chooses the topic. Neither gets to pick
+-- both what is fought over and what it is worth.
 CREATE TABLE IF NOT EXISTS duels (
   id TEXT PRIMARY KEY,
   challenger_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS duel_participants (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   side TEXT NOT NULL CHECK(side IN ('CHALLENGER', 'OPPONENT')),
   accepted INTEGER NOT NULL DEFAULT 0,
-  -- Each opponent names the topic they want. The duel only starts once both
-  -- have named the same one, which is what "the two of them agree it" means.
+  -- The challenged person's topic. Recorded per participant rather than only
+  -- on the duel so the choice stays attributable to whoever made it.
   topic_choice TEXT,
   staked INTEGER NOT NULL DEFAULT 0,
   UNIQUE(duel_id, user_id)
