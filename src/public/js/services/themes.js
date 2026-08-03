@@ -311,6 +311,48 @@ export function applyTheme({ preset = getPreset(), accents = resolveAccents() } 
   for (const [name, value] of Object.entries(theme.vars)) {
     root.style.setProperty(name, value);
   }
+
+  // The editorial stylesheet speaks a second vocabulary (--paper / --ink /
+  // --rule) and hardcodes light values in :root. Presets have to drive both
+  // names or the shell keeps painting near-black ink on a dark background.
+  const alias = {
+    '--paper': '--bg',
+    '--paper-raised': '--bg-elevated',
+    '--paper-sunken': '--surface-2',
+    '--paper-tint': '--surface-3',
+    '--ink': '--text',
+    '--ink-muted': '--text-muted',
+    '--ink-faint': '--text-faint',
+    '--rule': '--line',
+    '--rule-strong': '--line-strong'
+  };
+  for (const [name, source] of Object.entries(alias)) {
+    if (theme.vars[source]) root.style.setProperty(name, theme.vars[source]);
+  }
+
+  // The oldest stylesheet has its own light/dark pair keyed off a class the
+  // preset system no longer sets, which left dropdowns and cards painting the
+  // wrong shade. Drive those from the preset too.
+  // Status colours were tuned for paper and stayed dark under every dark
+  // preset. Derive them from the preset's polarity instead.
+  const status = theme.dark
+    ? { positive: '#4ade80', caution: '#fbbf24', critical: '#f87171', info: '#a78bfa' }
+    : { positive: '#1a7f4b', caution: '#8a5a00', critical: '#b3261e', info: '#6d28d9' };
+  for (const [name, value] of Object.entries(status)) {
+    root.style.setProperty(`--${name}`, value);
+    root.style.setProperty(`--${name}-soft`, rgba(value, theme.dark ? 0.16 : 0.12));
+    root.style.setProperty(`--${name}-line`, rgba(value, theme.dark ? 0.32 : 0.28));
+  }
+  root.style.setProperty('--success', status.positive);
+  root.style.setProperty('--warning', status.caution);
+  root.style.setProperty('--danger', status.critical);
+  root.style.setProperty('--success-wash', rgba(status.positive, theme.dark ? 0.16 : 0.12));
+  root.style.setProperty('--warning-wash', rgba(status.caution, theme.dark ? 0.16 : 0.12));
+  root.style.setProperty('--danger-wash', rgba(status.critical, theme.dark ? 0.16 : 0.12));
+
+  root.style.setProperty('--card-bg', theme.vars['--bg-elevated']);
+  root.style.setProperty('--text-main', theme.vars['--text']);
+  root.style.setProperty('--border-color', theme.vars['--line']);
   root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
   root.setAttribute('data-theme-preset', preset);
 
@@ -342,6 +384,7 @@ export function applyTheme({ preset = getPreset(), accents = resolveAccents() } 
   // accent would leave every "accent" surface showing the old default blue.
   root.style.setProperty('--accent-wash', rgba(fill, theme.dark ? 0.14 : 0.1));
   root.style.setProperty('--accent-line', rgba(fill, theme.dark ? 0.3 : 0.26));
+  root.style.setProperty('--accent-soft', rgba(fill, theme.dark ? 0.16 : 0.12));
 
   // Legacy aliases still referenced by the older stylesheet.
   root.style.setProperty('--accent-color', fill);
