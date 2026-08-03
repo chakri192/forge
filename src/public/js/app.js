@@ -33,10 +33,33 @@ export { renderCalendarView } from './views/calendarView.js';
 export { renderJournalView } from './views/journalView.js';
 export { renderAnalyticsView } from './views/analyticsView.js';
 export { renderQuizzesView } from './views/quizzesView.js';
+export { renderReviewView } from './views/reviewView.js';
 
 const router = new Router('appView');
 
+/**
+ * `/p/:slug` is a public page. It must render without a session, so it short
+ * circuits before any auth, nav, or stream setup runs.
+ */
+async function bootPublicProfile(slug) {
+  initTheme();
+  document.querySelector('.sidebar')?.remove();
+  document.querySelector('.topbar')?.remove();
+  document.querySelector('.backdrop')?.remove();
+  const main = document.querySelector('.main');
+  if (main) main.style.marginLeft = '0';
+  const mount = document.getElementById('appView');
+  const { renderPublicProfile } = await import('./views/publicProfileView.js');
+  await renderPublicProfile(slug, mount);
+}
+
 function bootApp() {
+  const publicMatch = location.pathname.match(/^\/p\/([\w-]+)\/?$/);
+  if (publicMatch) {
+    bootPublicProfile(publicMatch[1]);
+    return;
+  }
+
   initTheme();
   initDrawerNav();
   initNotificationBell();

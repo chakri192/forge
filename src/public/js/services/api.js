@@ -539,3 +539,61 @@ export async function submitQuiz(id, answers, durationSeconds) {
 export async function fetchQuizLeaderboard() {
   return requestApi('/quizzes/leaderboard');
 }
+
+// --- Review workflow ---
+
+export async function fetchReviewQueue() {
+  return requestApi('/reviews/queue');
+}
+
+export async function fetchReviewDetail(submissionId) {
+  return requestApi(`/submissions/${submissionId}/review`);
+}
+
+export async function submitReview(submissionId, payload) {
+  return requestApi(`/submissions/${submissionId}/review`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function addReviewComment(submissionId, body) {
+  return requestApi(`/submissions/${submissionId}/comments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ body })
+  });
+}
+
+export async function fetchRubric(taskId) {
+  return requestApi(`/tasks/${taskId}/rubric`);
+}
+
+export async function defineRubric(taskId, criteria) {
+  return requestApi(`/tasks/${taskId}/rubric`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ criteria })
+  });
+}
+
+// --- Profile privacy ---
+
+export async function fetchProfileSettings() {
+  return requestApi('/profile/settings');
+}
+
+export async function updateProfileSettings(settings) {
+  return requestApi('/profile/settings', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings)
+  });
+}
+
+// --- Search ---
+
+export async function search(query) {
+  return requestApi(`/search?q=${encodeURIComponent(query)}`);
+}
