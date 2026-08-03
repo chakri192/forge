@@ -14,6 +14,7 @@ import healthRoutes from './routes/healthRoutes.js';
 import gifRoutes from './routes/gifRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
+import storeRoutes from './routes/storeRoutes.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -92,6 +93,7 @@ app.use('/api', profileRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', leaderboardRoutes);
 app.use('/api', gameRoutes);
+app.use('/api', storeRoutes);
 app.use('/api/gifs', gifRoutes);
 
 // Auto-seed initial demo tasks/teams if database is empty (disabled during test runs)

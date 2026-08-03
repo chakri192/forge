@@ -8,11 +8,6 @@ import { db } from '../db/database.js';
  */
 
 export const METRICS = {
-  points: {
-    label: 'Points',
-    description: 'Points earned from completed tasks, solo and team.',
-    unit: 'pts'
-  },
   xp: {
     label: 'XP',
     description: 'Experience from every scored activity.',
@@ -30,7 +25,7 @@ export const METRICS = {
   }
 };
 
-export const DEFAULT_METRIC = 'points';
+export const DEFAULT_METRIC = 'xp';
 
 function mapBy(rows, key, value) {
   const out = new Map();
@@ -81,35 +76,6 @@ export const LeaderboardModel = {
       lastRank = rank;
       return { ...row, rank };
     });
-  },
-
-  /** Solo task points plus each member's weighted share of team points. */
-  pointsByUser() {
-    const solo = db
-      .prepare(
-        `SELECT assigned_user_id AS user_id, COALESCE(SUM(total_points), 0) AS total
-         FROM tasks
-         WHERE UPPER(status) = 'COMPLETED' AND assigned_user_id IS NOT NULL
-         GROUP BY assigned_user_id`
-      )
-      .all();
-
-    const team = db
-      .prepare(
-        `SELECT tm.user_id AS user_id,
-                COALESCE(SUM(t.total_points * COALESCE(tm.custom_point_share, 1.0)), 0) AS total
-         FROM team_memberships tm
-         JOIN tasks t ON tm.team_id = t.assigned_team_id
-         WHERE UPPER(t.status) = 'COMPLETED'
-         GROUP BY tm.user_id`
-      )
-      .all();
-
-    const totals = new Map();
-    for (const row of [...solo, ...team]) {
-      totals.set(row.user_id, (totals.get(row.user_id) || 0) + row.total);
-    }
-    return totals;
   },
 
   xpByUser() {

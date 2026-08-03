@@ -1522,3 +1522,81 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   .bubble { animation: none; transition: none; }
   .card { transition: none; }
 }
+
+/* ============================================================
+   Wallet and cosmetics store
+   ============================================================ */
+
+.wallet {
+  padding: var(--sp-4) var(--sp-5);
+  margin-bottom: var(--sp-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+}
+.wallet__row { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); }
+.wallet__label {
+  font-size: .6875rem; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.wallet__value {
+  font-size: 1.75rem; font-weight: 750; letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+.wallet__hint { margin: var(--sp-1) 0 0; font-size: .8125rem; color: var(--text-muted); }
+
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--sp-3);
+}
+
+.store-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+}
+.store-item.is-equipped { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+
+.store-item__preview {
+  display: grid;
+  place-items: center;
+  height: 68px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+/* An avatar ring: the cosmetic colour is the ring, not the fill. */
+.store-item__preview--frame::before {
+  content: '';
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  box-shadow: 0 0 0 3px var(--cosmetic);
+}
+.store-item__preview--banner {
+  background: linear-gradient(120deg, var(--cosmetic), transparent 78%), var(--surface-2);
+}
+.store-item__preview--title { font-weight: 750; font-size: .9375rem; letter-spacing: -.01em; }
+
+.store-item__body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.store-item__name { font-size: .875rem; font-weight: 650; }
+.store-item__desc { font-size: .75rem; color: var(--text-faint); line-height: 1.45; }
+
+.store-item__foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-2);
+}
+.store-item__cost {
+  font-size: .8125rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+.store-item__cost.is-short { color: var(--text-faint); }
+
+@media (max-width: 560px) {
+  .store-grid { grid-template-columns: 1fr 1fr; }
+}

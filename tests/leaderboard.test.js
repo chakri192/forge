@@ -44,11 +44,16 @@ describe('Leaderboard', () => {
     assert.equal((await supertest(app).get('/api/leaderboard')).status, 401);
   });
 
-  it('defaults to points and lists the available metrics', async () => {
+  it('defaults to XP and lists the available metrics', async () => {
+    // Points became a spendable wallet, so they are no longer a standing.
     const res = await get(memberToken);
     assert.equal(res.status, 200);
-    assert.equal(res.body.metric, 'points');
-    assert.deepEqual(res.body.metrics.map((m) => m.id), ['points', 'xp', 'tasks', 'streak']);
+    assert.equal(res.body.metric, 'xp');
+    assert.deepEqual(res.body.metrics.map((m) => m.id), ['xp', 'tasks', 'streak']);
+  });
+
+  it('no longer offers points as a ranking metric', async () => {
+    assert.equal((await get(memberToken, '?metric=points')).status, 400);
   });
 
   it('rejects an unknown metric rather than silently defaulting', async () => {
@@ -116,7 +121,7 @@ describe('Leaderboard', () => {
   });
 
   it('supports every advertised metric without erroring', async () => {
-    for (const metric of ['points', 'xp', 'tasks', 'streak']) {
+    for (const metric of ['xp', 'tasks', 'streak']) {
       const res = await get(memberToken, `?metric=${metric}`);
       assert.equal(res.status, 200, `${metric} should work`);
       assert.ok(Array.isArray(res.body.leaders));

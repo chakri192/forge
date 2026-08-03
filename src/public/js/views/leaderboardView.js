@@ -4,7 +4,7 @@ import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml } from '../utils/dom.js';
 import { pushHash, currentParam } from '../router/hashRouter.js';
 
-const VALID = ['points', 'xp', 'tasks', 'streak'];
+const VALID = ['xp', 'tasks', 'streak'];
 
 export function renderLeaderboardView(state) {
   if (!state.currentUser) {
@@ -27,10 +27,10 @@ export function attachLeaderboardEvents(state) {
   if (!state.currentUser) return;
   const root = document.getElementById('leaderboardRoot');
   const linked = currentParam();
-  let metric = VALID.includes(linked) ? linked : 'points';
+  let metric = VALID.includes(linked) ? linked : 'xp';
 
   async function load() {
-    pushHash('leaderboard', metric === 'points' ? null : metric);
+    pushHash('leaderboard', metric === 'xp' ? null : metric);
     try {
       const data = await fetchLeaderboard(metric);
       paint(data);
