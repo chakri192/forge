@@ -7,7 +7,14 @@ import { initSchema as runSchemaInit } from './schema.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isTest = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
+// Matching any argv entry containing "test" was far too loose: a script named
+// loadtest.mjs, a checkout under ~/testing, or a flag like --fastest would all
+// silently swap the real database for an empty throwaway one. Match the test
+// runner and test files specifically instead.
+const isTest =
+  process.env.NODE_ENV === 'test' ||
+  process.argv.includes('--test') ||
+  process.argv.some((arg) => /\.test\.[cm]?js$/.test(arg));
 const defaultDbName = isTest ? `../../../forge_test_${process.pid}.db` : '../../../forge.db';
 const dbPath = process.env.DATABASE_URL || path.join(__dirname, defaultDbName);
 
