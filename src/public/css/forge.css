@@ -413,7 +413,7 @@ hr, .rule { border: 0; border-top: 1px solid var(--rule); margin: var(--sp-5) 0;
 .backdrop { position:fixed; inset:0; z-index:40; background:rgba(24,20,12,.28); opacity:0; pointer-events:none; transition:opacity .24s var(--ease); }
 .backdrop[data-open='true'] { opacity:1; pointer-events:auto; }
 
-.topbar { position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:var(--sp-3); height:var(--topbar); padding:0 var(--sp-6); background:rgba(250,248,245,.86); backdrop-filter:blur(12px); border-bottom:1px solid var(--rule); }
+.topbar { position:sticky; top:0; z-index:30; display:flex; align-items:center; gap:var(--sp-3); height:var(--topbar); padding:0 var(--sp-6); background:color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--rule); }
 
 .main { flex:1; min-width:0; display:flex; flex-direction:column; }
 .page { flex:1; padding:var(--sp-8) var(--sp-6) var(--sp-10); }
@@ -496,14 +496,14 @@ hr, .rule { border: 0; border-top: 1px solid var(--rule); margin: var(--sp-5) 0;
 .text-amber-400, .text-amber-300, .text-amber-200 { color: var(--caution) !important; }
 .text-red-400, .text-red-300 { color: var(--critical) !important; }
 .text-sky-400, .text-sky-300, .text-ice-blue { color: var(--accent) !important; }
-.text-purple-300, .text-purple-400 { color: #6d28d9 !important; }
+.text-purple-300, .text-purple-400, .text-violet-300, .text-violet-400 { color: var(--info) !important; }
 .bg-emerald-500\/20, .bg-emerald-500\/15, .bg-emerald-500\/10 { background-color: var(--positive-soft) !important; }
 .bg-amber-500\/20, .bg-amber-500\/15, .bg-amber-500\/10 { background-color: var(--caution-soft) !important; }
 .bg-red-500\/20, .bg-red-500\/15, .bg-red-500\/10 { background-color: var(--critical-soft) !important; }
 .bg-sky-500\/15, .bg-purple-500\/15 { background-color: var(--accent-soft) !important; }
-.border-emerald-500\/30, .border-emerald-500\/25 { border-color: #bfe0cd !important; }
-.border-amber-500\/30, .border-amber-500\/40, .border-amber-500\/25 { border-color: #ecd9ae !important; }
-.border-red-500\/30, .border-red-500\/25 { border-color: #f0c8c5 !important; }
+.border-emerald-500\/30, .border-emerald-500\/25 { border-color: var(--positive-line) !important; }
+.border-amber-500\/30, .border-amber-500\/40, .border-amber-500\/25 { border-color: var(--caution-line) !important; }
+.border-red-500\/30, .border-red-500\/25 { border-color: var(--critical-line) !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
@@ -992,18 +992,6 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 :root[data-theme='light'] .border-white\/20 { border-color: var(--line-strong) !important; }
 :root[data-theme='light'] .divide-white\/5 > * + * { border-color: var(--line-faint) !important; }
 
-/* Status colours are tuned for a dark background and sit at roughly 1.5:1 on
-   paper. These are the same hues taken down to AA against white. */
-:root[data-theme='light'] .text-amber-400,
-:root[data-theme='light'] .text-amber-300 { color: #8a5a00 !important; }
-:root[data-theme='light'] .text-emerald-400,
-:root[data-theme='light'] .text-emerald-300 { color: #05704a !important; }
-:root[data-theme='light'] .text-sky-400,
-:root[data-theme='light'] .text-sky-300 { color: #0b6a95 !important; }
-:root[data-theme='light'] .text-red-400,
-:root[data-theme='light'] .text-red-300 { color: #b42318 !important; }
-:root[data-theme='light'] .text-violet-400,
-:root[data-theme='light'] .text-purple-400 { color: #6b21a8 !important; }
 
 /* Their wash backgrounds go the other way - lighter, so dark text sits on top. */
 :root[data-theme='light'] [class*='bg-amber-500\/'],
@@ -1039,11 +1027,6 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   color: var(--accent-on) !important;
 }
 
-/* Remaining palette shades used by the activity timeline and badge rows. */
-:root[data-theme='light'] .text-cyan-400,
-:root[data-theme='light'] .text-cyan-300 { color: #0e6f80 !important; }
-:root[data-theme='light'] .text-purple-300,
-:root[data-theme='light'] .text-violet-300 { color: #6b21a8 !important; }
 :root[data-theme='light'] [class*='bg-cyan-500\/'],
 :root[data-theme='light'] [class*='bg-cyan-400\/'] { background-color: rgba(14, 111, 128, .12) !important; }
 :root[data-theme='light'] [class*='bg-purple-500\/'],
