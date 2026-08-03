@@ -16,6 +16,14 @@ export const db = new Database(dbPath);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+// Write-ahead logging lets readers proceed during writes, which matters as
+// soon as more than one request is in flight. NORMAL synchronous is the
+// standard companion to WAL: durable across app crashes, and only at risk
+// in an OS-level crash.
+db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('busy_timeout = 5000');
+
 export function initSchema() {
   runSchemaInit(db);
 }

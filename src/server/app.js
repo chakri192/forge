@@ -8,6 +8,9 @@ import { initSchema } from './db/database.js';
 import { authenticateUser } from './middleware/auth.js';
 import { uploadsDir } from './middleware/upload.js';
 import { errorHandler, jsonSyntaxErrorHandler, spaFallback } from './middleware/errorHandler.js';
+import { mutationRateLimiter } from './middleware/rateLimit.js';
+import { requestLogger, logger } from './utils/logger.js';
+import healthRoutes from './routes/healthRoutes.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -42,14 +45,17 @@ try {
   seedProgression();
   seedQuizzes();
 } catch (err) {
-  console.error('Reference-data seed failed:', err);
+  logger.error('Reference-data seed failed', { error: err.message });
 }
 
 export const app = express();
 
+app.use(requestLogger);
 app.use(cors());
 app.use(express.json());
 app.use(jsonSyntaxErrorHandler);
+
+app.use(healthRoutes);
 
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
@@ -57,6 +63,10 @@ app.use('/uploads', express.static(uploadsDir));
 
 // Authenticate user for all incoming requests
 app.use(authenticateUser);
+
+// Throttle every mutation. Auth keeps its own tighter limiter; this catches
+// voting, posting, submitting and everything else that was unbounded.
+app.use('/api', mutationRateLimiter);
 
 // Mount API Routes
 app.use('/api', authRoutes);

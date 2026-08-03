@@ -1,4 +1,5 @@
 import multer from 'multer';
+import { logger } from '../utils/logger.js';
 import path from 'path';
 
 export function jsonSyntaxErrorHandler(err, req, res, next) {
@@ -11,7 +12,17 @@ export function jsonSyntaxErrorHandler(err, req, res, next) {
   next(err);
 }
 
-export function errorHandler(err, _req, res, _next) {
+export function errorHandler(err, req, res, _next) {
+  const status = err && (err.status || err.statusCode);
+  if (!status || status >= 500) {
+    logger.error('unhandled error', {
+      requestId: req && req.id,
+      path: req && req.path,
+      error: err && err.message,
+      stack: err && err.stack
+    });
+  }
+
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({
       success: false,

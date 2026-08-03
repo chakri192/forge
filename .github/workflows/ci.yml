@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Syntax-check the frontend too. It ships unbundled, so a parse error
+      # never fails a build — it just breaks the app in the browser.
+      - name: Check frontend modules parse
+        run: |
+          find src/public/js -name '*.js' -print0 \
+            | xargs -0 -n1 node --check
+
+      - run: npm test
+
+      # A production boot must fail without a real secret. Assert the guard
+      # is still in place so it cannot be quietly removed.
+      - name: Verify production refuses an insecure JWT secret
+        run: |
+          if NODE_ENV=production node -e "import('./src/server/utils/jwt.js')" 2>/dev/null; then
+            echo "::error::Production booted without JWT_SECRET"
+            exit 1
+          fi
+          echo "Guard is in place."
