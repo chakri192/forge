@@ -10,7 +10,8 @@
     "seed": "node src/server/db/seed.js",
     "test": "node --test",
     "test:watch": "node --test --watch",
-    "migrate:rollback": "node src/server/db/rollback.js"
+    "migrate:rollback": "node src/server/db/rollback.js",
+    "discord:check": "node src/server/scripts/discordCheck.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
