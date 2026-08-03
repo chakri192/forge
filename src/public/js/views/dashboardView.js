@@ -156,7 +156,7 @@ export function renderDashboard(state) {
               <span class="material-symbols-outlined text-amber-400">emoji_events</span>
               Hall of Fame Top 3
             </h2>
-            <button class="nav-drawer-item text-xs text-amber-400 hover:underline font-bold" data-tab="halloffame">View All →</button>
+            <button class="nav-drawer-item text-xs text-accent-text hover:underline accent-target font-bold" data-tab="halloffame">View All →</button>
           </div>
 
           <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
