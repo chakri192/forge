@@ -17,9 +17,10 @@ describe('Static File Server (Production App Instance)', () => {
   it('should serve the design system stylesheet with its tokens', async () => {
     const res = await supertest(app).get('/css/forge.css');
     assert.equal(res.status, 200);
+    assert.match(res.text, /--paper:/);
+    assert.match(res.text, /--ink:/);
     assert.match(res.text, /--accent:/);
-    assert.match(res.text, /--accent-text:/);
-    assert.match(res.text, /--surface-1:/);
+    assert.match(res.text, /--rule:/);
   });
 
   it('should still serve the legacy component stylesheet', async () => {
