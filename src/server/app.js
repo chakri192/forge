@@ -27,6 +27,8 @@ import progressionRoutes from './routes/progressionRoutes.js';
 import forumRoutes from './routes/forumRoutes.js';
 import cohortRoutes from './routes/cohortRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import profileRoutes, { publicProfileRouter } from './routes/profileRoutes.js';
 import { seedQuizzes } from './db/seedQuizzes.js';
 import { seedProgression } from './db/seedProgression.js';
 import { TaskModel } from './models/Task.js';
@@ -56,6 +58,7 @@ app.use(express.json());
 app.use(jsonSyntaxErrorHandler);
 
 app.use(healthRoutes);
+app.use(publicProfileRouter);
 
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
@@ -84,6 +87,8 @@ app.use('/api', progressionRoutes);
 app.use('/api', forumRoutes);
 app.use('/api', cohortRoutes);
 app.use('/api', quizRoutes);
+app.use('/api', reviewRoutes);
+app.use('/api', profileRoutes);
 
 // Auto-seed initial demo tasks/teams if database is empty (disabled during test runs)
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
