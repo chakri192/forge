@@ -30,7 +30,6 @@ export { renderProfileView } from './views/profileView.js';
 export { renderForumView } from './views/forumView.js';
 export { renderMarketplaceView } from './views/marketplaceView.js';
 export { renderCalendarView } from './views/calendarView.js';
-export { renderJournalView } from './views/journalView.js';
 export { renderAnalyticsView } from './views/analyticsView.js';
 export { renderReviewView } from './views/reviewView.js';
 export { renderAppearanceView } from './views/appearanceView.js';

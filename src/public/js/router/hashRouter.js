@@ -14,7 +14,6 @@ const VALID_TABS = new Set([
   'forum',
   'marketplace',
   'calendar',
-  'journal',
   'analytics',
   'review',
   'appearance',
@@ -71,6 +70,13 @@ export function initRouting() {
   window.addEventListener('hashchange', () => {
     if (selfWrite) return;
     const parsed = parseHash();
+    // A hash we no longer recognise — a bookmark to a removed feature, say —
+    // used to leave whatever was on screen, which reads as the link doing
+    // nothing. Send it to the dashboard instead.
+    if (!parsed && window.location.hash.length > 2) {
+      store.setState({ activeTab: 'dashboard' });
+      return;
+    }
     if (parsed && parsed.tab !== store.getState().activeTab) {
       store.setState({ activeTab: parsed.tab });
     } else if (parsed) {

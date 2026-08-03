@@ -14,7 +14,6 @@ import { renderProfileView, attachProfileEvents } from '../views/profileView.js'
 import { renderForumView, attachForumEvents } from '../views/forumView.js';
 import { renderMarketplaceView, attachMarketplaceEvents } from '../views/marketplaceView.js';
 import { renderCalendarView, attachCalendarEvents } from '../views/calendarView.js';
-import { renderJournalView, attachJournalEvents } from '../views/journalView.js';
 import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsView.js';
 import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
 import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
@@ -32,7 +31,6 @@ const routes = {
   forum: { render: renderForumView, attach: attachForumEvents },
   marketplace: { render: renderMarketplaceView, attach: attachMarketplaceEvents },
   calendar: { render: renderCalendarView, attach: attachCalendarEvents },
-  journal: { render: renderJournalView, attach: attachJournalEvents },
   analytics: { render: renderAnalyticsView, attach: attachAnalyticsEvents },
   review: { render: renderReviewView, attach: attachReviewEvents },
   appearance: { render: renderAppearanceView, attach: attachAppearanceEvents },

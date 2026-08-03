@@ -479,21 +479,8 @@ export async function deleteCalendarEvent(id) {
 
 // --- Journal ---
 
-export async function fetchJournal() {
-  return requestApi('/journal');
-}
 
-export async function createJournalEntry(data) {
-  return requestApi('/journal', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-}
 
-export async function deleteJournalEntry(id) {
-  return requestApi(`/journal/${id}`, { method: 'DELETE' });
-}
 
 // --- Analytics ---
 
