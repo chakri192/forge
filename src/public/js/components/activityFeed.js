@@ -13,7 +13,7 @@ export function renderActivityFeed({ containerId, title = 'Activity Feed', isGlo
           <p class="text-xs text-outline mt-0.5">Real-time audit log of user actions and platform events</p>
         </div>
 
-        <button id="${containerId}_refreshBtn" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer self-start md:self-auto">
+        <button id="${containerId}_refreshBtn" class="btn btn--ghost">
           <span class="material-symbols-outlined text-sm">refresh</span>
           <span>Refresh</span>
         </button>

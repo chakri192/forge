@@ -8,15 +8,23 @@ describe('Static File Server (Production App Instance)', () => {
     const res = await supertest(app).get('/');
     assert.equal(res.status, 200);
     assert.match(res.text, /<!DOCTYPE html>/i);
-    assert.match(res.text, /FORGE|MANABI|LUMINA/);
+    assert.match(res.text, /forge/i);
     assert.match(res.text, /type="module" src="\/js\/app.js"/);
+    // The design system must be linked or the shell renders unstyled.
+    assert.match(res.text, /href="\/css\/forge.css"/);
   });
 
-  it('should serve CSS style.css file with custom property tokens from production app instance', async () => {
+  it('should serve the design system stylesheet with its tokens', async () => {
+    const res = await supertest(app).get('/css/forge.css');
+    assert.equal(res.status, 200);
+    assert.match(res.text, /--accent:/);
+    assert.match(res.text, /--accent-text:/);
+    assert.match(res.text, /--surface-1:/);
+  });
+
+  it('should still serve the legacy component stylesheet', async () => {
     const res = await supertest(app).get('/css/style.css');
     assert.equal(res.status, 200);
-    assert.match(res.text, /--bg-base:/);
-    assert.match(res.text, /--accent-1:/);
   });
 
   it('should serve frontend ES module bundle app.js from production app instance', async () => {

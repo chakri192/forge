@@ -53,7 +53,7 @@ export function renderDevDashboardView(state) {
               <label class="block text-xs font-bold text-ice-blue uppercase tracking-wider">Max Community User Capacity</label>
               <div class="flex gap-2">
                 <input type="number" id="devMaxCapacity" min="1" max="1000" class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2 text-sm text-white focus:border-royal-slate-blue focus:outline-none" />
-                <button id="btnSaveCapacity" class="px-4 py-2 bg-royal-slate-blue hover:bg-royal-slate-blue/80 text-white font-bold text-xs rounded-xl shadow transition-all whitespace-nowrap">
+                <button id="btnSaveCapacity" class="btn btn--primary">
                   Save Cap
                 </button>
               </div>

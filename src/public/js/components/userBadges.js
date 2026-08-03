@@ -40,4 +40,27 @@ export function updateUserBadges(user) {
   if (logoutBtn) logoutBtn.classList.remove('hidden');
   if (loginLink) loginLink.classList.add('hidden');
   if (signUpLink) signUpLink.classList.add('hidden');
+
+  document.dispatchEvent(new CustomEvent('forge:user-badges', { detail: { user } }));
 }
+
+/** Initials for the avatar chips in the shell. */
+function initialsOf(name) {
+  return String(name || '?')
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0] || '')
+    .join('')
+    .toUpperCase() || '?';
+}
+
+document.addEventListener('forge:user-badges', (event) => {
+  const user = event.detail?.user || null;
+  const initials = user ? initialsOf(user.name) : '?';
+  for (const id of ['sidebarAvatar', 'topbarAvatar']) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = initials;
+  }
+  const footer = document.getElementById('footerAccount');
+  if (footer) footer.textContent = user ? user.name : '';
+});

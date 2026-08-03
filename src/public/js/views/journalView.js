@@ -32,9 +32,9 @@ export function renderJournalView(state) {
 
       <form class="glass-card rounded-2xl p-5 space-y-3.5" id="journalForm">
         <input id="journalTitle" maxlength="160" required placeholder="What did you work on?"
-          class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />
+          class="input" />
         <textarea id="journalContent" rows="4" maxlength="20000" required placeholder="What was hard? What clicked? What would you do differently?"
-          class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+          class="input"></textarea>
         <div class="flex items-center gap-2.5 flex-wrap">
           <div class="flex gap-1" role="radiogroup" aria-label="How did it go?">
             ${MOODS.map(
@@ -47,7 +47,7 @@ export function renderJournalView(state) {
           </div>
           <input id="journalTags" maxlength="200" placeholder="tags: css, testing"
             class="flex-1 min-w-[140px] bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />
-          <button type="submit" class="flex items-center gap-1.5 px-5 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all">
+          <button type="submit" class="btn btn--primary">
             <span class="material-symbols-outlined text-base" aria-hidden="true">save</span> Save entry
           </button>
         </div>

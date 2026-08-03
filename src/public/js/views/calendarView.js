@@ -31,7 +31,7 @@ export function renderCalendarView(state) {
         </div>
         ${
           canCreate
-            ? `<button id="btnNewEvent" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+            ? `<button id="btnNewEvent" class="btn btn--primary">
                 <span class="material-symbols-outlined text-base" aria-hidden="true">add</span> New Event
               </button>`
             : ''
@@ -72,7 +72,7 @@ export function attachCalendarEvents(state) {
         .map(
           ([day, items]) => `
         <section class="mb-5">
-          <h3 class="text-[11px] font-bold uppercase tracking-wider text-outline mb-2 flex items-center gap-2">
+          <h3 class="eyebrow mb-2 flex items-center gap-2">
             <span class="material-symbols-outlined text-sm" aria-hidden="true">today</span>
             ${formatDay(day)}
             ${isToday(day) ? '<span class="px-2 py-0.5 rounded-full bg-royal-slate-blue/25 text-accent-text text-[9px]">Today</span>' : ''}
@@ -146,26 +146,26 @@ export function attachCalendarEvents(state) {
         contentHtml: `
           <div class="space-y-3.5">
             <div>
-              <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Title</label>
+              <label class="field__label" style="margin-bottom:.375rem;display:block">Title</label>
               <input id="eventTitle" maxlength="160" placeholder="e.g. Sprint demo"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+                class="input" />
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Starts</label>
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Starts</label>
                 <input id="eventStart" type="datetime-local" value="${defaultStart}"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none" />
+                  class="select" />
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Ends</label>
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Ends</label>
                 <input id="eventEnd" type="datetime-local" value="${defaultEnd}"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none" />
+                  class="select" />
               </div>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Type</label>
-                <select id="eventType" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Type</label>
+                <select id="eventType" class="select">
                   <option value="EVENT">Event</option>
                   <option value="WORKSHOP">Workshop</option>
                   <option value="MEETING">Meeting</option>
@@ -173,15 +173,15 @@ export function attachCalendarEvents(state) {
                 </select>
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Location</label>
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Location</label>
                 <input id="eventLocation" maxlength="200" placeholder="Optional"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+                  class="input" />
               </div>
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Details</label>
+              <label class="field__label" style="margin-bottom:.375rem;display:block">Details</label>
               <textarea id="eventDescription" rows="2" maxlength="2000"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+                class="input"></textarea>
             </div>
           </div>`,
         onConfirm: async (overlay) => {

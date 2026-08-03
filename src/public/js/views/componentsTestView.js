@@ -80,7 +80,7 @@ export function renderComponentsTestView(state) {
           <div class="pt-3 border-t border-white/10 space-y-2">
             <h4 class="text-xs font-bold text-white">Backend Notification Engine API Trigger</h4>
             <div class="flex items-center gap-2">
-              <button id="btnBackendNotif" class="px-4 py-2 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center gap-2">
+              <button id="btnBackendNotif" class="btn btn--primary">
                 <span class="material-symbols-outlined text-sm">send</span>
                 <span>Insert Backend Notification</span>
               </button>
@@ -173,7 +173,7 @@ export function renderComponentsTestView(state) {
           <p class="text-xs text-outline">Test focus-trapped dialogs and declarative tooltip hover bubbles.</p>
 
           <div class="flex flex-wrap items-center gap-3">
-            <button id="btnOpenStandardModal" class="px-4 py-2 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all shadow-md">
+            <button id="btnOpenStandardModal" class="btn btn--primary">
               Standard Dialog
             </button>
             <button id="btnOpenDangerModal" class="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-bold text-xs rounded-xl transition-all">

@@ -9,7 +9,7 @@ export function renderChallengesView() {
       <span class="material-symbols-outlined text-4xl accent-target" aria-hidden="true">bolt</span>
       <h2 class="text-lg font-bold">Challenges moved into Tasks</h2>
       <p class="text-xs text-outline">They are now a section of the Tasks board, so everything you can do with a task works on a challenge too.</p>
-      <button id="btnGoToChallenges" class="px-5 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+      <button id="btnGoToChallenges" class="btn btn--primary">
         Open Tasks
       </button>
     </div>`;
