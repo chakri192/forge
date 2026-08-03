@@ -6,6 +6,8 @@ import { onStreamEvent } from '../services/stream.js';
 import { showToast } from '../components/toast.js';
 import { openModal } from '../components/modal.js';
 import { renderSkeleton } from '../components/spinner.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 import { pushHash, currentParam } from '../router/hashRouter.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
 import { saveDraft, readDraft, clearDraft } from '../utils/drafts.js';
@@ -18,21 +20,16 @@ export function renderForumView(state) {
   if (!state.currentUser) {
     return `<div class="glass-card p-10 rounded-2xl text-center text-sm text-outline">Sign in to join the discussion.</div>`;
   }
-  return `
-    <div class="space-y-5 max-w-4xl">
-      <div class="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
-            <span class="material-symbols-outlined text-3xl accent-target">tips_and_updates</span> Forum
-          </h2>
-          <p class="text-xs text-outline mt-1">Ask questions, share answers, vote the best to the top.</p>
-        </div>
-        <button id="btnNewThread" class="btn btn--primary">
-          <span class="material-symbols-outlined text-base" aria-hidden="true">add</span> New Thread
-        </button>
-      </div>
-      <div id="forumRoot">${renderSkeleton('card', { className: 'rounded-2xl' })}</div>
-    </div>`;
+  return renderScreen({
+    title: 'Forum',
+    subtitle: 'Questions and answers, ranked by votes.',
+    toolbar: {
+      groups: [
+        { actions: [{ id: 'new', label: 'New thread', icon: 'add', variant: 'primary' }] }
+      ]
+    },
+    body: `<div id="forumRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachForumEvents(state) {
@@ -244,7 +241,7 @@ export function attachForumEvents(state) {
     });
   }
 
-  document.getElementById('btnNewThread').addEventListener('click', () => {
+  attachToolbar(document.querySelector('.screen__header'), { new: () => {
     openModal({
       title: 'Start a discussion',
       contentHtml: `
@@ -289,7 +286,7 @@ export function attachForumEvents(state) {
         }
       }
     });
-  });
+  } });
 
   // Live vote counts ride the existing SSE 'vote' event type.
   if (unsubscribe) unsubscribe();

@@ -4,6 +4,8 @@ import { showToast } from '../components/toast.js';
 import { withUndo } from '../utils/undo.js';
 import { bindDraft, clearDraft } from '../utils/drafts.js';
 import { renderSkeleton } from '../components/spinner.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
 
 const MOODS = [
@@ -18,17 +20,10 @@ export function renderJournalView(state) {
   if (!state.currentUser) {
     return `<div class="glass-card p-10 rounded-2xl text-center text-sm text-outline">Sign in to write in your journal.</div>`;
   }
-  return `
-    <div class="space-y-5 max-w-3xl">
-      <div>
-        <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-3xl accent-target">menu_book</span> Reflection Journal
-        </h2>
-        <p class="text-xs text-outline mt-1 flex items-center gap-1.5">
-          <span class="material-symbols-outlined text-sm" aria-hidden="true">lock</span>
-          Private to you — nobody else can read these entries.
-        </p>
-      </div>
+  return renderScreen({
+    title: 'Journal',
+    subtitle: 'Private to you. Nobody else can read these entries.',
+    body: `
 
       <form class="glass-card rounded-2xl p-5 space-y-3.5" id="journalForm">
         <input id="journalTitle" maxlength="160" required placeholder="What did you work on?"
@@ -53,8 +48,8 @@ export function renderJournalView(state) {
         </div>
       </form>
 
-      <div id="journalList" class="space-y-3">${renderSkeleton('card', { className: 'rounded-2xl' })}</div>
-    </div>`;
+      <div id="journalList" class="stack stack--tight">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachJournalEvents(state) {
