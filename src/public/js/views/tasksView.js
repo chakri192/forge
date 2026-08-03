@@ -257,7 +257,7 @@ function renderTaskCard(t, isLeaderOrTeacher) {
   const statusClass = getStatusBadgeClass(t.status);
 
   return `
-    <div class="glass-card p-6 rounded-2xl space-y-4 border border-white/10 hover:border-royal-slate-blue/40 transition-all flex flex-col justify-between">
+    <div class="glass-card is-interactive p-6 rounded-2xl space-y-4 flex flex-col justify-between">
       <div class="space-y-3">
         
         <!-- Header Badges -->

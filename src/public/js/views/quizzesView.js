@@ -95,7 +95,7 @@ export function attachQuizzesEvents(state) {
   function cardHtml(q) {
     const diff = DIFFICULTY_STYLES[q.difficulty] || DIFFICULTY_STYLES.MEDIUM;
     return `
-      <article class="glass-card rounded-2xl p-4 flex items-center gap-4">
+      <article class="glass-card is-interactive rounded-2xl p-4 flex items-center gap-4">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h4 class="text-sm font-bold text-white">${escapeHtml(q.title)}</h4>

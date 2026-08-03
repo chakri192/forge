@@ -94,7 +94,7 @@ export function attachCalendarEvents(state) {
     const canDelete = !isTaskDeadline && (e.created_by === state.currentUser.id ||
       ['teacher', 'admin', 'DEV_STEALTH'].includes(state.currentUser.role));
     return `
-      <article class="glass-card rounded-2xl p-4 flex items-start gap-3.5" data-event-id="${escapeHtml(e.id)}">
+      <article class="glass-card is-interactive rounded-2xl p-4 flex items-start gap-3.5" data-event-id="${escapeHtml(e.id)}">
         <span class="w-9 h-9 rounded-xl border flex items-center justify-center shrink-0 ${style.cls}">
           <span class="material-symbols-outlined text-lg" aria-hidden="true">${style.icon}</span>
         </span>

@@ -87,7 +87,7 @@ export function attachForumEvents(state) {
 
   function threadRowHtml(t) {
     return `
-      <article class="glass-card rounded-2xl p-4 flex gap-4">
+      <article class="glass-card is-interactive rounded-2xl p-4 flex gap-4">
         ${voteColumnHtml('FORUM_THREAD', t.id, t.score, t.my_vote)}
         <div class="flex-1 min-w-0">
           <button data-thread-open="${t.id}" class="text-left w-full group">

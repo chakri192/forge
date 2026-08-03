@@ -62,7 +62,7 @@ export function attachMarketplaceEvents(state) {
   function cardHtml(s) {
     const statusClass = STATUS_STYLES[s.status] || STATUS_STYLES.PENDING;
     return `
-      <article class="glass-card rounded-2xl p-4 flex gap-4" data-suggestion-id="${s.id}">
+      <article class="glass-card is-interactive rounded-2xl p-4 flex gap-4" data-suggestion-id="${s.id}">
         <div class="flex flex-col items-center gap-0.5 shrink-0" data-vote-group="${s.id}">
           <button class="vote-btn p-1 rounded-lg transition-colors ${s.my_vote === 1 ? 'text-emerald-400' : 'text-outline hover:text-white'}"
             data-target-id="${s.id}" data-value="1" aria-label="Upvote this proposal">
