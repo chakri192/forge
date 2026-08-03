@@ -19,15 +19,14 @@ function toMatchQuery(raw) {
 const KIND_LABELS = {
   task: 'Task',
   forum: 'Discussion',
-  announcement: 'Announcement',
-  quiz: 'Quiz'
+  announcement: 'Announcement'
 };
 
 export const SearchService = {
   /**
    * Search everything the user is allowed to see. Results are re-checked
    * against source tables rather than trusting the index, so visibility rules
-   * (announcement audiences, unpublished quizzes) still apply.
+   * (announcement audiences) still apply.
    */
   query(user, raw, { limit = 20 } = {}) {
     const match = toMatchQuery(raw);
@@ -101,21 +100,6 @@ export const SearchService = {
           kind: 'announcement', label: KIND_LABELS.announcement, id: ann.id,
           title: ann.title, snippet: (ann.content || '').slice(0, 140),
           link: '#/announcements'
-        };
-      }
-      case 'quiz': {
-        const quiz = db
-          .prepare(`SELECT id, title, description, is_published, scheduled_for FROM quizzes WHERE id = ?`)
-          .get(row.ref_id);
-        if (!quiz) return null;
-        const authoring = hasRole(user, ['leader', 'teacher', 'admin']);
-        if (!quiz.is_published && !authoring) return null;
-        // Future-dated puzzles stay hidden from players.
-        if (quiz.scheduled_for && new Date(quiz.scheduled_for) > new Date() && !authoring) return null;
-        return {
-          kind: 'quiz', label: KIND_LABELS.quiz, id: quiz.id,
-          title: quiz.title, snippet: (quiz.description || '').slice(0, 140),
-          link: `#/quizzes/${quiz.id}`
         };
       }
       default:

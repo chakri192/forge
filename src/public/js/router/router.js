@@ -16,10 +16,10 @@ import { renderMarketplaceView, attachMarketplaceEvents } from '../views/marketp
 import { renderCalendarView, attachCalendarEvents } from '../views/calendarView.js';
 import { renderJournalView, attachJournalEvents } from '../views/journalView.js';
 import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsView.js';
-import { renderQuizzesView, attachQuizzesEvents } from '../views/quizzesView.js';
 import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
 import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
 import { renderLeaderboardView, attachLeaderboardEvents } from '../views/leaderboardView.js';
+import { renderGamesView, attachGamesEvents } from '../views/gamesView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -32,7 +32,6 @@ const routes = {
   calendar: { render: renderCalendarView, attach: attachCalendarEvents },
   journal: { render: renderJournalView, attach: attachJournalEvents },
   analytics: { render: renderAnalyticsView, attach: attachAnalyticsEvents },
-  quizzes: { render: renderQuizzesView, attach: attachQuizzesEvents },
   review: { render: renderReviewView, attach: attachReviewEvents },
   appearance: { render: renderAppearanceView, attach: attachAppearanceEvents },
   tasks: { render: renderTasksView, attach: attachTasksEvents },
@@ -40,6 +39,7 @@ const routes = {
   teams: { render: renderTeamsView, attach: attachTeamsEvents },
   halloffame: { render: renderHallOfFameView, attach: attachHallOfFameEvents },
   leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },
+  games: { render: renderGamesView, attach: attachGamesEvents },
   login: { render: renderLoginView, attach: attachLoginEvents },
   signup: { render: renderSignUpView, attach: attachSignUpEvents },
   settings: { render: renderSettingsView, attach: attachSettingsEvents },

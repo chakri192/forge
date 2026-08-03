@@ -2,7 +2,7 @@
 
 A community platform for private learning cohorts. Members take on tasks and
 challenges, submit work for review, earn XP toward levels and badges, discuss in
-a voting forum, take quizzes, and track their progress — while teachers get the
+a voting forum, play mini games, and track their progress — while teachers get the
 analytics to see who is falling behind.
 
 Built without a frontend framework: an Express API over SQLite, and a vanilla
@@ -19,7 +19,7 @@ npm run dev
 ```
 
 The app runs at `http://localhost:3000`. The seed creates demo accounts, tasks,
-squads, quizzes, and puzzles.
+squads, and channels.
 
 ### Configuration
 
@@ -90,10 +90,12 @@ transaction covering XP, streak, and badges together.
 history rather than counting forward, so an achievement added today is
 immediately earned by anyone who already qualified.
 
-**Quizzes and puzzles** support five question types — multiple choice,
-multi-select, true or false, short answer, and code output. Grading happens
-entirely server-side, a Puzzle of the Day rotates on a schedule, and every
-review explains why an answer was right or wrong.
+**Mini games** are short, replayable rounds that sharpen everyday skills:
+Hex Hunt reads a colour and asks for its hex, Type Sprint scores a retyped
+snippet by speed scaled against accuracy, and Sequence is pattern recall that
+grows by one each round. Beating your own previous best awards XP, so the
+reward is improvement rather than grinding. Scores are capped server-side,
+since a game running in the browser can only ever submit a claim.
 
 **Hall of Fame** ranks by XP with medals for the top three, a season toggle, and
 awarded titles.
@@ -108,7 +110,7 @@ review-latency percentiles, weekly activity, and automatic at-risk detection for
 members who have gone inactive, submitted nothing, hit repeated rejections, or
 broken a long streak.
 
-**Search** indexes tasks, discussions, announcements, and quizzes in a SQLite
+**Search** indexes tasks, discussions, and announcements in a SQLite
 FTS5 table kept current by triggers, and respects the same visibility rules as
 the rest of the app — a member never finds a teachers-only announcement.
 
@@ -156,11 +158,9 @@ makes "newly earned" a reliable signal for notifications.
 `notification`, `vote`, `xp`). Adding an event type needs no transport work.
 `EventSource` cannot set headers, so the stream authenticates by query token.
 
-**Quiz integrity.** The play endpoint strips correct answers and explanations
-from its payload; a test asserts the serialized response does not even contain
-the string `correct_answer`. Answers appear only in a grading result.
-
----
+**Game scores are claims, not measurements.** The games run entirely in the
+browser, so every score is validated against a per-game ceiling before it is
+recorded, and XP is granted only for beating a personal best.
 
 ## Project layout
 
@@ -194,7 +194,7 @@ tests/                   Unit, integration, RBAC matrix, and E2E suites
 
 Coverage focuses on the parts most likely to break quietly: progression
 transaction rollback and retry, streak behaviour across month and year
-boundaries, quiz grading for all five question types, the journal privacy
+boundaries, mini-game score validation and XP awards, the journal privacy
 boundary, and RBAC rejections on every protected route.
 
 ---

@@ -32,10 +32,10 @@ export { renderMarketplaceView } from './views/marketplaceView.js';
 export { renderCalendarView } from './views/calendarView.js';
 export { renderJournalView } from './views/journalView.js';
 export { renderAnalyticsView } from './views/analyticsView.js';
-export { renderQuizzesView } from './views/quizzesView.js';
 export { renderReviewView } from './views/reviewView.js';
 export { renderAppearanceView } from './views/appearanceView.js';
 export { renderLeaderboardView } from './views/leaderboardView.js';
+export { renderGamesView } from './views/gamesView.js';
 
 const router = new Router('appView');
 
