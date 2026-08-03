@@ -3,7 +3,7 @@ import { XpModel } from '../models/Xp.js';
 import { db } from '../db/database.js';
 
 /** XP is awarded for beating your own best, not for playing. */
-const XP_PER_GAME = { hex: 12, sprint: 12, sequence: 12 };
+const XP_PER_GAME = { snake: 12, memory: 12, pop: 12, sequence: 12 };
 
 export const GameService = {
   catalogue(user) {
