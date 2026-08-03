@@ -637,3 +637,31 @@ export async function equipCosmetic(id, equipped) {
     body: JSON.stringify({ equipped })
   });
 }
+
+export async function fetchDuels() {
+  return requestApi('/duels');
+}
+
+export async function createDuel(body) {
+  return requestApi('/duels', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+export async function respondToDuel(id, action, body = {}) {
+  return requestApi(`/duels/${encodeURIComponent(id)}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+export async function resolveDuel(id, winnerId) {
+  return requestApi(`/duels/${encodeURIComponent(id)}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ winnerId })
+  });
+}
