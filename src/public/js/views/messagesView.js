@@ -256,7 +256,7 @@ export function attachMessagesEvents(state) {
           title: 'Edit message',
           contentHtml: `
             <textarea id="editMessageInput" maxlength="4000" rows="4"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60">${escapeHtml(current)}</textarea>`,
+              class="input">${escapeHtml(current)}</textarea>`,
           onConfirm: async (overlay) => {
             const content = overlay.querySelector('#editMessageInput').value.trim();
             if (!content) return false;
@@ -392,9 +392,9 @@ export function attachMessagesEvents(state) {
         contentHtml: `
           <div class="space-y-4">
             <div>
-              <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Name</label>
+              <label class="field__label" style="margin-bottom:.375rem;display:block">Name</label>
               <input id="newChannelName" maxlength="60" placeholder="e.g. project-updates"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />
+                class="input" />
             </div>
             <input type="hidden" id="newChannelType" value="text" />
             <p class="text-[11px] text-outline">
@@ -404,8 +404,8 @@ export function attachMessagesEvents(state) {
             ${
               teams.length
                 ? `<div>
-                    <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Visibility</label>
-                    <select id="newChannelTeam" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                    <label class="field__label" style="margin-bottom:.375rem;display:block">Visibility</label>
+                    <select id="newChannelTeam" class="select">
                       <option value="">Public — visible to everyone</option>
                       ${teams.map((t) => `<option value="${t.id}">Private — ${escapeHtml(t.name)} only</option>`).join('')}
                     </select>

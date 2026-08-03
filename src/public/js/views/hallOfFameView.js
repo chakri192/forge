@@ -26,7 +26,7 @@ export function renderHallOfFameView(state) {
           <p class="text-xs text-outline mt-1">Academic excellence, coding mastery, and community titles.</p>
         </div>
         ${isTeacherOrDev ? `
-          <button id="btnAwardTitle" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+          <button id="btnAwardTitle" class="btn btn--primary">
             <span class="material-symbols-outlined text-base" aria-hidden="true">workspace_premium</span> Award Title
           </button>
         ` : ''}

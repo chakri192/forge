@@ -291,6 +291,10 @@ export function initCommandPalette() {
 
   inputEl.addEventListener('input', () => renderResults(inputEl.value.trim()));
 
+  // The topbar search button is the discoverable path to the palette for
+  // anyone who does not know the shortcut.
+  document.getElementById('btnOpenPalette')?.addEventListener('click', openPalette);
+
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();

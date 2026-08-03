@@ -13,12 +13,9 @@ function ensureBanner() {
     banner = document.createElement('div');
     banner.id = BANNER_ID;
     banner.setAttribute('role', 'status');
-    banner.className =
-      'fixed top-16 left-0 right-0 z-30 flex items-center justify-center gap-2 py-1.5 ' +
-      'text-[11px] font-semibold text-amber-200 bg-amber-500/15 border-b border-amber-500/30 ' +
-      'backdrop-blur-md transition-transform duration-300 -translate-y-full lg:pl-64';
+    banner.className = 'conn-banner';
     banner.innerHTML = `
-      <span class="material-symbols-outlined text-sm animate-spin" aria-hidden="true">progress_activity</span>
+      <span class="material-symbols-outlined" style="font-size:15px" aria-hidden="true">sync_problem</span>
       <span>Reconnecting to live updates…</span>`;
     document.body.appendChild(banner);
   }
@@ -26,11 +23,11 @@ function ensureBanner() {
 }
 
 function show() {
-  ensureBanner().classList.remove('-translate-y-full');
+  ensureBanner().dataset.show = 'true';
 }
 
 function hide() {
-  ensureBanner().classList.add('-translate-y-full');
+  ensureBanner().dataset.show = 'false';
 }
 
 function apply(status) {

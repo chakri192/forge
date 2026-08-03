@@ -84,7 +84,7 @@ export function attachQuizzesEvents(state) {
     if (!items.length) return '';
     return `
       <section class="space-y-2.5 mb-5">
-        <h3 class="text-[11px] font-bold uppercase tracking-wider text-outline flex items-center gap-2">
+        <h3 class="eyebrow flex items-center gap-2">
           <span class="material-symbols-outlined text-sm" aria-hidden="true">${icon}</span>
           ${title} <span class="text-outline/60">· ${items.length}</span>
         </h3>
@@ -111,7 +111,7 @@ export function attachQuizzesEvents(state) {
             ${q.best_percent !== null && q.best_percent !== undefined ? `<span class="text-white font-semibold">Best ${q.best_percent}%</span>` : ''}
           </div>
         </div>
-        <button data-quiz-open="${q.id}" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl transition-all shrink-0">
+        <button data-quiz-open="${q.id}" class="btn btn--ghost">
           ${q.attempts ? 'Retry' : 'Start'}
         </button>
       </article>`;
@@ -210,7 +210,7 @@ export function attachQuizzesEvents(state) {
           .join(''),
       SHORT_ANSWER: () => `
         <input type="text" name="q_${q.id}" placeholder="Type your answer…"
-          class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />`,
+          class="input" />`,
       CODE_OUTPUT: () => `
         <input type="text" name="q_${q.id}" placeholder="What does it print?"
           class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm font-mono text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />`
@@ -287,12 +287,12 @@ export function attachQuizzesEvents(state) {
               : ''
         }
         <div class="flex gap-2 justify-center mt-4">
-          <button id="btnRetake" class="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-xs rounded-xl transition-all">Retake</button>
-          <button id="btnBackToQuizzes" class="px-4 py-2 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all">All quizzes</button>
+          <button id="btnRetake" class="btn btn--ghost">Retake</button>
+          <button id="btnBackToQuizzes" class="btn btn--primary">All quizzes</button>
         </div>
       </section>
 
-      <h3 class="text-[11px] font-bold uppercase tracking-wider text-outline mb-2">Review</h3>
+      <h3 class="eyebrow mb-2">Review</h3>
       <div class="space-y-2.5">
         ${result.results
           .map(

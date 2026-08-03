@@ -27,7 +27,7 @@ export function renderForumView(state) {
           </h2>
           <p class="text-xs text-outline mt-1">Ask questions, share answers, vote the best to the top.</p>
         </div>
-        <button id="btnNewThread" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+        <button id="btnNewThread" class="btn btn--primary">
           <span class="material-symbols-outlined text-base" aria-hidden="true">add</span> New Thread
         </button>
       </div>
@@ -178,9 +178,9 @@ export function attachForumEvents(state) {
               </div>`
             : `<form class="glass-card rounded-2xl p-4 mt-4 space-y-2.5" id="replyForm">
                 <textarea id="replyInput" rows="3" maxlength="8000" placeholder="Write a reply…"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+                  class="input"></textarea>
                 <div class="flex justify-end">
-                  <button type="submit" class="px-5 py-2 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all">Reply</button>
+                  <button type="submit" class="btn btn--primary">Reply</button>
                 </div>
               </form>`
         }`;
@@ -250,13 +250,13 @@ export function attachForumEvents(state) {
       contentHtml: `
         <div class="space-y-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Title</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Title</label>
             <input id="threadTitle" maxlength="160" placeholder="What do you want to ask or share?"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+              class="input" />
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Category</label>
-            <select id="threadCategory" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Category</label>
+            <select id="threadCategory" class="select">
               <option value="general">General</option>
               <option value="help">Help</option>
               <option value="showcase">Showcase</option>
@@ -264,9 +264,9 @@ export function attachForumEvents(state) {
             </select>
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Body</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Body</label>
             <textarea id="threadBody" rows="4" maxlength="8000" placeholder="Add the details…"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+              class="input"></textarea>
           </div>
         </div>`,
       onConfirm: async (overlay) => {
