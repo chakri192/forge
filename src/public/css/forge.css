@@ -1122,31 +1122,6 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
    Leaderboard
    ============================================================ */
 
-.lb-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1);
-  margin-bottom: var(--sp-4);
-  padding: var(--sp-1);
-  border: 1px solid var(--line-faint);
-  border-radius: var(--r-lg);
-  background: var(--surface-1);
-  width: fit-content;
-}
-.lb-tab {
-  padding: .4rem .9rem;
-  border: 0;
-  border-radius: var(--r-md);
-  background: none;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: .8125rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .12s var(--ease), color .12s var(--ease);
-}
-.lb-tab:hover { color: var(--text); background: var(--surface-2); }
-.lb-tab.is-active { background: var(--accent); color: var(--accent-on); }
 
 .lb-note {
   margin: 0 0 var(--sp-5);
@@ -1309,10 +1284,8 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lb-tab { transition: none; }
   .podium__slot--1 { transform: none; }
 }
-
 /* ============================================================
    Mini games
    ============================================================ */
@@ -1640,3 +1613,265 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   .duel__head { flex-wrap: wrap; }
   .duel__age { margin-left: 0; width: 100%; }
 }
+
+/* ============================================================================
+   SCREEN SYSTEM
+   ----------------------------------------------------------------------------
+   The authoritative layout layer. Everything below is defined once and reused;
+   views should compose these rather than inventing spacing or type sizes.
+
+   Spatial scale is a strict 8px grid with two sub-steps (4px, 12px) for dense
+   controls. Nothing in a view should use a raw pixel value.
+   ============================================================================ */
+
+:root {
+  /* 8px grid */
+  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+  --s5: 24px;  --s6: 32px;  --s7: 48px;  --s8: 64px;
+
+  /* Type ramp. Headings run tight; body sits at 1.5 for readability. */
+  --t-display: 1.75rem;  --t-display-lh: 1.15;
+  --t-title:   1.25rem;  --t-title-lh:   1.25;
+  --t-section: 0.75rem;  --t-section-lh: 1.3;
+  --t-body:    0.9375rem; --t-body-lh:   1.5;
+  --t-meta:    0.8125rem; --t-meta-lh:   1.45;
+  --t-micro:   0.6875rem; --t-micro-lh:  1.4;
+
+  --w-regular: 400; --w-medium: 500; --w-semi: 600; --w-bold: 700;
+
+  --ring: 0 0 0 3px var(--accent-soft, var(--accent-wash));
+}
+
+/* --- page shell ---------------------------------------------------------- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  max-width: 1120px;
+  padding-bottom: var(--s8);
+}
+
+.screen__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  flex-wrap: wrap;
+  padding-bottom: var(--s4);
+  border-bottom: 1px solid var(--line-faint);
+}
+
+.screen__heading { display: flex; flex-direction: column; gap: var(--s1); min-width: 0; }
+
+.screen__title {
+  margin: 0;
+  font-size: var(--t-display);
+  line-height: var(--t-display-lh);
+  font-weight: var(--w-bold);
+  letter-spacing: -0.02em;
+}
+
+/* One line, factual. Not a tagline. */
+.screen__subtitle {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--t-meta);
+  line-height: var(--t-meta-lh);
+  color: var(--text-muted);
+}
+
+.screen__body { display: flex; flex-direction: column; gap: var(--s5); }
+
+/* --- section ------------------------------------------------------------- */
+
+.block { display: flex; flex-direction: column; gap: var(--s3); }
+
+.block__label {
+  font-size: var(--t-section);
+  line-height: var(--t-section-lh);
+  font-weight: var(--w-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* --- toolbar ------------------------------------------------------------- */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--s1);
+  flex-wrap: nowrap;
+  padding: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-1);
+}
+.toolbar--bare { border: 0; background: none; padding: 0; }
+
+.toolbar__group { display: flex; align-items: center; gap: var(--s1); min-width: 0; }
+
+/* A hairline between groups carries the grouping without adding chrome. */
+.toolbar__divider {
+  width: 1px;
+  align-self: stretch;
+  margin: var(--s1) var(--s2);
+  background: var(--line);
+  flex: none;
+}
+
+.toolbar__spacer { flex: 1 1 auto; min-width: var(--s2); }
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  height: 32px;
+  padding: 0 var(--s3);
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--t-meta);
+  line-height: 1;
+  font-weight: var(--w-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.tool .material-symbols-outlined { font-size: 18px; flex: none; }
+
+.tool:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.tool:active:not(:disabled) { background: var(--surface-3); }
+.tool:focus-visible { outline: none; box-shadow: var(--ring); border-color: var(--accent); }
+
+.tool[aria-pressed='true'],
+.tool.is-active {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+  color: var(--accent-text);
+}
+
+.tool:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.tool--primary {
+  background: var(--accent);
+  color: var(--accent-on);
+  font-weight: var(--w-semi);
+}
+.tool--primary:hover:not(:disabled) { background: var(--accent-hover); color: var(--accent-on); }
+.tool--danger { color: var(--danger); }
+.tool--danger:hover:not(:disabled) { background: var(--danger-wash); color: var(--danger); }
+
+/* Icon-only: square, label carried by aria-label and the tooltip. */
+.tool--icon { width: 32px; padding: 0; justify-content: center; }
+.tool--icon .tool__label { display: none; }
+
+/* --- overflow ------------------------------------------------------------ */
+
+.toolbar__overflow { position: relative; flex: none; }
+
+.overflow-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--s1));
+  z-index: 60;
+  min-width: 200px;
+  padding: var(--s1);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.overflow-menu[hidden] { display: none; }
+
+.overflow-menu .tool {
+  width: 100%;
+  justify-content: flex-start;
+  height: 34px;
+}
+.overflow-menu .tool__label { display: inline; }
+.overflow-menu .toolbar__divider {
+  width: auto;
+  height: 1px;
+  align-self: auto;
+  margin: var(--s1) var(--s2);
+}
+
+/* Below this width secondary actions collapse into the overflow menu. */
+@media (max-width: 720px) {
+  .toolbar { flex-wrap: nowrap; }
+  .toolbar__group[data-collapse='true'] { display: none; }
+  .toolbar__divider[data-collapse='true'] { display: none; }
+}
+@media (min-width: 721px) {
+  .toolbar__overflow[data-only-small='true'] { display: none; }
+}
+
+/* --- content primitives used by the rebuilt screens ---------------------- */
+
+.steps {
+  margin: 0;
+  padding-left: var(--s5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  font-size: var(--t-body);
+  line-height: var(--t-body-lh);
+  color: var(--text-muted);
+}
+.steps strong { color: var(--text); font-weight: var(--w-semi); }
+
+/* The wallet strip is data, not decoration: one number, one label. */
+.wallet {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-1);
+}
+.wallet__row { display: contents; }
+.wallet__label {
+  font-size: var(--t-micro);
+  font-weight: var(--w-semi);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.wallet__value {
+  font-size: var(--t-title);
+  line-height: var(--t-title-lh);
+  font-weight: var(--w-bold);
+  font-variant-numeric: tabular-nums;
+}
+.wallet__value small {
+  margin-left: var(--s1);
+  font-size: var(--t-meta);
+  font-weight: var(--w-medium);
+  color: var(--text-faint);
+}
+.wallet__hint { display: none; }
+
+/* Screens keep their own body rhythm on the same grid. */
+.screen__body > * + * { margin-top: 0; }
+.appearance { display: flex; flex-direction: column; gap: var(--s6); }
+.appearance .section { margin-bottom: 0; }
+
+@media (max-width: 720px) {
+  .screen__header { gap: var(--s3); }
+  .screen__title { font-size: 1.5rem; }
+  .toolbar { width: 100%; }
+}
+
+/* Async view roots hold their own blocks, so they need the screen's rhythm
+   rather than inheriting nothing and letting sections butt together. */
+.stack { display: flex; flex-direction: column; gap: var(--s5); }
+.stack--tight { gap: var(--s3); }

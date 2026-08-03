@@ -3,6 +3,8 @@ import { fetchLeaderboard } from '../services/api.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml } from '../utils/dom.js';
 import { pushHash, currentParam } from '../router/hashRouter.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 const VALID = ['xp', 'tasks', 'streak'];
 
@@ -11,16 +13,27 @@ export function renderLeaderboardView(state) {
     return `<div class="empty"><p class="empty__text">Sign in to see the standings.</p></div>`;
   }
 
-  return `
-    <div class="page__inner">
-      <header class="page__head">
-        <div>
-          <h1 class="title">Leaderboard</h1>
-          <p class="subtitle">Who is ahead, and by how much. Updated as work is approved.</p>
-        </div>
-      </header>
-      <div id="leaderboardRoot">${renderSkeleton('card', { className: '' })}</div>
-    </div>`;
+  const active = VALID.includes(currentParam()) ? currentParam() : 'xp';
+  return renderScreen({
+    title: 'Leaderboard',
+    subtitle: 'Standings update as work is approved.',
+    toolbar: {
+      groups: [
+        {
+          actions: [
+            { id: 'xp', label: 'XP', pressed: active === 'xp' },
+            { id: 'tasks', label: 'Tasks', pressed: active === 'tasks' },
+            { id: 'streak', label: 'Streak', pressed: active === 'streak' }
+          ]
+        },
+        {
+          collapsible: true,
+          actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh', iconOnly: true }]
+        }
+      ]
+    },
+    body: `<div id="leaderboardRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachLeaderboardEvents(state) {
@@ -52,7 +65,6 @@ export function attachLeaderboardEvents(state) {
     const noneScored = !leaders.length || leaders.every((row) => row.score === 0);
     if (noneScored) {
       root.innerHTML = `
-        ${tabsHtml(data)}
         <p class="lb-note">${escapeHtml(active.description)}</p>
         <div class="empty">
           <p class="empty__title">No ${escapeHtml(active.label.toLowerCase())} recorded yet</p>
@@ -66,7 +78,6 @@ export function attachLeaderboardEvents(state) {
             }
           </p>
         </div>`;
-      bindTabs();
       return;
     }
 
@@ -76,7 +87,6 @@ export function attachLeaderboardEvents(state) {
     const rest = leaders.slice(3);
 
     root.innerHTML = `
-      ${tabsHtml(data)}
       <p class="lb-note">${escapeHtml(active.description)}</p>
 
       <ol class="podium">
@@ -104,22 +114,6 @@ export function attachLeaderboardEvents(state) {
         }
       </p>`;
 
-    bindTabs();
-  }
-
-  function tabsHtml(data) {
-    return `
-      <div class="lb-tabs" role="tablist" aria-label="Leaderboard metric">
-        ${data.metrics
-          .map(
-            (m) => `
-          <button class="lb-tab ${m.id === data.metric ? 'is-active' : ''}"
-            role="tab" aria-selected="${m.id === data.metric}" data-metric="${m.id}">
-            ${escapeHtml(m.label)}
-          </button>`
-          )
-          .join('')}
-      </div>`;
   }
 
   function podiumHtml(row, metric, state) {
@@ -148,16 +142,6 @@ export function attachLeaderboardEvents(state) {
       </li>`;
   }
 
-  function bindTabs() {
-    root.querySelectorAll('[data-metric]').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        if (tab.dataset.metric === metric) return;
-        metric = tab.dataset.metric;
-        load();
-      });
-    });
-  }
-
   function initials(name) {
     return String(name || '?')
       .split(/\s+/)
@@ -165,6 +149,22 @@ export function attachLeaderboardEvents(state) {
       .map((p) => p[0] || '')
       .join('')
       .toUpperCase();
+  }
+
+  attachToolbar(document.querySelector('.screen__header'), {
+    xp: () => switchMetric('xp'),
+    tasks: () => switchMetric('tasks'),
+    streak: () => switchMetric('streak'),
+    refresh: load
+  });
+
+  function switchMetric(next) {
+    if (next === metric) return;
+    metric = next;
+    document
+      .querySelectorAll('.screen__header .toolbar__group:first-child .tool')
+      .forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.action === next)));
+    load();
   }
 
   load();
