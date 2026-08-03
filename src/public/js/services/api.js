@@ -171,20 +171,7 @@ export async function deleteTask(taskId) {
   });
 }
 
-export async function suggestTask({ title, description, total_points, task_type, mode, user_id }) {
-  return requestApi('/tasks/suggest', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, description, total_points, task_type, mode, user_id })
-  });
-}
 
-export async function upvoteTask(taskId) {
-  return requestApi(`/tasks/${taskId}/upvote`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
 
 export async function assignTask(taskId, { team_id, user_id, task_type, assigned_by }) {
   return requestApi(`/tasks/${taskId}/assign`, {

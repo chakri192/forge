@@ -1,4 +1,15 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+
+/**
+ * Key by user id when authenticated, otherwise by IP.
+ *
+ * The IP branch must go through `ipKeyGenerator`: a raw `req.ip` gives every
+ * address in an IPv6 /64 its own bucket, so a single client could rotate
+ * addresses and bypass the limit entirely.
+ */
+function userOrIpKey(req) {
+  return req.user ? `u:${req.user.id}` : ipKeyGenerator(req.ip);
+}
 
 const isTest = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));
 
@@ -28,7 +39,7 @@ export const mutationRateLimiter = rateLimit({
   max: isTest ? 10000 : 120,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req.user ? `u:${req.user.id}` : `ip:${req.ip}`),
+  keyGenerator: userOrIpKey,
   skip: (req) => ['GET', 'HEAD', 'OPTIONS'].includes(req.method),
   handler: (_req, res) => {
     res.status(429).json({ success: false, error: 'Too many requests, please slow down' });
@@ -44,7 +55,7 @@ export const quizAttemptRateLimiter = rateLimit({
   max: isTest ? 10000 : 12,
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => (req.user ? `u:${req.user.id}` : `ip:${req.ip}`),
+  keyGenerator: userOrIpKey,
   handler: (_req, res) => {
     res.status(429).json({ success: false, error: 'Too many attempts, please wait a moment' });
   }

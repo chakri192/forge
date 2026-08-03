@@ -84,6 +84,17 @@ review-latency percentiles, weekly activity, and automatic at-risk detection for
 members who have gone inactive, submitted nothing, hit repeated rejections, or
 broken a long streak.
 
+**Search** indexes tasks, discussions, announcements, and quizzes in a SQLite
+FTS5 table kept current by triggers, and respects the same visibility rules as
+the rest of the app — a member never finds a teachers-only announcement.
+
+**Review** gives each submission a weighted rubric, per-criterion scores, and a
+threaded conversation, with a `changes_requested` state that returns work to
+the submitter.
+
+**Public profiles** are opt-in, revocable portfolio pages at `/p/:slug`,
+served by a dedicated allowlist serializer so no private field can leak.
+
 **Access control** enforces four roles — member, leader, teacher, admin —
 through middleware and per-resource checks, hardened against IDOR and privilege
 escalation.
@@ -154,7 +165,7 @@ tests/                   Unit, integration, RBAC matrix, and E2E suites
 
 ## Testing
 
-188 tests run under Node's built-in test runner. `npm test` discovers every
+224 tests run under Node's built-in test runner. `npm test` discovers every
 `*.test.js` recursively.
 
 Coverage focuses on the parts most likely to break quietly: progression

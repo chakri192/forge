@@ -2,7 +2,7 @@
 // or person, plus common verbs. Searches data already in the store, so opening
 // it costs nothing.
 import { store } from '../state/store.js';
-import { fetchChannels, fetchAnnouncements, fetchAllUsers } from '../services/api.js';
+import { fetchChannels, fetchAnnouncements, fetchAllUsers, search } from '../services/api.js';
 import { escapeHtml } from '../utils/dom.js';
 
 const OVERLAY_ID = 'forgeCommandPalette';
@@ -30,6 +30,8 @@ let listEl = null;
 let items = [];
 let activeIndex = 0;
 let cache = { channels: [], announcements: [], users: [], loadedAt: 0 };
+// Server-side full-text hits for the current query.
+let remoteResults = [];
 
 /** Subsequence match — "bru" matches "Build Responsive UI". */
 function fuzzyScore(haystack, needle) {
@@ -184,6 +186,14 @@ function renderResults(query) {
         .map((r) => r.c)
     : candidates.filter((c) => c.group === 'Go to' || c.group === 'Actions');
 
+  // Fold in full-text matches, skipping anything already matched locally.
+  if (query && remoteResults.length) {
+    const seen = new Set(ranked.map((r) => r.label));
+    for (const remote of remoteResults) {
+      if (!seen.has(remote.label)) ranked.push(remote);
+    }
+  }
+
   items = ranked.slice(0, 12);
   activeIndex = 0;
 
@@ -241,6 +251,7 @@ function runItem(index) {
 export function openPalette() {
   if (!store.getState().currentUser) return;
   overlay.classList.remove('hidden');
+  remoteResults = [];
   inputEl.value = '';
   renderResults('');
   inputEl.focus();
@@ -289,7 +300,32 @@ export function initCommandPalette() {
     if (e.target === overlay) closePalette();
   });
 
-  inputEl.addEventListener('input', () => renderResults(inputEl.value.trim()));
+  let searchTimer = null;
+  inputEl.addEventListener('input', () => {
+    const q = inputEl.value.trim();
+    renderResults(q);
+
+    // Full-text search runs against the server, debounced, and merges into the
+    // already-rendered local matches rather than replacing them.
+    clearTimeout(searchTimer);
+    if (q.length < 2) return;
+    searchTimer = setTimeout(async () => {
+      try {
+        const { results } = await search(q);
+        if (inputEl.value.trim() !== q || !results.length) return;
+        remoteResults = results.map((r) => ({
+          group: r.label,
+          label: r.title,
+          hint: r.snippet ? r.snippet.slice(0, 40) : '',
+          icon: { task: 'assignment', forum: 'tips_and_updates', announcement: 'campaign', quiz: 'quiz' }[r.kind] || 'search',
+          run: () => { location.hash = r.link; }
+        }));
+        renderResults(q);
+      } catch (_) {
+        /* local results already shown */
+      }
+    }, 180);
+  });
 
   // The topbar search button is the discoverable path to the palette for
   // anyone who does not know the shortcut.

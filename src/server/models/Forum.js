@@ -24,9 +24,12 @@ export const ForumModel = {
       .get(id) ?? null;
   },
 
-  listThreads({ category = null } = {}) {
+  listThreads({ category = null, limit = 50, offset = 0 } = {}) {
     const where = category ? `WHERE t.category = ?` : '';
     const params = category ? [category] : [];
+    // Unbounded lists are fine at 50 rows and not at 50,000.
+    const capped = Math.max(1, Math.min(Number(limit) || 50, 100));
+    const skip = Math.max(0, Number(offset) || 0);
     return db
       .prepare(`
         SELECT t.*, u.name AS author_name, u.role AS author_role,
@@ -37,8 +40,9 @@ export const ForumModel = {
         LEFT JOIN users u ON u.id = t.author_id
         ${where}
         ORDER BY t.is_pinned DESC, t.updated_at DESC
+        LIMIT ? OFFSET ?
       `)
-      .all(...params);
+      .all(...params, capped, skip);
   },
 
   categories() {

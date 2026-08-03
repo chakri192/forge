@@ -70,9 +70,25 @@ router.delete('/tasks/:id', requirePermission('TASK_CREATE'), validate({}), (req
   }
 });
 
+/**
+ * DEPRECATED — superseded by /api/marketplace (marketplace_suggestions + the
+ * shared votes table), which adds a status lifecycle and promotion to a real
+ * task.
+ *
+ * Kept live rather than removed: eight test files exercise these routes and
+ * there is existing `task_upvotes` data behind them. Removing this path needs
+ * a data migration into marketplace_suggestions plus a test rewrite, so it is
+ * its own piece of work.
+ */
+function markDeprecated(res, replacement) {
+  res.set('Deprecation', 'true');
+  res.set('Link', `<${replacement}>; rel="successor-version"`);
+}
+
 // Marketplace suggestion endpoint
 router.post('/tasks/suggest', validate(taskSchemas.suggest), (req, res, next) => {
   try {
+    markDeprecated(res, '/api/marketplace');
     const userId = req.user ? req.user.id : (req.body && req.body.user_id ? req.body.user_id : null);
     if (!userId) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const taskId = TaskService.suggestTask({ ...req.body, userId });
@@ -85,6 +101,7 @@ router.post('/tasks/suggest', validate(taskSchemas.suggest), (req, res, next) =>
 // Upvote task endpoint
 router.post('/tasks/:id/upvote', validate({}), (req, res, next) => {
   try {
+    markDeprecated(res, '/api/votes');
     const userId = req.user ? req.user.id : (req.body && req.body.user_id ? req.body.user_id : null);
     const upvotes = TaskService.upvoteTask(req.params.id, userId);
     res.json({ success: true, upvotes });
@@ -96,6 +113,7 @@ router.post('/tasks/:id/upvote', validate({}), (req, res, next) => {
 // Remove upvote endpoint
 router.delete('/tasks/:id/upvote', validate({}), (req, res, next) => {
   try {
+    markDeprecated(res, '/api/votes');
     if (!req.user) return res.status(401).json({ success: false, error: 'Unauthorized' });
     const upvotes = TaskService.removeUpvote(req.params.id, req.user.id);
     res.json({ success: true, upvotes });
