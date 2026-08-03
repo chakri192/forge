@@ -111,7 +111,7 @@ export function renderTasksView(state) {
         </div>
 
         ${isLeaderOrTeacher ? `
-          <button id="btnCreateTask" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+          <button id="btnCreateTask" class="btn btn--primary">
             <span class="material-symbols-outlined text-base" aria-hidden="true">add_task</span>
             Create Task
           </button>
@@ -204,7 +204,7 @@ function renderTaskSections(tasks, isLeaderOrTeacher) {
     .map(
       (section) => `
         <section class="space-y-3">
-          <h3 class="text-[11px] font-bold uppercase tracking-wider text-outline flex items-center gap-2">
+          <h3 class="eyebrow flex items-center gap-2">
             <span class="material-symbols-outlined text-sm" aria-hidden="true">${section.icon}</span>
             ${section.label}
             <span class="text-outline/60">· ${section.items.length}</span>

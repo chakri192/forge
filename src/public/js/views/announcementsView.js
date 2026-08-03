@@ -57,9 +57,9 @@ export function renderAnnouncementsView(state) {
                 <span class="material-symbols-outlined text-base accent-target">edit_square</span> Publish announcement
               </h3>
               <input id="annTitle" maxlength="120" required placeholder="Title"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60 transition-colors" />
+                class="input" />
               <textarea id="annContent" maxlength="8000" required rows="3" placeholder="What does the community need to know?"
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60 transition-colors"></textarea>
+                class="input"></textarea>
               <div class="flex flex-wrap items-center gap-2.5">
                 <select id="annPriority" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
                   <option value="NORMAL">Normal priority</option>
@@ -70,7 +70,7 @@ export function renderAnnouncementsView(state) {
                 <select id="annAudience" class="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none">
                   ${AUDIENCE_OPTIONS.map(([v, label]) => `<option value="${v}">${label}</option>`).join('')}
                 </select>
-                <button type="submit" class="ml-auto flex items-center gap-1.5 px-5 py-2.5 bg-royal-slate-blue text-white rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md">
+                <button type="submit" class="btn btn--primary" style="margin-left:auto">
                   <span class="material-symbols-outlined text-base">send</span> Publish
                 </button>
               </div>
@@ -134,14 +134,14 @@ export function attachAnnouncementsEvents(state) {
       contentHtml: `
         <div class="space-y-4">
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Title</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Title</label>
             <input id="editAnnTitle" maxlength="120" value="${escapeHtml(announcement.title)}"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+              class="input" />
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Content</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Content</label>
             <textarea id="editAnnContent" maxlength="8000" rows="4"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60">${escapeHtml(announcement.content)}</textarea>
+              class="input">${escapeHtml(announcement.content)}</textarea>
           </div>
           <div class="flex gap-2.5">
             <select id="editAnnPriority" class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none">

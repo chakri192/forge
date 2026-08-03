@@ -1,403 +1,237 @@
 <!DOCTYPE html>
 <html class="dark" data-theme="dark" lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>FORGE | Community Platform</title>
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  <link href="/css/style.css" rel="stylesheet"/>
-  
-  <script id="tailwind-config">
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <meta name="color-scheme" content="dark" />
+  <title>Forge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  <script>
+    /* Compatibility shim: views still carrying utility classes resolve against
+       the same tokens forge.css defines, so both systems stay in step while
+       views are converted. */
     tailwind.config = {
-      darkMode: "class",
+      darkMode: 'class',
       theme: {
         extend: {
           colors: {
-            "primary": "var(--accent-color, #2374ab)",
-            "royal-slate-blue": "var(--accent-color, #2374ab)",
-            "accent-text": "var(--accent-text, #5b8def)",
-            "primary-container": "var(--accent-color, #2374ab)",
-            "warm-coral": "#ff8484",
-            "ice-blue": "#95b8d1",
-            "muted-slate": "#666a86",
-            "sage-white": "#f3f8f2",
-            "deep-obsidian": "#101014",
-            "dark-charcoal": "#333333",
-            "outline": "#8b8fa3",
-            "on-surface": "#ffffff",
-            "surface-variant": "#2a2a2a",
-            "secondary": "#a13c3f",
-            "border-translucent": "rgba(255, 255, 255, 0.12)"
+            'royal-slate-blue': 'var(--accent)',
+            'accent-text': 'var(--accent-text)',
+            primary: 'var(--accent)',
+            'ice-blue': 'var(--accent-text)',
+            outline: 'var(--text-muted)',
+            'deep-obsidian': 'var(--bg)',
+            'on-surface': 'var(--text)',
+            'surface-variant': 'var(--bg-elevated)'
           },
-          fontFamily: {
-            "display": ["Inter", "sans-serif"],
-            "body": ["Inter", "sans-serif"]
-          }
+          fontFamily: { display: ['Inter', 'sans-serif'], body: ['Inter', 'sans-serif'] }
         }
       }
-    }
+    };
   </script>
-  
+  <!-- Legacy component styles load first; the design system loads last so it
+       wins on equal specificity while old views are converted. -->
+  <link href="/css/style.css" rel="stylesheet" />
+  <link href="/css/forge.css" rel="stylesheet" />
   <style>
-    :root {
-      /* Surfaces: a real elevation ladder rather than one flat translucency. */
-      --bg-base: #101014;
-      --surface-1: rgba(255, 255, 255, 0.035);
-      --surface-2: rgba(255, 255, 255, 0.06);
-      --surface-raised: rgba(255, 255, 255, 0.08);
-
-      --border-subtle: rgba(255, 255, 255, 0.08);
-      --border-default: rgba(255, 255, 255, 0.12);
-      --border-strong: rgba(255, 255, 255, 0.2);
-
-      /* Fill accent: white text on it reads at 5.05:1. */
-      --accent-color: #2374ab;
-      /* Text/icon accent: 5.44:1 on the dark shell, where the fill accent
-         would only reach 3.48:1 and fail WCAG AA. */
-      --accent-text: #5b8def;
-      --accent-glow: rgba(91, 141, 239, 0.15);
-
-      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
-      --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.4);
-
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 18px;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--bg-base);
-      color: #ffffff;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      letter-spacing: -0.011em;
-      /* Two faint light sources keep the flat dark field from reading as grey. */
-      background-image:
-        radial-gradient(60rem 40rem at 82% -8%, rgba(91, 141, 239, 0.10), transparent 62%),
-        radial-gradient(46rem 34rem at -8% 102%, rgba(56, 189, 248, 0.06), transparent 60%);
-      background-attachment: fixed;
-    }
-
-    h1, h2, h3, h4 { letter-spacing: -0.021em; }
-
-    .accent-target {
-      color: var(--accent-text);
-      fill: var(--accent-text);
-    }
-
-    /* Cards carry a top highlight so they catch the light instead of floating
-       as uniform grey rectangles. */
-    .glass-card {
-      position: relative;
-      background:
-        linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, rgba(255, 255, 255, 0.02) 100%);
-      backdrop-filter: blur(16px) saturate(1.1);
-      -webkit-backdrop-filter: blur(16px) saturate(1.1);
-      border: 1px solid var(--border-default);
-      box-shadow: var(--shadow-sm);
-      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-    }
-
-    .glass-card::before {
-      content: '';
-      position: absolute;
-      inset: 0 0 auto 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
-      pointer-events: none;
-      border-radius: inherit;
-    }
-
-    .glass-card:hover {
-      border-color: var(--border-strong);
-      box-shadow: var(--shadow-md);
-    }
-
-    /* Interactive cards lift; static panels should not twitch on hover. */
-    .glass-card.is-interactive:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-lg);
-    }
-
-    .spring-progress {
-      transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-      vertical-align: middle;
-    }
-
-    /* Sidebar: a clear active state with an accent spine. */
-    .nav-drawer-item {
-      position: relative;
-    }
-
-    .nav-drawer-item[aria-current="page"]::before {
-      content: '';
-      position: absolute;
-      left: -12px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 18px;
-      border-radius: 0 3px 3px 0;
-      background: var(--accent-text);
-    }
-
-    .nav-drawer-item[aria-current="page"] {
-      background: var(--accent-glow);
-    }
-
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      border: 2px solid transparent;
-      background-clip: content-box;
-    }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); background-clip: content-box; }
-
-    ::selection { background: rgba(91, 141, 239, 0.32); }
+    /* Legacy alias so unconverted views inherit the new card treatment. */
+    .glass-card { }
   </style>
 </head>
-<body class="bg-deep-obsidian text-white min-h-screen selection:bg-royal-slate-blue/30 overflow-x-hidden">
+<body>
 
-  <!-- Left Sidebar Drawer Backdrop Overlay -->
-  <div id="drawerBackdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden"></div>
+  <div class="backdrop" id="drawerBackdrop" data-open="false"></div>
 
-  <!-- Left Sidebar: persistent rail on desktop, slide-over drawer below lg -->
-  <aside id="sidebarDrawer" aria-label="Main navigation" class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-deep-obsidian/95 backdrop-blur-2xl border-r border-white/10 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-2xl lg:translate-x-0 lg:w-64 lg:shadow-none">
-    <div>
-      <!-- Drawer Header with Full Forge Logo -->
-      <div class="flex items-center justify-between p-6 border-b border-white/10">
-        <div class="flex items-center gap-3">
-          <img src="/assets/logo/FULL.png" alt="FORGE" class="h-10 w-auto object-contain" />
-        </div>
-        <button id="drawerCloseBtn" aria-label="Close navigation menu" class="p-2 text-outline hover:text-white rounded-lg hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70 lg:hidden">
-          <span class="material-symbols-outlined text-xl" aria-hidden="true">close</span>
-        </button>
-      </div>
+  <aside class="sidebar" id="sidebarDrawer" aria-label="Main navigation" data-open="false">
+    <div class="sidebar__brand">
+      <img src="/assets/logo/FULL.png" alt="Forge" style="height:26px;width:auto" />
+      <button class="btn btn--icon btn--subtle" id="drawerCloseBtn" aria-label="Close menu">
+        <span class="material-symbols-outlined" aria-hidden="true">close</span>
+      </button>
+    </div>
 
-      <!-- Drawer Navigation Options -->
-      <nav class="p-3 space-y-3" id="drawerNavList">
+    <nav class="sidebar__nav" id="drawerNavList">
         <div class="nav-group" data-nav-group="work">
-          <button type="button" class="nav-group-toggle w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-outline/70 hover:text-outline transition-colors"
-            aria-expanded="true" aria-controls="navGroup-work">
-            <span class="material-symbols-outlined text-sm nav-group-chevron transition-transform">expand_more</span>
+          <button type="button" class="nav-group__toggle" aria-expanded="true" aria-controls="navGroup-work">
+            <span class="material-symbols-outlined nav-group__chevron" aria-hidden="true">expand_more</span>
             <span>Work</span>
           </button>
-          <div class="nav-group-items space-y-0.5 mt-0.5" id="navGroup-work">
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="dashboard">
-            <span class="material-symbols-outlined text-lg">dashboard</span>
+          <div class="nav-group__items" id="navGroup-work">
+          <button class="nav-item" data-tab="dashboard">
+            <span class="material-symbols-outlined" aria-hidden="true">dashboard</span>
             <span>Dashboard</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="tasks">
-            <span class="material-symbols-outlined text-lg">assignment</span>
+          <button class="nav-item" data-tab="tasks">
+            <span class="material-symbols-outlined" aria-hidden="true">assignment</span>
             <span>Tasks</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="teams">
-            <span class="material-symbols-outlined text-lg">groups</span>
+          <button class="nav-item" data-tab="teams">
+            <span class="material-symbols-outlined" aria-hidden="true">groups</span>
             <span>Teams</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="calendar">
-            <span class="material-symbols-outlined text-lg">calendar_month</span>
+          <button class="nav-item" data-tab="calendar">
+            <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
             <span>Calendar</span>
           </button>
           </div>
         </div>
         <div class="nav-group" data-nav-group="community">
-          <button type="button" class="nav-group-toggle w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-outline/70 hover:text-outline transition-colors"
-            aria-expanded="true" aria-controls="navGroup-community">
-            <span class="material-symbols-outlined text-sm nav-group-chevron transition-transform">expand_more</span>
+          <button type="button" class="nav-group__toggle" aria-expanded="true" aria-controls="navGroup-community">
+            <span class="material-symbols-outlined nav-group__chevron" aria-hidden="true">expand_more</span>
             <span>Community</span>
           </button>
-          <div class="nav-group-items space-y-0.5 mt-0.5" id="navGroup-community">
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="messages">
-            <span class="material-symbols-outlined text-lg">chat</span>
+          <div class="nav-group__items" id="navGroup-community">
+          <button class="nav-item" data-tab="messages">
+            <span class="material-symbols-outlined" aria-hidden="true">forum</span>
             <span>Messages</span>
-            <span id="navUnreadChannels" class="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-royal-slate-blue text-white text-[10px] font-bold hidden items-center justify-center"></span>
+            <span class="nav-item__count hidden" id="navUnreadChannels"></span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="announcements">
-            <span class="material-symbols-outlined text-lg">campaign</span>
+          <button class="nav-item" data-tab="announcements">
+            <span class="material-symbols-outlined" aria-hidden="true">campaign</span>
             <span>Announcements</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="forum">
-            <span class="material-symbols-outlined text-lg">tips_and_updates</span>
+          <button class="nav-item" data-tab="forum">
+            <span class="material-symbols-outlined" aria-hidden="true">tips_and_updates</span>
             <span>Forum</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="marketplace">
-            <span class="material-symbols-outlined text-lg">storefront</span>
+          <button class="nav-item" data-tab="marketplace">
+            <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
             <span>Marketplace</span>
           </button>
           </div>
         </div>
         <div class="nav-group" data-nav-group="growth">
-          <button type="button" class="nav-group-toggle w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-outline/70 hover:text-outline transition-colors"
-            aria-expanded="true" aria-controls="navGroup-growth">
-            <span class="material-symbols-outlined text-sm nav-group-chevron transition-transform">expand_more</span>
+          <button type="button" class="nav-group__toggle" aria-expanded="true" aria-controls="navGroup-growth">
+            <span class="material-symbols-outlined nav-group__chevron" aria-hidden="true">expand_more</span>
             <span>Growth</span>
           </button>
-          <div class="nav-group-items space-y-0.5 mt-0.5" id="navGroup-growth">
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="profile">
-            <span class="material-symbols-outlined text-lg">military_tech</span>
+          <div class="nav-group__items" id="navGroup-growth">
+          <button class="nav-item" data-tab="profile">
+            <span class="material-symbols-outlined" aria-hidden="true">military_tech</span>
             <span>My Progress</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="quizzes">
-            <span class="material-symbols-outlined text-lg">quiz</span>
-            <span>Quizzes & Puzzles</span>
+          <button class="nav-item" data-tab="quizzes">
+            <span class="material-symbols-outlined" aria-hidden="true">quiz</span>
+            <span>Quizzes</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="halloffame">
-            <span class="material-symbols-outlined text-lg">emoji_events</span>
+          <button class="nav-item" data-tab="halloffame">
+            <span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>
             <span>Hall of Fame</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="journal">
-            <span class="material-symbols-outlined text-lg">menu_book</span>
+          <button class="nav-item" data-tab="journal">
+            <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
             <span>Journal</span>
           </button>
           </div>
         </div>
         <div class="nav-group" data-nav-group="manage" data-nav-roles="leader,teacher,admin,DEV_STEALTH,STUDENT_LEADER,TEACHER">
-          <button type="button" class="nav-group-toggle w-full flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-outline/70 hover:text-outline transition-colors"
-            aria-expanded="false" aria-controls="navGroup-manage">
-            <span class="material-symbols-outlined text-sm nav-group-chevron transition-transform">chevron_right</span>
+          <button type="button" class="nav-group__toggle" aria-expanded="false" aria-controls="navGroup-manage">
+            <span class="material-symbols-outlined nav-group__chevron" aria-hidden="true">chevron_right</span>
             <span>Manage</span>
           </button>
-          <div class="nav-group-items space-y-0.5 mt-0.5 hidden" id="navGroup-manage">
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="analytics">
-            <span class="material-symbols-outlined text-lg">insights</span>
+          <div class="nav-group__items hidden" id="navGroup-manage">
+          <button class="nav-item" data-tab="analytics">
+            <span class="material-symbols-outlined" aria-hidden="true">insights</span>
             <span>Analytics</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="devdashboard">
-            <span class="material-symbols-outlined text-lg">admin_panel_settings</span>
+          <button class="nav-item" data-tab="devdashboard">
+            <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span>
             <span>Dev Dashboard</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="componentstest">
-            <span class="material-symbols-outlined text-lg">widgets</span>
-            <span>Component Library</span>
+          <button class="nav-item" data-tab="componentstest">
+            <span class="material-symbols-outlined" aria-hidden="true">widgets</span>
+            <span>Components</span>
           </button>
           </div>
         </div>
-        <div class="pt-2 mt-2 border-t border-white/10 space-y-0.5">
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerSettingsLink" data-tab="settings">
-            <span class="material-symbols-outlined text-lg">settings</span>
-            <span>Account Settings</span>
+      <div class="nav-group">
+        <div class="nav-group__items">
+          <button class="nav-item" id="drawerSettingsLink" data-tab="settings">
+            <span class="material-symbols-outlined" aria-hidden="true">settings</span><span>Settings</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerLoginLink" data-tab="login">
-            <span class="material-symbols-outlined text-lg">login</span>
-            <span>Sign In</span>
+          <button class="nav-item hidden" id="drawerLoginLink" data-tab="login">
+            <span class="material-symbols-outlined" aria-hidden="true">login</span><span>Sign in</span>
           </button>
-          <button class="nav-drawer-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerSignUpLink" data-tab="signup">
-            <span class="material-symbols-outlined text-lg">person_add</span>
-            <span>Sign Up</span>
-          </button>
-          <button class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer hidden" id="drawerLogoutBtn">
-            <span class="material-symbols-outlined text-lg">logout</span>
-            <span>Logout</span>
+          <button class="nav-item hidden" id="drawerSignUpLink" data-tab="signup">
+            <span class="material-symbols-outlined" aria-hidden="true">person_add</span><span>Create account</span>
           </button>
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
 
-    <!-- Drawer Footer Profile -->
-    <div class="p-4 border-t border-white/10 bg-white/[0.02]">
-      <div class="flex items-center gap-3 p-3 glass-card rounded-2xl">
-        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-royal-slate-blue to-ice-blue p-[1px] flex items-center justify-center shadow-inner">
-          <span class="material-symbols-outlined text-sm text-white">person</span>
-        </div>
-        <div class="flex-1 min-w-0">
-          <p id="drawerUserName" class="text-xs font-bold text-white truncate">V Chakradhar (Dev / Owner)</p>
-          <p id="drawerUserTag" class="text-[10px] text-accent-text font-semibold accent-target truncate">System Ops</p>
-        </div>
-        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+    <div class="sidebar__foot">
+      <div class="row row--tight">
+        <span class="avatar" id="sidebarAvatar">?</span>
+        <span class="col" style="gap:0;min-width:0;flex:1">
+          <span class="truncate" id="drawerUserName" style="font-size:.8125rem;font-weight:600">Guest</span>
+          <span class="truncate text-faint" id="drawerUserTag" style="font-size:.6875rem">Not signed in</span>
+        </span>
+        <button class="btn btn--icon btn--subtle hidden" id="drawerLogoutBtn" aria-label="Sign out" title="Sign out">
+          <span class="material-symbols-outlined" aria-hidden="true">logout</span>
+        </button>
       </div>
     </div>
   </aside>
 
-  <!-- Top Navigation Bar -->
-  <header class="fixed top-0 w-full z-40 bg-deep-obsidian/90 backdrop-blur-md border-b border-white/10 transition-all duration-300 lg:pl-64">
-    <div class="flex justify-between items-center h-16 px-4 md:px-8 max-w-7xl mx-auto">
-      <!-- Top Left: Menu trigger (mobile/tablet only — sidebar is persistent on desktop) -->
-      <div class="flex items-center gap-4">
-        <button id="drawerToggleBtn" aria-label="Open navigation menu" aria-controls="sidebarDrawer" aria-expanded="false" class="flex items-center gap-2 group p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-royal-slate-blue/50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70 cursor-pointer lg:hidden">
-          <span class="material-symbols-outlined text-xl text-white px-0.5" aria-hidden="true">menu</span>
-          <img src="/assets/logo/HALF.png" alt="FORGE" class="h-9 w-auto object-contain group-hover:scale-105 transition-transform" />
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn--icon btn--subtle" id="drawerToggleBtn" aria-label="Open menu"
+        aria-controls="sidebarDrawer" aria-expanded="false" style="display:inline-flex">
+        <span class="material-symbols-outlined" aria-hidden="true">menu</span>
+      </button>
+
+      <span class="spacer"></span>
+
+      <button class="btn btn--ghost btn--sm" id="btnOpenPalette" aria-label="Search" title="Search (Cmd K)">
+        <span class="material-symbols-outlined" style="font-size:18px" aria-hidden="true">search</span>
+        <span class="text-faint" style="font-weight:500">Search</span>
+      </button>
+
+      <div style="position:relative" id="notificationBellContainer">
+        <button class="btn btn--icon btn--ghost" id="notificationBellBtn" aria-label="Notifications"
+          aria-haspopup="true" aria-expanded="false" style="position:relative">
+          <span class="material-symbols-outlined" aria-hidden="true">notifications</span>
+          <span id="notificationUnreadBadge" class="nav-item__count"
+            style="position:absolute;top:-4px;right:-4px;background:var(--danger);transform:scale(0);transition:transform .2s">0</span>
         </button>
-      </div>
 
-      <!-- Header Right: Notification Bell & User Account Badge -->
-      <div class="flex items-center gap-3">
-        <!-- Notification Bell Component Mount Point -->
-        <div class="relative" id="notificationBellContainer">
-          <button id="notificationBellBtn" aria-label="Notifications" aria-haspopup="true" aria-expanded="false" class="flex items-center justify-center p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-outline hover:text-white transition-all cursor-pointer relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
-            <span class="material-symbols-outlined text-xl" aria-hidden="true">notifications</span>
-            <span id="notificationUnreadBadge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white font-bold text-[10px] flex items-center justify-center border-2 border-deep-obsidian shadow-lg scale-0 transition-transform duration-200">0</span>
-          </button>
-
-          <div id="notificationDropdownPanel" class="forge-notification-dropdown">
-            <div class="p-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
-              <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-base text-accent-text">notifications_active</span>
-                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Notifications</h3>
-              </div>
-              <button id="markAllReadBtn" class="text-[11px] font-semibold text-accent-text hover:underline cursor-pointer px-2 py-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
-                Mark all read
-              </button>
-            </div>
-
-            <div id="notificationListContainer" class="max-h-80 overflow-y-auto divide-y divide-white/5">
-              <div class="p-6 text-center text-outline text-xs">
-                Loading notifications...
-              </div>
-            </div>
-
-            <div class="p-2 border-t border-white/10 text-center bg-white/[0.02]">
-              <span class="inline-flex items-center gap-1.5 text-[10px] text-outline">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" aria-hidden="true"></span>
-                Live — updates arrive instantly
-              </span>
-            </div>
+        <div id="notificationDropdownPanel" class="forge-notification-dropdown">
+          <div class="card__header" style="justify-content:space-between">
+            <span class="eyebrow">Notifications</span>
+            <button class="btn btn--sm btn--subtle" id="markAllReadBtn">Mark all read</button>
           </div>
-        </div>
-
-        <div id="currentUserBadge" class="flex items-center gap-2.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:border-royal-slate-blue/50 transition-colors cursor-pointer">
-          <span id="userTagBadge" class="text-xs font-semibold text-accent-text accent-target">V Chakradhar (Dev / Owner)</span>
-          <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-royal-slate-blue to-ice-blue p-[1px] flex items-center justify-center">
-            <span class="material-symbols-outlined text-sm text-white">person</span>
+          <div id="notificationListContainer" style="max-height:20rem;overflow-y:auto">
+            <div class="empty" style="padding:var(--sp-8)"><span class="empty__text">Loading…</span></div>
+          </div>
+          <div class="row row--tight" style="justify-content:center;padding:var(--sp-2);border-top:1px solid var(--line-faint)">
+            <span style="width:6px;height:6px;border-radius:999px;background:var(--success)"></span>
+            <span class="text-faint" style="font-size:.6875rem">Live</span>
           </div>
         </div>
       </div>
-    </div>
-  </header>
 
-  <!-- Main View Container -->
-  <main id="appView" class="pt-24 pb-16 px-4 md:px-8 max-w-7xl mx-auto min-h-[calc(100vh-140px)] lg:ml-64">
-    <!-- Dynamic views injected here by app.js -->
-  </main>
+      <div class="row row--tight" id="currentUserBadge">
+        <span class="text-muted truncate" id="userTagBadge" style="font-size:.75rem;max-width:16ch"></span>
+        <span class="avatar avatar--sm" id="topbarAvatar">?</span>
+      </div>
+    </header>
 
-  <!-- Live region for toast announcements (screen readers) -->
+    <main class="page" id="appView"></main>
+
+    <footer class="row" style="padding:var(--sp-5) var(--sp-8);border-top:1px solid var(--line-faint);font-size:.75rem;color:var(--text-faint)">
+      <span>Forge</span>
+      <span class="chip">v1.0</span>
+      <span class="spacer"></span>
+      <span id="footerAccount"></span>
+    </footer>
+  </div>
+
   <div id="forgeLiveRegion" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
-
-  <!-- Proper App Footer -->
-  <footer class="w-full py-6 px-4 md:px-8 border-t border-white/10 bg-deep-obsidian/90 backdrop-blur-md lg:pl-64">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-outline">
-      <div class="flex items-center gap-3">
-        <img src="/assets/logo/HALF.png" alt="FORGE Logo" class="h-6 w-auto opacity-80" />
-        <span class="font-bold text-white tracking-wider">FORGE Platform</span>
-        <span class="px-2 py-0.5 rounded bg-royal-slate-blue/20 text-ice-blue border border-royal-slate-blue/40 text-[10px]">v0.50-alpha</span>
-      </div>
-      <div>
-        <span>FORGE © 2026 • Account: <strong class="text-white">V Chakradhar (Dev / Owner)</strong></span>
-      </div>
-    </div>
-  </footer>
 
   <script type="module" src="/js/app.js"></script>
 </body>
 </html>
-

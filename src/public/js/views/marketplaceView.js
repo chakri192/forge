@@ -30,7 +30,7 @@ export function renderMarketplaceView(state) {
           </h2>
           <p class="text-xs text-outline mt-1">Propose what you want to build. The most-wanted ideas become real tasks.</p>
         </div>
-        <button id="btnSuggest" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+        <button id="btnSuggest" class="btn btn--primary">
           <span class="material-symbols-outlined text-base" aria-hidden="true">lightbulb</span> Suggest a Task
         </button>
       </div>
@@ -118,13 +118,13 @@ export function attachMarketplaceEvents(state) {
             <div class="space-y-3.5">
               <p class="text-xs text-outline">This creates a task the whole community can pick up, and rewards the person who proposed it.</p>
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Points</label>
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Points</label>
                 <input id="promotePoints" type="number" value="40" min="0"
-                  class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+                  class="input" />
               </div>
               <div>
-                <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Type</label>
-                <select id="promoteType" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                <label class="field__label" style="margin-bottom:.375rem;display:block">Type</label>
+                <select id="promoteType" class="select">
                   <option value="TEAM_TASK">Team task</option>
                   <option value="CHALLENGE">Challenge</option>
                 </select>
@@ -154,14 +154,14 @@ export function attachMarketplaceEvents(state) {
       contentHtml: `
         <div class="space-y-3.5">
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Title</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Title</label>
             <input id="suggestTitle" maxlength="160" placeholder="e.g. Build a colour-palette generator"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60" />
+              class="input" />
           </div>
           <div>
-            <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Why is it worth building?</label>
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Why is it worth building?</label>
             <textarea id="suggestBody" rows="4" maxlength="4000" placeholder="Describe the idea and what people would learn…"
-              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+              class="input"></textarea>
           </div>
         </div>`,
       onConfirm: async (overlay) => {

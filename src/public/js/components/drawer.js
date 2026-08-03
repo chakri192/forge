@@ -14,21 +14,15 @@ export function initDrawerNav() {
 
   function openDrawer() {
     if (isDesktop()) return;
-    if (drawer) drawer.classList.remove('-translate-x-full');
-    if (backdrop) {
-      backdrop.classList.remove('opacity-0', 'pointer-events-none');
-      backdrop.classList.add('opacity-100', 'pointer-events-auto');
-    }
+    if (drawer) drawer.dataset.open = 'true';
+    if (backdrop) backdrop.dataset.open = 'true';
     if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'true');
     if (closeBtn) closeBtn.focus();
   }
 
   function closeDrawer() {
-    if (drawer) drawer.classList.add('-translate-x-full');
-    if (backdrop) {
-      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
-      backdrop.classList.add('opacity-0', 'pointer-events-none');
-    }
+    if (drawer) drawer.dataset.open = 'false';
+    if (backdrop) backdrop.dataset.open = 'false';
     if (toggleBtn) toggleBtn.setAttribute('aria-expanded', 'false');
   }
 
@@ -54,7 +48,7 @@ export function initDrawerNav() {
     });
   }
 
-  const navItems = document.querySelectorAll('.nav-drawer-item');
+  const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach((item) => {
     item.addEventListener('click', (e) => {
       const activeTab = e.currentTarget.getAttribute('data-tab');
@@ -90,9 +84,9 @@ function initNavGroups() {
 
   document.querySelectorAll('.nav-group').forEach((group) => {
     const id = group.dataset.navGroup;
-    const toggle = group.querySelector('.nav-group-toggle');
-    const items = group.querySelector('.nav-group-items');
-    const chevron = group.querySelector('.nav-group-chevron');
+    const toggle = group.querySelector('.nav-group__toggle');
+    const items = group.querySelector('.nav-group__items');
+    const chevron = group.querySelector('.nav-group__chevron');
     if (!toggle || !items) return;
 
     const setOpen = (open) => {
@@ -146,16 +140,11 @@ document.addEventListener('forge:unread-channels', (event) => {
   const count = event.detail?.count || 0;
   badge.textContent = count > 9 ? '9+' : String(count);
   badge.classList.toggle('hidden', count === 0);
-  badge.classList.toggle('flex', count > 0);
 });
 
 export function updateActiveNavHighlight(activeTab) {
-  document.querySelectorAll('.nav-drawer-item[data-tab]').forEach((item) => {
+  document.querySelectorAll('.nav-item[data-tab]').forEach((item) => {
     const isActive = item.getAttribute('data-tab') === activeTab;
-    item.classList.toggle('bg-royal-slate-blue/20', isActive);
-    item.classList.toggle('border-royal-slate-blue/40', isActive);
-    item.classList.toggle('text-white', isActive);
-    item.classList.toggle('text-outline', !isActive);
     if (isActive) item.setAttribute('aria-current', 'page');
     else item.removeAttribute('aria-current');
   });
