@@ -835,10 +835,16 @@ body {
   }
 }
 
-/* Logo assets are dark-on-transparent; force them legible on the dark shell */
+/* Logo assets are dark-on-transparent artwork. Knock them out to white on a
+   dark shell, but leave them dark on a light theme — inverting unconditionally
+   painted the mark white on white and made it disappear. */
 img[src*="/assets/logo/"]:not([data-decorative]) {
   filter: brightness(0) invert(1);
   opacity: 0.92;
+}
+:root[data-theme='light'] img[src*="/assets/logo/"]:not([data-decorative]) {
+  filter: brightness(0);
+  opacity: 0.88;
 }
 
 /* Decorative watermark stays a faint background texture */

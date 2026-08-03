@@ -1,6 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { contrastRatio, readableOn, readableFill, textOn, PRESETS } from '../src/public/js/services/themes.js';
+import {
+  contrastRatio, readableOn, readableFill, textOn, PRESETS,
+  HARMONIES, deriveAccents, hexToHsl, hslToHex
+} from '../src/public/js/services/themes.js';
 import { isEmbeddableMedia, renderMessageBody } from '../src/public/js/utils/richText.js';
 
 describe('Theme contrast correction', () => {
@@ -78,6 +81,66 @@ describe('Theme contrast correction', () => {
   it('rejects malformed input instead of producing garbage', () => {
     assert.equal(contrastRatio('nope', '#000000'), 1);
     assert.equal(readableOn('nope', '#000000'), 'nope');
+  });
+});
+
+describe('Accent harmony', () => {
+  it('round-trips hex through HSL', () => {
+    for (const hex of ['#2f7fc4', '#ffe066', '#000000', '#ffffff', '#7c37bb']) {
+      const { h, s, l } = hexToHsl(hex);
+      assert.equal(hslToHex(h, s, l), hex);
+    }
+  });
+
+  it('keeps the primary exactly as chosen under every rule', () => {
+    for (const rule of Object.keys(HARMONIES)) {
+      assert.equal(deriveAccents('#2f7fc4', rule).primary, '#2f7fc4', `${rule} must not move the primary`);
+    }
+  });
+
+  it('gives monochrome one hue at different depths', () => {
+    const set = deriveAccents('#2f7fc4', 'mono');
+    const hues = [set.primary, set.secondary, set.tertiary].map((c) => hexToHsl(c).h);
+    // Not exactly equal: a round trip through 8-bit hex moves the hue by a
+    // fraction of a degree, which is invisible but not zero.
+    assert.ok(Math.max(...hues) - Math.min(...hues) < 1.5, `hues drifted: ${hues.join(', ')}`);
+    const lights = [set.primary, set.secondary, set.tertiary].map((c) => hexToHsl(c).l);
+    assert.ok(lights[1] < lights[0] && lights[2] > lights[0], 'one darker, one lighter');
+  });
+
+  it('spaces triadic hues evenly', () => {
+    const set = deriveAccents('#2f7fc4', 'triad');
+    const [a, b, c] = [set.primary, set.secondary, set.tertiary].map((x) => hexToHsl(x).h);
+    assert.ok(Math.abs((((b - a) % 360) + 360) % 360 - 120) < 1);
+    assert.ok(Math.abs((((c - a) % 360) + 360) % 360 - 240) < 1);
+  });
+
+  it('puts the complement opposite the primary', () => {
+    const set = deriveAccents('#2f7fc4', 'complement');
+    const delta = (((hexToHsl(set.secondary).h - hexToHsl(set.primary).h) % 360) + 360) % 360;
+    assert.ok(Math.abs(delta - 180) < 1, `expected ~180 degrees, got ${delta}`);
+  });
+
+  it('produces three usable accents for every rule and every hue', () => {
+    for (const rule of Object.keys(HARMONIES)) {
+      for (let hue = 0; hue < 360; hue += 20) {
+        const set = deriveAccents(hslToHex(hue, 65, 50), rule);
+        for (const role of ['primary', 'secondary', 'tertiary']) {
+          assert.match(set[role], /^#[0-9a-f]{6}$/, `${rule} at hue ${hue} produced ${set[role]}`);
+          const fill = readableFill(set[role]);
+          assert.ok(
+            contrastRatio(textOn(fill), fill) >= 4.4,
+            `${rule} hue ${hue} ${role}: label only reaches ${contrastRatio(textOn(fill), fill).toFixed(2)}:1`
+          );
+        }
+      }
+    }
+  });
+
+  it('degrades gracefully on malformed input', () => {
+    const set = deriveAccents('not-a-colour', 'triad');
+    assert.equal(set.primary, 'not-a-colour');
+    assert.equal(set.secondary, 'not-a-colour');
   });
 });
 

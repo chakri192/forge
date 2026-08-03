@@ -8,6 +8,7 @@
 
 const PRESET_KEY = 'forge_theme_preset';
 const ACCENT_KEY = 'forge_theme_accents';
+const HARMONY_KEY = 'forge_theme_harmony';
 
 export const PRESETS = {
   'forge-dark': {
@@ -86,6 +87,46 @@ export const PRESETS = {
 };
 
 export const DEFAULT_PRESET = 'forge-dark';
+export const DEFAULT_HARMONY = 'analogous';
+
+/**
+ * Asking someone to pick three colours that work together is asking them to do
+ * the one part of this that is actually hard. So they pick one, and the other
+ * two are derived by a classic harmony rule. "Custom" is the escape hatch for
+ * people who do want to place all three by hand.
+ */
+export const HARMONIES = {
+  mono: {
+    label: 'Monochrome',
+    hint: 'One hue, three depths. The safest choice.',
+    offsets: [0, 0, 0],
+    shift: [0, -14, 14]
+  },
+  analogous: {
+    label: 'Analogous',
+    hint: 'Neighbouring hues. Calm and cohesive.',
+    offsets: [0, -28, 28],
+    shift: [0, -6, 6]
+  },
+  complement: {
+    label: 'Complementary',
+    hint: 'Opposite hues. High contrast, more energy.',
+    offsets: [0, 180, 150],
+    shift: [0, -4, 10]
+  },
+  triad: {
+    label: 'Triadic',
+    hint: 'Three evenly spaced hues. Bold and playful.',
+    offsets: [0, 120, 240],
+    shift: [0, 0, 0]
+  },
+  custom: {
+    label: 'Custom',
+    hint: 'Place all three by hand.',
+    offsets: [0, 0, 0],
+    shift: [0, 0, 0]
+  }
+};
 
 /* ------------------------------------------------------------ colour maths */
 
@@ -115,6 +156,47 @@ export function contrastRatio(a, b) {
   const la = relativeLuminance(ca);
   const lb = relativeLuminance(cb);
   return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+export function hexToHsl(hex) {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  const [r, g, b] = rgb.map((v) => v / 255);
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (!d) return { h: 0, s: 0, l: l * 100 };
+  const s = d / (1 - Math.abs(2 * l - 1));
+  let h;
+  if (max === r) h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  h *= 60;
+  if (h < 0) h += 360;
+  return { h, s: s * 100, l: l * 100 };
+}
+
+export function hslToHex(h, s, l) {
+  const sat = Math.max(0, Math.min(100, s)) / 100;
+  const lig = Math.max(0, Math.min(100, l)) / 100;
+  const hue = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * lig - 1)) * sat;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = lig - c / 2;
+  const [r, g, b] =
+    hue < 60 ? [c, x, 0] : hue < 120 ? [x, c, 0] : hue < 180 ? [0, c, x]
+    : hue < 240 ? [0, x, c] : hue < 300 ? [x, 0, c] : [c, 0, x];
+  return rgbToHex([(r + m) * 255, (g + m) * 255, (b + m) * 255]);
+}
+
+/** Derive the secondary and tertiary accents from one chosen colour. */
+export function deriveAccents(primary, harmony = DEFAULT_HARMONY) {
+  const rule = HARMONIES[harmony] || HARMONIES[DEFAULT_HARMONY];
+  const base = hexToHsl(primary);
+  if (!base) return { primary, secondary: primary, tertiary: primary };
+  const at = (i) => hslToHex(base.h + rule.offsets[i], base.s, base.l + rule.shift[i]);
+  return { primary, secondary: at(1), tertiary: at(2) };
 }
 
 function rgba(hex, alpha) {
@@ -192,6 +274,11 @@ export function getPreset() {
   return PRESETS[stored] ? stored : DEFAULT_PRESET;
 }
 
+export function getHarmony() {
+  const stored = localStorage.getItem(HARMONY_KEY);
+  return HARMONIES[stored] ? stored : DEFAULT_HARMONY;
+}
+
 export function getAccents() {
   try {
     const stored = JSON.parse(localStorage.getItem(ACCENT_KEY));
@@ -201,12 +288,23 @@ export function getAccents() {
 }
 
 /**
+ * The accents actually in force: a stored set if the user has one, otherwise
+ * the current preset's own accent run through the active harmony.
+ */
+export function resolveAccents({ preset = getPreset(), harmony = getHarmony() } = {}) {
+  const stored = getAccents();
+  if (stored) return stored;
+  const theme = PRESETS[preset] || PRESETS[DEFAULT_PRESET];
+  return deriveAccents(theme.accent, harmony);
+}
+
+/**
  * Apply a preset plus optional custom accents. The three accents map to:
  *   primary   — fills: buttons, active states
  *   secondary — supporting highlights and meters
  *   tertiary  — decorative marks, avatar gradients
  */
-export function applyTheme({ preset = getPreset(), accents = getAccents() } = {}) {
+export function applyTheme({ preset = getPreset(), accents = resolveAccents() } = {}) {
   const theme = PRESETS[preset] || PRESETS[DEFAULT_PRESET];
   const root = document.documentElement;
 
@@ -214,7 +312,7 @@ export function applyTheme({ preset = getPreset(), accents = getAccents() } = {}
     root.style.setProperty(name, value);
   }
   root.setAttribute('data-theme', theme.dark ? 'dark' : 'light');
-  root.setAttribute('data-preset', preset);
+  root.setAttribute('data-theme-preset', preset);
 
   const background = theme.vars['--bg'];
   const primary = (accents && accents.primary) || theme.accent;
@@ -252,18 +350,25 @@ export function applyTheme({ preset = getPreset(), accents = getAccents() } = {}
   return { preset, accents: { primary, secondary, tertiary } };
 }
 
-export function saveTheme({ preset, accents }) {
+export function saveTheme({ preset, accents, harmony }) {
   if (preset && PRESETS[preset]) localStorage.setItem(PRESET_KEY, preset);
+  if (harmony && HARMONIES[harmony]) localStorage.setItem(HARMONY_KEY, harmony);
   if (accents) localStorage.setItem(ACCENT_KEY, JSON.stringify(accents));
   else if (accents === null) localStorage.removeItem(ACCENT_KEY);
-  return applyTheme({ preset: preset || getPreset(), accents: accents === null ? null : accents });
+
+  const nextPreset = preset || getPreset();
+  return applyTheme({
+    preset: nextPreset,
+    accents: accents === null ? resolveAccents({ preset: nextPreset }) : accents || resolveAccents({ preset: nextPreset })
+  });
 }
 
 export function resetAccents() {
   localStorage.removeItem(ACCENT_KEY);
-  return applyTheme({ preset: getPreset(), accents: null });
+  localStorage.removeItem(HARMONY_KEY);
+  return applyTheme({ preset: getPreset(), accents: resolveAccents({ preset: getPreset() }) });
 }
 
 export function initThemes() {
-  applyTheme();
+  applyTheme({ preset: getPreset(), accents: resolveAccents() });
 }

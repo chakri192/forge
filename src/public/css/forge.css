@@ -976,3 +976,342 @@ code, pre, .mono {
   color: var(--text-faint, #7f8496);
   font-size: .75rem;
 }
+
+/* ============================================================
+   Appearance page
+   ============================================================ */
+
+.appearance .section { margin-bottom: var(--sp-8, 2.5rem); }
+
+.section__head {
+  display: block;
+  margin-bottom: var(--sp-4, 1rem);
+}
+.section__title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-faint);
+  margin: 0 0 var(--sp-1, .25rem);
+}
+.section__sub {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  max-width: 62ch;
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* --- theme cards ------------------------------------------------------- */
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: var(--sp-3, .75rem);
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3, .75rem);
+  padding: var(--sp-3, .75rem);
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg, 12px);
+  background: var(--surface-1);
+  transition: border-color .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+.theme-card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+.theme-card.is-active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.theme-card__mock {
+  display: block;
+  border: 1px solid;
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+}
+.theme-card__bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-bottom: 1px solid;
+}
+.theme-card__dot { width: 8px; height: 8px; border-radius: 999px; flex: none; }
+.theme-card__rule { display: block; height: 4px; border-radius: 999px; opacity: .55; }
+.theme-card__body { display: flex; align-items: flex-end; gap: 8px; padding: 10px 8px; }
+.theme-card__panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  border: 1px solid;
+  border-radius: 6px;
+}
+.theme-card__btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.theme-card__meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.theme-card__name {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2, .5rem);
+  font-weight: 650;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+.theme-card__tick {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--accent-text);
+}
+.theme-card__desc { font-size: 0.75rem; color: var(--text-faint); line-height: 1.45; }
+
+/* --- accent picker ----------------------------------------------------- */
+
+.accent-layout {
+  display: grid;
+  grid-template-columns: auto minmax(240px, 1fr);
+  gap: var(--sp-6, 1.75rem);
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .accent-layout { grid-template-columns: 1fr; }
+}
+
+.accent-layout__wheel { display: flex; flex-direction: column; gap: var(--sp-4, 1rem); }
+.accent-layout__side { display: flex; flex-direction: column; gap: var(--sp-5, 1.25rem); }
+
+.wheel { position: relative; width: 240px; height: 240px; }
+.wheel__canvas {
+  display: block;
+  border-radius: 999px;
+  cursor: crosshair;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .3);
+}
+.wheel__canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.wheel__overlay { position: absolute; inset: 0; touch-action: none; }
+.wheel__handle { cursor: grab; }
+.wheel__handle:active { cursor: grabbing; }
+
+.slider { display: flex; flex-direction: column; gap: var(--sp-2, .5rem); width: 240px; }
+.slider__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--text-faint);
+}
+.slider input[type='range'] { width: 100%; accent-color: var(--accent); }
+
+.harmony { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--sp-1, .25rem); }
+.harmony__option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3, .75rem);
+  padding: var(--sp-2, .5rem) var(--sp-3, .75rem);
+  border: 1px solid transparent;
+  border-radius: var(--r-md, 8px);
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease;
+}
+.harmony__option:hover { background: var(--surface-1); }
+.harmony__option:has(input:checked) {
+  background: var(--accent-wash);
+  border-color: var(--accent-line);
+}
+.harmony__option input { margin-top: 3px; accent-color: var(--accent); }
+.harmony__text { display: flex; flex-direction: column; gap: 1px; }
+.harmony__name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+.harmony__hint { font-size: 0.75rem; color: var(--text-faint); line-height: 1.4; }
+
+.swatch-list { display: flex; flex-direction: column; gap: var(--sp-1, .25rem); }
+.swatch {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3, .75rem);
+  padding: var(--sp-2, .5rem) var(--sp-3, .75rem);
+  border-radius: var(--r-md, 8px);
+  background: var(--surface-1);
+}
+.swatch__chip {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+}
+.swatch__text { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.swatch__name { font-size: 0.8125rem; font-weight: 600; }
+.swatch__hint { font-size: 0.6875rem; color: var(--text-faint); }
+.swatch__hex {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* --- readability readout ----------------------------------------------- */
+
+.readout {
+  border: 1px solid var(--line-faint);
+  border-radius: var(--r-lg, 12px);
+  overflow: hidden;
+}
+.readout__row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto 1fr auto;
+  align-items: center;
+  gap: var(--sp-3, .75rem);
+  padding: var(--sp-3, .75rem) var(--sp-4, 1rem);
+  border-bottom: 1px solid var(--line-faint);
+}
+.readout__row:last-child { border-bottom: 0; }
+@media (max-width: 720px) {
+  .readout__row { grid-template-columns: 1fr auto; row-gap: var(--sp-2, .5rem); }
+  .readout__role { grid-column: 1 / -1; }
+}
+
+.readout__role { font-size: 0.8125rem; font-weight: 650; color: var(--text-muted); }
+.readout__sample { font-weight: 650; font-size: 0.875rem; }
+.readout__sample--fill {
+  justify-self: start;
+  padding: .3rem .75rem;
+  border-radius: var(--r-md, 8px);
+  font-size: 0.8125rem;
+}
+.readout__badge {
+  justify-self: end;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: .2rem .5rem;
+  border-radius: 999px;
+}
+.readout__badge.is-pass { color: var(--success); background: var(--success-wash); }
+.readout__badge.is-adjusted { color: var(--warning); background: var(--warning-wash); }
+
+/* --- preview ----------------------------------------------------------- */
+
+.preview { display: flex; flex-direction: column; gap: var(--sp-4, 1rem); }
+.preview__row { display: flex; flex-wrap: wrap; gap: var(--sp-2, .5rem); align-items: center; }
+.preview__text { margin: 0; color: var(--text-muted); max-width: 62ch; line-height: 1.6; }
+.preview__meters { display: flex; flex-direction: column; gap: var(--sp-2, .5rem); }
+.meter__fill--2 { background: var(--accent-2); }
+.meter__fill--3 { background: var(--accent-3); }
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-card { transition: none; }
+  .theme-card:hover { transform: none; }
+}
+
+/* ============================================================
+   Light-theme compatibility layer
+   ------------------------------------------------------------
+   Most views predate the theme system and paint with utility
+   classes that assume a dark shell: text-white, bg-white/5,
+   border-white/10 and friends. Roughly 900 usages, so this is
+   remapped once here rather than edited across the markup.
+
+   Everything is scoped to :root[data-theme='light'], and the
+   extra specificity beats the Tailwind shim regardless of load
+   order. The dark presets never match these rules, so they are
+   unaffected.
+   ============================================================ */
+
+:root[data-theme='light'] .text-white { color: var(--text) !important; }
+:root[data-theme='light'] .text-white\/90,
+:root[data-theme='light'] .text-white\/85,
+:root[data-theme='light'] .text-white\/80,
+:root[data-theme='light'] .text-white\/70 { color: var(--text-muted) !important; }
+:root[data-theme='light'] .text-outline { color: var(--text-muted) !important; }
+
+/* Surfaces: white-on-white reads as nothing, so these become the paper
+   theme's own tinted surfaces. */
+:root[data-theme='light'] .bg-white\/5 { background-color: var(--surface-2) !important; }
+:root[data-theme='light'] .bg-white\/10 { background-color: var(--surface-3) !important; }
+:root[data-theme='light'] .bg-white\/15,
+:root[data-theme='light'] .bg-white\/20 { background-color: var(--line-faint) !important; }
+:root[data-theme='light'] .bg-black\/20,
+:root[data-theme='light'] .bg-black\/30 { background-color: var(--surface-2) !important; }
+
+:root[data-theme='light'] .border-white\/5 { border-color: var(--line-faint) !important; }
+:root[data-theme='light'] .border-white\/10,
+:root[data-theme='light'] .border-white\/15 { border-color: var(--line) !important; }
+:root[data-theme='light'] .border-white\/20 { border-color: var(--line-strong) !important; }
+:root[data-theme='light'] .divide-white\/5 > * + * { border-color: var(--line-faint) !important; }
+
+/* Status colours are tuned for a dark background and sit at roughly 1.5:1 on
+   paper. These are the same hues taken down to AA against white. */
+:root[data-theme='light'] .text-amber-400,
+:root[data-theme='light'] .text-amber-300 { color: #8a5a00 !important; }
+:root[data-theme='light'] .text-emerald-400,
+:root[data-theme='light'] .text-emerald-300 { color: #05704a !important; }
+:root[data-theme='light'] .text-sky-400,
+:root[data-theme='light'] .text-sky-300 { color: #0b6a95 !important; }
+:root[data-theme='light'] .text-red-400,
+:root[data-theme='light'] .text-red-300 { color: #b42318 !important; }
+:root[data-theme='light'] .text-violet-400,
+:root[data-theme='light'] .text-purple-400 { color: #6b21a8 !important; }
+
+/* Their wash backgrounds go the other way - lighter, so dark text sits on top. */
+:root[data-theme='light'] [class*='bg-amber-500\/'],
+:root[data-theme='light'] [class*='bg-amber-400\/'] { background-color: rgba(180, 120, 0, .12) !important; }
+:root[data-theme='light'] [class*='bg-emerald-500\/'],
+:root[data-theme='light'] [class*='bg-emerald-400\/'] { background-color: rgba(5, 112, 74, .12) !important; }
+:root[data-theme='light'] [class*='bg-sky-500\/'],
+:root[data-theme='light'] [class*='bg-sky-400\/'] { background-color: rgba(11, 106, 149, .12) !important; }
+:root[data-theme='light'] [class*='bg-red-500\/'],
+:root[data-theme='light'] [class*='bg-red-400\/'] { background-color: rgba(180, 35, 24, .1) !important; }
+
+/* The frosted panel is a white film over a dark page; on paper it needs to be
+   an actual raised card instead. */
+:root[data-theme='light'] .glass-card {
+  background: var(--surface-1) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: var(--shadow-1, 0 1px 2px rgba(16, 15, 20, .06));
+  backdrop-filter: none !important;
+}
+
+/* Avatars and other accent fills carry their own computed label colour. */
+:root[data-theme='light'] .avatar { color: var(--accent-on) !important; }
+
+/* Labels sitting on a solid accent fill are the exception to the rule above:
+   they must follow the fill, not the page. Without this, remapping text-white
+   to the body text colour puts near-black on a dark indigo button.
+   Washes (bg-royal-slate-blue/20 and friends) are light, so they keep the
+   page text colour and are deliberately not matched here. */
+:root[data-theme='light'] .bg-royal-slate-blue,
+:root[data-theme='light'] .bg-royal-slate-blue *,
+:root[data-theme='light'] .chip--solid,
+:root[data-theme='light'] .chip--solid * {
+  color: var(--accent-on) !important;
+}
+
+/* Remaining palette shades used by the activity timeline and badge rows. */
+:root[data-theme='light'] .text-cyan-400,
+:root[data-theme='light'] .text-cyan-300 { color: #0e6f80 !important; }
+:root[data-theme='light'] .text-purple-300,
+:root[data-theme='light'] .text-violet-300 { color: #6b21a8 !important; }
+:root[data-theme='light'] [class*='bg-cyan-500\/'],
+:root[data-theme='light'] [class*='bg-cyan-400\/'] { background-color: rgba(14, 111, 128, .12) !important; }
+:root[data-theme='light'] [class*='bg-purple-500\/'],
+:root[data-theme='light'] [class*='bg-violet-500\/'] { background-color: rgba(107, 33, 168, .12) !important; }
