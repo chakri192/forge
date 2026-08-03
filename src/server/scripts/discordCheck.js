@@ -140,8 +140,27 @@ async function checkIdTypes(guildId) {
       }
     }
 
+    // 3.4 names its eight categories, so report which are absent rather than
+    // just a count — "6 of 8" does not tell you what to create.
+    const WANTED_FORUMS = [
+      'general discussion', 'academic', 'hackathons', 'resources',
+      'ideas', 'social', 'q&a', 'feedback'
+    ];
     const forums = [...all.values()].filter((c) => c?.type === ChannelType.GuildForum);
-    console.log(`${tick(forums.length >= 8)} ${forums.length} forum channel(s) — milestone 3.4 needs 8`);
+    const have = forums.map((c) => c.name.toLowerCase().replace(/[-_]+/g, ' ').trim());
+    const absent = WANTED_FORUMS.filter(
+      (want) => !have.some((h) => h === want || h.replace(/&/g, 'and') === want.replace(/&/g, 'and'))
+    );
+    if (absent.length) {
+      console.log(`${tick(false)} forums: ${forums.length}/8 — missing ${absent.join(', ')} (needed by 3.4)`);
+    } else {
+      console.log(`${tick(true)} forums: all 8 present`);
+    }
+
+    // 3.3 posts its cleanup summary here, so its absence bites later.
+    if (!process.env.DISCORD_CHANNEL_SYSTEM_ALERTS) {
+      console.log(`${tick(false)} DISCORD_CHANNEL_SYSTEM_ALERTS not set — 3.3 posts cleanup summaries there`);
+    }
   } catch (err) {
     console.log(`${tick(false)} could not inspect channels: ${err.message}`);
     problems += 1;
