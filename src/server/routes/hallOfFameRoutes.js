@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { HallOfFameService } from '../services/hallOfFameService.js';
 import { requirePermission } from '../middleware/auth.js';
+import { requireAuth } from '../middleware/auth.js';
 import { validate, hallOfFameSchemas } from '../middleware/validation.js';
 
 const router = Router();
 
-router.get('/hall-of-fame', validate({}), (_req, res, next) => {
+router.get('/hall-of-fame', requireAuth, validate({}), (_req, res, next) => {
   try {
     res.json(HallOfFameService.getHallOfFameData());
   } catch (err) {

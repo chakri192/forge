@@ -1,4 +1,5 @@
 import { fetchGlobalActivity, fetchUserActivity } from '../services/api.js';
+import { escapeHtml } from '../utils/dom.js';
 
 export function renderActivityFeed({ containerId, title = 'Activity Feed', isGlobal = true, userId = null }) {
   return `
@@ -138,9 +139,14 @@ function renderTimeline(container, activities) {
         const formattedDate = new Date(act.created_at).toLocaleString(undefined, {
           month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
-        const detailsText = act.details && act.details.description
-          ? act.details.description
-          : (act.action + ' on ' + act.entity_type);
+        // Escaped on the way out. Input sanitising strips tags today, but a
+        // message arriving from Discord never passes through that middleware,
+        // and output encoding is the layer that does not depend on it.
+        const detailsText = escapeHtml(
+          act.details && act.details.description
+            ? act.details.description
+            : `${escapeHtml(act.action)} on ${act.entity_type}`
+        );
 
         return `
           <div class="relative pl-6 group">
@@ -156,7 +162,7 @@ function renderTimeline(container, activities) {
                   <span class="text-xs font-bold text-white">${act.user_name || 'System'}</span>
                   <span class="text-[10px] text-outline">(@${act.user_username || 'system'})</span>
                   <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase ${style.badgeBg} ${style.badgeText} border ${style.badgeBorder}">
-                    ${act.action}
+                    ${escapeHtml(act.action)}
                   </span>
                 </div>
                 <span class="text-[11px] text-outline font-medium whitespace-nowrap">${formattedDate}</span>
@@ -167,8 +173,8 @@ function renderTimeline(container, activities) {
               ${act.details && (act.details.team_name || act.details.title || act.details.old_role) ? `
                 <div class="text-[11px] text-outline pt-1 flex flex-wrap gap-3 border-t border-white/5 mt-2">
                   ${act.details.title ? `<span>Task: <strong class="text-white">${act.details.title}</strong></span>` : ''}
-                  ${act.details.team_name ? `<span>Team: <strong class="text-white">${act.details.team_name}</strong></span>` : ''}
-                  ${act.details.old_role ? `<span>Role: <span class="text-red-300 font-semibold">${act.details.old_role}</span> → <span class="text-emerald-300 font-semibold">${act.details.new_role}</span></span>` : ''}
+                  ${act.details.team_name ? `<span>Team: <strong class="text-white">${escapeHtml(act.details.team_name)}</strong></span>` : ''}
+                  ${act.details.old_role ? `<span>Role: <span class="text-red-300 font-semibold">${escapeHtml(act.details.old_role)}</span> → <span class="text-emerald-300 font-semibold">${escapeHtml(act.details.new_role)}</span></span>` : ''}
                 </div>
               ` : ''}
             </div>

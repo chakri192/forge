@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { UserService } from '../services/userService.js';
-import { requirePermission } from '../middleware/auth.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
 import { validate, userSchemas } from '../middleware/validation.js';
 
 const router = Router();
 
-router.get('/users', validate({}), (req, res, next) => {
+// The member directory carries contact details, so it is never anonymous.
+router.get('/users', requireAuth, validate({}), (req, res, next) => {
   try {
-    const users = UserService.getAllUsers(req.query.role);
+    const users = UserService.getAllUsers(req.query.role, req.user);
     res.json(users);
   } catch (err) {
     next(err);
