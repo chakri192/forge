@@ -19,6 +19,7 @@ import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsVi
 import { renderQuizzesView, attachQuizzesEvents } from '../views/quizzesView.js';
 import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
 import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
+import { renderLeaderboardView, attachLeaderboardEvents } from '../views/leaderboardView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -38,6 +39,7 @@ const routes = {
   challenges: { render: renderChallengesView, attach: attachChallengesEvents },
   teams: { render: renderTeamsView, attach: attachTeamsEvents },
   halloffame: { render: renderHallOfFameView, attach: attachHallOfFameEvents },
+  leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },
   login: { render: renderLoginView, attach: attachLoginEvents },
   signup: { render: renderSignUpView, attach: attachSignUpEvents },
   settings: { render: renderSettingsView, attach: attachSettingsEvents },

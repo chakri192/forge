@@ -35,6 +35,7 @@ export { renderAnalyticsView } from './views/analyticsView.js';
 export { renderQuizzesView } from './views/quizzesView.js';
 export { renderReviewView } from './views/reviewView.js';
 export { renderAppearanceView } from './views/appearanceView.js';
+export { renderLeaderboardView } from './views/leaderboardView.js';
 
 const router = new Router('appView');
 
@@ -80,6 +81,22 @@ function bootApp() {
       store.setState({ activeTab: e.detail.tab });
     }
   });
+
+  // Views are re-rendered on every state change, so anything inside #appView
+  // has to be delegated rather than bound per element. Without this, every
+  // in-page link that navigates by data-tab — the dashboard's "View all",
+  // each task's "Details", and the login/signup cross-links — did nothing.
+  const appView = document.getElementById('appView');
+  if (appView) {
+    appView.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-tab]');
+      if (!target || !appView.contains(target)) return;
+      const tab = target.getAttribute('data-tab');
+      if (!tab) return;
+      e.preventDefault();
+      store.setState({ activeTab: tab });
+    });
+  }
 
   let lastRenderedTab = null;
   store.subscribe((state) => {

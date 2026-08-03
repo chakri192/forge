@@ -1058,3 +1058,198 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 :root[data-theme='light'] [class*='bg-cyan-400\/'] { background-color: rgba(14, 111, 128, .12) !important; }
 :root[data-theme='light'] [class*='bg-purple-500\/'],
 :root[data-theme='light'] [class*='bg-violet-500\/'] { background-color: rgba(107, 33, 168, .12) !important; }
+
+/* ============================================================
+   Leaderboard
+   ============================================================ */
+
+.lb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-bottom: var(--sp-4);
+  padding: var(--sp-1);
+  border: 1px solid var(--line-faint);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+  width: fit-content;
+}
+.lb-tab {
+  padding: .4rem .9rem;
+  border: 0;
+  border-radius: var(--r-md);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .12s var(--ease), color .12s var(--ease);
+}
+.lb-tab:hover { color: var(--text); background: var(--surface-2); }
+.lb-tab.is-active { background: var(--accent); color: var(--accent-on); }
+
+.lb-note {
+  margin: 0 0 var(--sp-5);
+  color: var(--text-muted);
+  font-size: .875rem;
+}
+
+/* Podium: the lead is the thing people look for, so give it its own shape. */
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--sp-3);
+  margin: 0 0 var(--sp-5);
+  padding: 0;
+  list-style: none;
+}
+
+
+.podium__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-1);
+  padding: var(--sp-5) var(--sp-3);
+  text-align: center;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-1);
+}
+/* First place sits higher on wide screens; on one column that would just be
+   an odd gap, so the lift is scoped to the grid layout. */
+@media (min-width: 641px) {
+  .podium__slot--1 { transform: translateY(-10px); }
+}
+.podium__slot--1 { border-color: var(--accent); }
+.podium__slot.is-you { box-shadow: 0 0 0 1px var(--accent); }
+
+.podium__rank {
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.podium__slot--1 .podium__rank { color: var(--accent-text); }
+.podium__name { font-weight: 700; font-size: .9375rem; margin-top: var(--sp-1); }
+.podium__meta { font-size: .75rem; color: var(--text-faint); }
+.podium__score {
+  margin-top: var(--sp-2);
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.podium__score small {
+  margin-left: .25rem;
+  font-size: .6875rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+@media (max-width: 640px) {
+  /* Stacked, three tall cards is a lot of scrolling for three names, so the
+     podium lays out sideways at this width instead. */
+  .podium { grid-template-columns: 1fr; }
+  .podium__slot {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-3) var(--sp-4);
+    text-align: left;
+  }
+  .podium__rank { order: -1; width: 1.75rem; }
+  .podium__name { margin-top: 0; flex: 1; }
+  .podium__meta { display: none; }
+  .podium__score { margin-top: 0; margin-left: auto; font-size: 1.25rem; }
+  .podium__slot .avatar--lg { width: 34px; height: 34px; font-size: .75rem; }
+}
+
+
+.lb-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--line-faint);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line-faint);
+}
+.lb-row:last-child { border-bottom: 0; }
+.lb-row.is-you { background: var(--accent-wash); }
+
+.lb-row__rank {
+  width: 2.5rem;
+  flex: none;
+  font-size: .8125rem;
+  font-weight: 700;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+.lb-row__who { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.lb-row__name {
+  font-size: .875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-row__sub { font-size: .75rem; color: var(--text-faint); }
+.lb-row__score {
+  flex: none;
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lb-row__score small {
+  margin-left: .2rem;
+  font-size: .625rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.lb-badge {
+  margin-left: .35rem;
+  padding: .05rem .35rem;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-on);
+  font-size: .5625rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.lb-you { margin-top: var(--sp-4); }
+.lb-you__label {
+  display: block;
+  margin-bottom: var(--sp-2);
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.lb-foot {
+  margin-top: var(--sp-4);
+  color: var(--text-faint);
+  font-size: .8125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lb-tab { transition: none; }
+  .podium__slot--1 { transform: none; }
+}

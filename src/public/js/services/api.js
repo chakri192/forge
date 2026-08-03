@@ -610,3 +610,7 @@ export async function fetchAvailableEmoji() {
 export async function searchGifs(q, limit = 16) {
   return requestApi(`/gifs/search?q=${encodeURIComponent(q)}&limit=${limit}`);
 }
+
+export async function fetchLeaderboard(metric = 'points', limit = 25) {
+  return requestApi(`/leaderboard?metric=${encodeURIComponent(metric)}&limit=${limit}`);
+}
