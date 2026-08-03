@@ -5,6 +5,8 @@ import { ActivityService } from './activity.js';
 import { publish, publishAll } from './sse.js';
 import { ReactionModel, isAllowedEmoji } from '../models/Reaction.js';
 import { VoteModel } from '../models/Vote.js';
+import { MessageRelay } from './discord/messageRelay.js';
+import { DiscordMap } from '../models/DiscordMap.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin'];
 const CHANNEL_TYPES = ['text', 'announcement', 'team'];
@@ -131,6 +133,21 @@ export const MessageService = {
     }
     const message = MessageModel.create({ channelId, userId: user.id, content });
     broadcastToChannel(channel, { type: 'message', action: 'created', channelId, message });
+
+    // Mirror to Discord when this channel is mapped. Deliberately not awaited
+    // and never fatal: the message is already saved and delivered to Forge
+    // clients, so a Discord outage must not fail the request or lose the post.
+    const mapped = DiscordMap.channelForReference('public', channelId)
+      || DiscordMap.channelByDiscordId(channel.discord_channel_id || '');
+    if (mapped?.discord_channel_id) {
+      MessageRelay.relay({
+        user,
+        discordChannelId: mapped.discord_channel_id,
+        content,
+        sentAt: message.created_at
+      }).catch(() => {});
+    }
+
     return message;
   },
 
