@@ -8,7 +8,7 @@
  *   npm run discord:check
  */
 import 'dotenv/config';
-import { Client, GatewayIntentBits, PermissionFlagsBits, ChannelType } from 'discord.js';
+import { Client, GatewayIntentBits, PermissionFlagsBits, ChannelType, ApplicationFlags } from 'discord.js';
 
 const BOTS = [
   {
@@ -16,14 +16,16 @@ const BOTS = [
     name: 'System Bot',
     env: 'DISCORD_SYSTEM_BOT_TOKEN',
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers],
-    needs: ['ManageChannels', 'ManageRoles', 'ViewChannel', 'ReadMessageHistory']
+    needs: ['ManageChannels', 'ManageRoles', 'ViewChannel', 'ReadMessageHistory'],
+    needsMembers: true
   },
   {
     key: 'admin',
     name: 'Admin Bot',
     env: 'DISCORD_ADMIN_BOT_TOKEN',
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
-    needs: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles', 'ManageMessages', 'ReadMessageHistory']
+    needs: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles', 'ManageMessages', 'ReadMessageHistory'],
+    needsMessageContent: true
   },
   {
     key: 'messenger',
@@ -31,12 +33,15 @@ const BOTS = [
     env: 'DISCORD_MESSENGER_BOT_TOKEN',
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
     needs: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles', 'ReadMessageHistory'],
+    needsMessageContent: true,
     mustNotHave: ['ManageMessages']
   }
 ];
 
 const tick = (ok) => (ok ? '  ok  ' : ' FAIL ');
-let problems = 0;
+const WARN = ' warn ';
+let problems = 0;   // blocks the bridge from working
+let warnings = 0;   // needed by a later milestone, not by this one
 
 async function checkBot(spec, guildId) {
   const token = process.env[spec.env];
@@ -70,6 +75,37 @@ async function checkBot(spec, guildId) {
       problems += 1;
     } else {
       console.log(`${tick(true)} ${spec.name}: has every permission it needs`);
+    }
+
+    // Intents are separate from permissions and are not covered by the invite
+    // URL. Without Message Content a bot still receives messageCreate, but
+    // content, embeds and attachments all arrive empty — the relay looks
+    // connected and silently delivers nothing.
+    if (spec.needsMessageContent) {
+      const appInfo = await client.application.fetch();
+      const hasContent =
+        appInfo.flags.has(ApplicationFlags.GatewayMessageContent) ||
+        appInfo.flags.has(ApplicationFlags.GatewayMessageContentLimited);
+      if (!hasContent) {
+        console.log(
+          `${tick(false)} ${spec.name}: Message Content Intent is off — ` +
+            'Developer Portal → Bot → Privileged Gateway Intents'
+        );
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${spec.name}: Message Content Intent enabled`);
+      }
+    }
+
+    if (spec.needsMembers) {
+      const appInfo = await client.application.fetch();
+      if (!appInfo.flags.has(ApplicationFlags.GatewayGuildMembers) &&
+          !appInfo.flags.has(ApplicationFlags.GatewayGuildMembersLimited)) {
+        console.log(`${tick(false)} ${spec.name}: Server Members Intent is off`);
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${spec.name}: Server Members Intent enabled`);
+      }
     }
 
     // The Messenger Bot must not be able to pin; that separation is the point.
@@ -152,14 +188,17 @@ async function checkIdTypes(guildId) {
       (want) => !have.some((h) => h === want || h.replace(/&/g, 'and') === want.replace(/&/g, 'and'))
     );
     if (absent.length) {
-      console.log(`${tick(false)} forums: ${forums.length}/8 — missing ${absent.join(', ')} (needed by 3.4)`);
+      // Not blocking: nothing before 3.4 touches forums.
+      console.log(`${WARN} forums: ${forums.length}/8 — missing ${absent.join(', ')} (needed by 3.4)`);
+      warnings += 1;
     } else {
       console.log(`${tick(true)} forums: all 8 present`);
     }
 
     // 3.3 posts its cleanup summary here, so its absence bites later.
     if (!process.env.DISCORD_CHANNEL_SYSTEM_ALERTS) {
-      console.log(`${tick(false)} DISCORD_CHANNEL_SYSTEM_ALERTS not set — 3.3 posts cleanup summaries there`);
+      console.log(`${WARN} DISCORD_CHANNEL_SYSTEM_ALERTS not set — 3.3 posts cleanup summaries there`);
+      warnings += 1;
     }
   } catch (err) {
     console.log(`${tick(false)} could not inspect channels: ${err.message}`);
@@ -190,10 +229,11 @@ async function main() {
 
   await checkIdTypes(guildId);
 
+  const warnNote = warnings ? ` ${warnings} warning(s) for later milestones.` : '';
   console.log(
     problems === 0
-      ? '\nAll checks passed. Start Forge and the bridge will come up.\n'
-      : `\n${problems} problem(s) above. Fix them and run this again.\n`
+      ? `\nReady. Start Forge and the bridge will come up.${warnNote}\n`
+      : `\n${problems} problem(s) above. Fix them and run this again.${warnNote}\n`
   );
   process.exit(problems === 0 ? 0 : 1);
 }
