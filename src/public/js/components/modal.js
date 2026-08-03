@@ -1,6 +1,6 @@
 // Accessible Modal Component
 
-export function openModal({ title, contentHtml, onConfirm }) {
+export function openModal({ title, contentHtml, onConfirm, onOpen, confirmLabel = 'Submit' }) {
   closeModal();
 
   const overlay = document.createElement('div');
@@ -18,7 +18,7 @@ export function openModal({ title, contentHtml, onConfirm }) {
       </div>
       <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.5rem;">
         <button id="modalCancelBtn" class="btn btn-secondary">Cancel</button>
-        <button id="modalConfirmBtn" class="btn btn-primary">Submit</button>
+        <button id="modalConfirmBtn" class="btn btn-primary">${confirmLabel}</button>
       </div>
     </div>
   `;
@@ -29,6 +29,13 @@ export function openModal({ title, contentHtml, onConfirm }) {
   overlay.querySelector('#modalCloseBtn').addEventListener('click', close);
   overlay.querySelector('#modalCancelBtn').addEventListener('click', close);
 
+  // Escape closes, matching every other dismissible surface in the app.
+  const onKey = (e) => {
+    if (e.key === 'Escape') close();
+  };
+  document.addEventListener('keydown', onKey);
+  overlay.addEventListener('forge:modal-closed', () => document.removeEventListener('keydown', onKey));
+
   overlay.querySelector('#modalConfirmBtn').addEventListener('click', async () => {
     if (onConfirm) {
       const shouldClose = await onConfirm(overlay);
@@ -37,11 +44,15 @@ export function openModal({ title, contentHtml, onConfirm }) {
       close();
     }
   });
+
+  if (onOpen) onOpen(overlay);
+  return overlay;
 }
 
 export function closeModal() {
   const existing = document.getElementById('forgeModalOverlay');
   if (existing) {
+    existing.dispatchEvent(new CustomEvent('forge:modal-closed'));
     existing.remove();
   }
 }

@@ -18,6 +18,7 @@ const VALID_TABS = new Set([
   'analytics',
   'quizzes',
   'review',
+  'appearance',
   'settings',
   'devdashboard',
   'componentstest',

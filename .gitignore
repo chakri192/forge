@@ -29,3 +29,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local editor/agent session config
+.claude/

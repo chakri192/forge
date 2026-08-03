@@ -584,3 +584,29 @@ export async function updateProfileSettings(settings) {
 export async function search(query) {
   return requestApi(`/search?q=${encodeURIComponent(query)}`);
 }
+
+// --- Reactions & message votes ---
+
+export async function reactToMessage(messageId, emoji) {
+  return requestApi(`/messages/${messageId}/reactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ emoji })
+  });
+}
+
+export async function voteOnMessage(messageId, value) {
+  return requestApi(`/messages/${messageId}/vote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value })
+  });
+}
+
+export async function fetchAvailableEmoji() {
+  return requestApi('/reactions/available');
+}
+
+export async function searchGifs(q, limit = 16) {
+  return requestApi(`/gifs/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+}

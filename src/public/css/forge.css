@@ -261,7 +261,7 @@ code, pre, .mono {
 
 .btn--primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-on, #fff);
   box-shadow: var(--shadow-1);
 }
 .btn--primary:hover { background: var(--accent-hover); }
@@ -301,7 +301,7 @@ code, pre, .mono {
 .chip--warning { background: var(--warning-wash); border-color: rgba(251, 191, 36, 0.3);      color: var(--warning); }
 .chip--danger  { background: var(--danger-wash);  border-color: rgba(248, 113, 113, 0.3);     color: var(--danger); }
 .chip--info    { background: var(--info-wash);    border-color: rgba(56, 189, 248, 0.3);      color: var(--info); }
-.chip--solid   { background: var(--accent); border-color: transparent; color: #fff; }
+.chip--solid   { background: var(--accent); border-color: transparent; color: var(--accent-on, #fff); }
 .chip--upper   { text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.625rem; font-weight: 700; }
 
 /* --------------------------------------------------------------- Fields */
@@ -612,7 +612,7 @@ code, pre, .mono {
   justify-content: center;
   border-radius: var(--r-full);
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-on, #fff);
   font-size: 0.625rem;
   font-weight: 700;
 }
@@ -638,7 +638,9 @@ code, pre, .mono {
   gap: var(--sp-3);
   height: var(--header-h);
   padding: 0 var(--sp-5);
-  background: rgba(13, 14, 18, 0.82);
+  /* Follows the active theme instead of pinning a dark slate, so the bar does
+     not stay black when a light preset is selected. */
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--line-faint);
 }
@@ -781,4 +783,196 @@ code, pre, .mono {
      the hamburger that opens it are both meaningless there. */
   #drawerCloseBtn,
   #drawerToggleBtn { display: none !important; }
+}
+
+/* ============================================================
+   Message reactions, votes, pickers and inline media
+   ============================================================ */
+
+.msg-meta {
+  font-size: .75rem;
+}
+
+.msg-reaction {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .15rem .45rem;
+  border-radius: 999px;
+  border: 1px solid var(--line, rgba(255,255,255,.11));
+  background: var(--surface-1, rgba(255,255,255,.04));
+  color: var(--text, inherit);
+  font-size: .8125rem;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background .12s ease, border-color .12s ease, transform .08s ease;
+}
+.msg-reaction:hover { background: var(--surface-2, rgba(255,255,255,.07)); }
+.msg-reaction:active { transform: scale(.94); }
+.msg-reaction.is-mine {
+  border-color: var(--accent, #2f7fc4);
+  background: color-mix(in srgb, var(--accent, #2f7fc4) 18%, transparent);
+}
+.msg-reaction__n {
+  font-size: .6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #a4a8b8);
+}
+.msg-reaction.is-mine .msg-reaction__n { color: var(--accent-text, var(--accent)); }
+
+.msg-react-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px dashed var(--line, rgba(255,255,255,.15));
+  background: none;
+  color: var(--text-faint, #7f8496);
+  cursor: pointer;
+  /* Hidden until hover on pointer devices; always visible on touch, where
+     there is no hover state to reveal it. */
+  opacity: 0;
+  transition: opacity .12s ease, color .12s ease, border-color .12s ease;
+}
+.msg-row:hover .msg-react-add,
+.msg-react-add:focus-visible { opacity: 1; }
+.msg-react-add:hover { color: var(--accent-text, var(--accent)); border-color: var(--accent, currentColor); }
+.msg-react-add .material-symbols-outlined { font-size: 15px; }
+
+.msg-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: .1rem;
+  margin-left: .15rem;
+  border-radius: 999px;
+  border: 1px solid var(--line-faint, rgba(255,255,255,.07));
+  padding: 0 .1rem;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.msg-row:hover .msg-vote,
+.msg-vote:focus-within,
+.msg-vote:has(.is-on) { opacity: 1; }
+
+.msg-vote__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: none;
+  border-radius: 999px;
+  color: var(--text-faint, #7f8496);
+  cursor: pointer;
+}
+.msg-vote__btn:hover { color: var(--text, inherit); background: var(--surface-2, rgba(255,255,255,.07)); }
+.msg-vote__btn.is-on { color: var(--accent-text, var(--accent)); }
+.msg-vote__btn .material-symbols-outlined { font-size: 14px; }
+
+.msg-vote__score {
+  min-width: 1.1rem;
+  text-align: center;
+  font-size: .6875rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #a4a8b8);
+}
+.msg-vote__score.is-pos { color: var(--accent-text, var(--accent)); }
+.msg-vote__score.is-neg { color: #ef7a7a; }
+
+.msg-media {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .4rem;
+}
+.msg-media__item {
+  max-width: min(280px, 100%);
+  max-height: 220px;
+  width: auto;
+  border-radius: var(--r-lg, 12px);
+  border: 1px solid var(--line, rgba(255,255,255,.11));
+  background: var(--surface-1, rgba(255,255,255,.04));
+  object-fit: contain;
+}
+
+.emoji-picker {
+  position: fixed;
+  z-index: 1200;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: .15rem;
+  padding: .4rem;
+  border-radius: var(--r-lg, 12px);
+  border: 1px solid var(--line, rgba(255,255,255,.14));
+  background: var(--bg-elevated, #16171d);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+}
+.emoji-picker__item {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: var(--r-md, 8px);
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.emoji-picker__item:hover,
+.emoji-picker__item:focus-visible {
+  background: var(--surface-2, rgba(255,255,255,.09));
+  outline: none;
+}
+
+.gif-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: .4rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.gif-grid__item {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-md, 8px);
+  overflow: hidden;
+  background: var(--surface-1, rgba(255,255,255,.04));
+  cursor: pointer;
+  line-height: 0;
+}
+.gif-grid__item img { width: 100%; height: 84px; object-fit: cover; display: block; }
+.gif-grid__item.is-selected { border-color: var(--accent, #2f7fc4); }
+
+.composer-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  border-radius: var(--r-lg, 12px);
+  border: 1px solid var(--line, rgba(255,255,255,.11));
+  background: var(--surface-1, rgba(255,255,255,.04));
+  color: var(--text-muted, #a4a8b8);
+  cursor: pointer;
+  transition: color .12s ease, border-color .12s ease;
+}
+.composer-tool:hover { color: var(--text, #fff); border-color: var(--line-strong, rgba(255,255,255,.22)); }
+
+@media (hover: none) {
+  .msg-react-add, .msg-vote { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .msg-reaction, .msg-react-add, .msg-vote, .composer-tool { transition: none; }
+}
+
+.msg-media__broken {
+  display: inline-block;
+  padding: .3rem .6rem;
+  border-radius: var(--r-md, 8px);
+  border: 1px dashed var(--line, rgba(255,255,255,.15));
+  color: var(--text-faint, #7f8496);
+  font-size: .75rem;
 }

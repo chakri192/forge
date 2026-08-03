@@ -21,6 +21,7 @@ const SECTIONS = [
   { tab: 'quizzes', label: 'Quizzes & Puzzles', icon: 'quiz' },
   { tab: 'journal', label: 'Reflection Journal', icon: 'menu_book' },
   { tab: 'analytics', label: 'Cohort Analytics', icon: 'insights' },
+  { tab: 'appearance', label: 'Appearance & Themes', icon: 'palette' },
   { tab: 'settings', label: 'Account Settings', icon: 'settings' }
 ];
 

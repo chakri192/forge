@@ -18,6 +18,7 @@ import { renderJournalView, attachJournalEvents } from '../views/journalView.js'
 import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsView.js';
 import { renderQuizzesView, attachQuizzesEvents } from '../views/quizzesView.js';
 import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
+import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -32,6 +33,7 @@ const routes = {
   analytics: { render: renderAnalyticsView, attach: attachAnalyticsEvents },
   quizzes: { render: renderQuizzesView, attach: attachQuizzesEvents },
   review: { render: renderReviewView, attach: attachReviewEvents },
+  appearance: { render: renderAppearanceView, attach: attachAppearanceEvents },
   tasks: { render: renderTasksView, attach: attachTasksEvents },
   challenges: { render: renderChallengesView, attach: attachChallengesEvents },
   teams: { render: renderTeamsView, attach: attachTeamsEvents },
