@@ -32,12 +32,12 @@ describe('Mini games', () => {
   it('lists the games with the caller’s bests', async () => {
     const res = await supertest(app).get('/api/games').set('Authorization', `Bearer ${token}`);
     assert.equal(res.status, 200);
-    assert.deepEqual(res.body.games.map((g) => g.id), ['hex', 'sprint', 'sequence']);
+    assert.deepEqual(res.body.games.map((g) => g.id), ['snake', 'memory', 'pop', 'sequence']);
     assert.ok(res.body.games.every((g) => typeof g.best === 'number'));
   });
 
   it('records a score and awards XP for a first result', async () => {
-    const res = await post('hex', { score: 7 });
+    const res = await post('snake', { score: 7 });
     assert.equal(res.status, 200);
     assert.equal(res.body.improved, true);
     assert.equal(res.body.best, 7);
@@ -45,7 +45,7 @@ describe('Mini games', () => {
   });
 
   it('does not award XP again for a worse score', async () => {
-    const res = await post('hex', { score: 3 });
+    const res = await post('snake', { score: 3 });
     assert.equal(res.body.improved, false);
     assert.equal(res.body.xpAwarded, 0);
     assert.equal(res.body.best, 7, 'the best is unchanged');
@@ -56,13 +56,13 @@ describe('Mini games', () => {
       `SELECT COALESCE(SUM(amount),0) AS t FROM xp_history WHERE user_id='u_game_1'`
     ).get().t;
 
-    await post('hex', { score: 2 });
+    await post('snake', { score: 2 });
     const unchanged = db.prepare(
       `SELECT COALESCE(SUM(amount),0) AS t FROM xp_history WHERE user_id='u_game_1'`
     ).get().t;
     assert.equal(unchanged, before, 'a worse score grants nothing');
 
-    const better = await post('hex', { score: 9 });
+    const better = await post('snake', { score: 9 });
     const after = db.prepare(
       `SELECT COALESCE(SUM(amount),0) AS t FROM xp_history WHERE user_id='u_game_1'`
     ).get().t;
@@ -72,13 +72,13 @@ describe('Mini games', () => {
 
   it('rejects a score above the game’s ceiling', async () => {
     // Games run in the browser, so a submitted score is a claim, not a fact.
-    const res = await post('hex', { score: 99999 });
+    const res = await post('snake', { score: 99999 });
     assert.equal(res.status, 400);
   });
 
   it('rejects negative and non-integer scores', async () => {
     for (const score of [-1, 2.5]) {
-      const res = await post('sprint', { score });
+      const res = await post('memory', { score });
       assert.ok(res.status >= 400 && res.status < 500, `${score} should be rejected`);
     }
   });
@@ -99,7 +99,7 @@ describe('Mini games', () => {
 
   it('stores every attempt even when it is not a best', async () => {
     const count = db.prepare(
-      `SELECT COUNT(*) AS n FROM game_scores WHERE user_id='u_game_1' AND game='hex'`
+      `SELECT COUNT(*) AS n FROM game_scores WHERE user_id='u_game_1' AND game='snake'`
     ).get().n;
     assert.ok(count >= 4, `history is kept, found ${count} rows`);
   });

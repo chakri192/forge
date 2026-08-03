@@ -7,25 +7,32 @@ import { genId } from '../utils/genId.js';
  * anyone could post a made-up number straight onto the leaderboard.
  */
 export const GAMES = {
-  hex: {
-    label: 'Hex Hunt',
-    blurb: 'Read a colour and pick its hex before the clock runs out.',
-    max: 30,
-    unit: 'correct'
+  snake: {
+    label: 'Snake',
+    blurb: 'Eat the apples and grow. Do not hit the wall or yourself.',
+    max: 300,
+    unit: 'apples'
   },
-  sprint: {
-    label: 'Type Sprint',
-    blurb: 'Retype a snippet accurately. Speed counts, mistakes count more.',
-    max: 200,
-    unit: 'wpm'
+  memory: {
+    label: 'Memory Match',
+    blurb: 'Flip two cards at a time and remember where the pairs are.',
+    max: 120,
+    unit: 'pairs'
+  },
+  pop: {
+    label: 'Bubble Pop',
+    blurb: 'Pop as many bubbles as you can before the thirty seconds run out.',
+    max: 150,
+    unit: 'pops'
   },
   sequence: {
-    label: 'Sequence',
-    blurb: 'Watch the pattern, then play it back. It gets one longer each round.',
+    label: 'Colour Sequence',
+    blurb: 'Watch the colours light up, then tap them back in order.',
     max: 40,
     unit: 'rounds'
   }
 };
+
 
 export const GameModel = {
   record({ userId, game, score, detail = null }) {

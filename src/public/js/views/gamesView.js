@@ -1,16 +1,8 @@
-// Mini games. Short, replayable, and scored against your own previous best.
+// Mini games: four classics, playable in a minute, scored against your own best.
 import { fetchGames, submitGameScore } from '../services/api.js';
 import { showToast } from '../components/toast.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml } from '../utils/dom.js';
-
-const SNIPPETS = [
-  'const total = items.reduce((sum, item) => sum + item.price, 0);',
-  'export function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }',
-  'db.prepare("SELECT * FROM users WHERE id = ?").get(userId);',
-  'element.addEventListener("click", () => setOpen((open) => !open));',
-  'const [first, ...rest] = await Promise.all(pending);'
-];
 
 export function renderGamesView(state) {
   if (!state.currentUser) {
@@ -21,7 +13,7 @@ export function renderGamesView(state) {
       <header class="page__head">
         <div>
           <h1 class="title">Mini games</h1>
-          <p class="subtitle">Short rounds that sharpen the things you use daily. Beat your own best to earn XP.</p>
+          <p class="subtitle">A minute each. Beat your own best to earn XP.</p>
         </div>
       </header>
       <div id="gamesRoot">${renderSkeleton('card', { className: '' })}</div>
@@ -36,7 +28,7 @@ export function attachGamesEvents(state) {
     try {
       const { games } = await fetchGames();
       root.innerHTML = `<div class="games">${games.map(cardHtml).join('')}</div>`;
-      games.forEach((g) => bindCard(g));
+      games.forEach(bindCard);
     } catch (_) {
       root.innerHTML = `<div class="empty"><p class="empty__text">Games could not be loaded.</p></div>`;
     }
@@ -55,16 +47,12 @@ export function attachGamesEvents(state) {
             <strong>${game.best}<small>${escapeHtml(game.unit)}</small></strong>
           </span>
         </header>
-
         <div class="game__stage" data-stage>
           <button class="btn btn--primary" data-start>Play</button>
         </div>
-
         ${
           game.top.length
-            ? `<ol class="game__top" data-top>
-                ${game.top.map((t, i) => topRow(t, i, game.unit)).join('')}
-              </ol>`
+            ? `<ol class="game__top" data-top>${game.top.map((t, i) => topRow(t, i, game.unit)).join('')}</ol>`
             : '<p class="game__empty" data-top>No scores yet. Set the first one.</p>'
         }
       </section>`;
@@ -88,11 +76,9 @@ export function attachGamesEvents(state) {
         const res = await submitGameScore(game.id, score, detail);
         card.querySelector('[data-best] strong').innerHTML =
           `${res.best}<small>${escapeHtml(game.unit)}</small>`;
-        const top = card.querySelector('[data-top]');
         if (res.top.length) {
-          top.outerHTML = `<ol class="game__top" data-top>${res.top
-            .map((t, i) => topRow(t, i, game.unit))
-            .join('')}</ol>`;
+          card.querySelector('[data-top]').outerHTML =
+            `<ol class="game__top" data-top>${res.top.map((t, i) => topRow(t, i, game.unit)).join('')}</ol>`;
         }
         showToast({
           title: res.improved ? 'New personal best' : `Scored ${score}`,
@@ -113,149 +99,323 @@ export function attachGamesEvents(state) {
 
   // The view re-attaches whenever app state changes, so a stage can end up
   // hosting more than one run. Each run carries a token and stops as soon as a
-  // newer one starts — without this, two Sequence instances drove the same
-  // pads and the round counter advanced with no input at all.
+  // newer one starts.
   function play(game, stage, finish) {
     const token = (Number(stage.dataset.run || 0) + 1).toString();
     stage.dataset.run = token;
     const live = () => stage.dataset.run === token;
 
-    if (game.id === 'hex') return playHex(stage, finish, live);
-    if (game.id === 'sprint') return playSprint(stage, finish, live);
-    return playSequence(stage, finish, live);
+    const runners = { snake: playSnake, memory: playMemory, pop: playPop, sequence: playSequence };
+    runners[game.id](stage, finish, live);
   }
 
   load();
 }
 
-/* ------------------------------------------------------------------ Hex Hunt
-   A colour is shown; pick its hex from four options. Thirty seconds, one
-   point per correct answer, and a wrong answer costs you the round. */
+/* ------------------------------------------------------------------- Snake */
 
-function playHex(stage, finish, live = () => true) {
+function playSnake(stage, finish, live) {
+  const SIZE = 15;
+  const START_SPEED = 190;
+
+  let snake = [{ x: 7, y: 7 }];
+  let dir = { x: 1, y: 0 };
+  let queued = null;
+  let apple = { x: 11, y: 7 };
   let score = 0;
-  let remaining = 30;
-  let ticker;
+  let timer = null;
+  let over = false;
 
-  const randomHex = () =>
-    '#' + Array.from({ length: 3 }, () =>
-      Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('');
+  stage.innerHTML = `
+    <div class="snake">
+      <div class="game__bar">
+        <span data-score>0 apples</span>
+        <span class="game__hint">Arrow keys, WASD, or swipe</span>
+      </div>
+      <div class="snake__board" data-board></div>
+      <div class="pad">
+        <button class="pad__btn pad__up" data-dir="up" aria-label="Up">↑</button>
+        <button class="pad__btn pad__left" data-dir="left" aria-label="Left">←</button>
+        <button class="pad__btn pad__right" data-dir="right" aria-label="Right">→</button>
+        <button class="pad__btn pad__down" data-dir="down" aria-label="Down">↓</button>
+      </div>
+    </div>`;
 
-  function round() {
-    const answer = randomHex();
-    // Decoys are perturbations of the answer, so the game tests reading a
-    // colour rather than spotting the one option that is obviously different.
-    const options = [answer];
-    while (options.length < 4) {
-      const shifted = answer.replace(/[0-9a-f]{2}/g, (pair) => {
-        const v = parseInt(pair, 16) + Math.round((Math.random() - 0.5) * 90);
-        return Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0');
-      });
-      if (!options.includes(shifted)) options.push(shifted);
+  const board = stage.querySelector('[data-board]');
+  const scoreEl = stage.querySelector('[data-score]');
+  board.style.setProperty('--cells', SIZE);
+  board.innerHTML = Array.from({ length: SIZE * SIZE }, () => '<i></i>').join('');
+  const cells = [...board.querySelectorAll('i')];
+
+  const DIRS = {
+    up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 }, right: { x: 1, y: 0 }
+  };
+
+  function turn(name) {
+    const next = DIRS[name];
+    if (!next) return;
+    // Ignore a straight reversal — it would run the head into the neck.
+    const current = queued || dir;
+    if (next.x === -current.x && next.y === -current.y) return;
+    queued = next;
+  }
+
+  const onKey = (e) => {
+    const map = {
+      ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+      w: 'up', s: 'down', a: 'left', d: 'right'
+    };
+    const name = map[e.key] || map[String(e.key).toLowerCase()];
+    if (!name) return;
+    e.preventDefault();
+    turn(name);
+  };
+  document.addEventListener('keydown', onKey);
+
+  stage.querySelectorAll('[data-dir]').forEach((btn) =>
+    btn.addEventListener('click', () => turn(btn.dataset.dir))
+  );
+
+  // Swipe, so it is playable on a phone without reaching for the pad.
+  let touchStart = null;
+  board.addEventListener('touchstart', (e) => {
+    touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, { passive: true });
+  board.addEventListener('touchend', (e) => {
+    if (!touchStart) return;
+    const dx = e.changedTouches[0].clientX - touchStart.x;
+    const dy = e.changedTouches[0].clientY - touchStart.y;
+    touchStart = null;
+    if (Math.abs(dx) < 24 && Math.abs(dy) < 24) return;
+    turn(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  }, { passive: true });
+
+  function placeApple() {
+    const free = [];
+    for (let y = 0; y < SIZE; y += 1) {
+      for (let x = 0; x < SIZE; x += 1) {
+        if (!snake.some((s) => s.x === x && s.y === y)) free.push({ x, y });
+      }
     }
-    options.sort(() => Math.random() - 0.5);
+    apple = free[Math.floor(Math.random() * free.length)] || apple;
+  }
 
-    stage.innerHTML = `
-      <div class="hex">
-        <div class="hex__bar">
-          <span class="hex__score">${score} correct</span>
-          <span class="hex__clock" data-clock>${remaining}s</span>
-        </div>
-        <div class="hex__swatch" style="background:${answer}"></div>
-        <div class="hex__options">
-          ${options
-            .map((o) => `<button class="btn hex__option" data-hex="${o}">${o}</button>`)
-            .join('')}
-        </div>
-      </div>`;
-
-    stage.querySelectorAll('[data-hex]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (btn.dataset.hex === answer) {
-          score += 1;
-          round();
-        } else {
-          btn.classList.add('is-wrong');
-          stage.querySelector(`[data-hex="${answer}"]`)?.classList.add('is-right');
-          stop();
-        }
-      });
+  function draw() {
+    cells.forEach((c) => (c.className = ''));
+    snake.forEach((s, i) => {
+      const cell = cells[s.y * SIZE + s.x];
+      if (cell) cell.className = i === 0 ? 'is-head' : 'is-body';
     });
+    const appleCell = cells[apple.y * SIZE + apple.x];
+    if (appleCell) appleCell.className = 'is-apple';
+  }
+
+  function cleanup() {
+    clearInterval(timer);
+    document.removeEventListener('keydown', onKey);
   }
 
   function stop() {
-    clearInterval(ticker);
+    if (over) return;
+    over = true;
+    cleanup();
     if (!live()) return;
-    setTimeout(() => live() && finish(score, `${score} correct`), 700);
+    board.classList.add('is-over');
+    setTimeout(() => live() && finish(score, `${score} apples`), 700);
+  }
+
+  function tick() {
+    if (!live()) return cleanup();
+    if (queued) { dir = queued; queued = null; }
+
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    const hitWall = head.x < 0 || head.y < 0 || head.x >= SIZE || head.y >= SIZE;
+    // The tail tip vacates this tick, so touching it is not a collision.
+    const body = snake.slice(0, -1);
+    if (hitWall || body.some((s) => s.x === head.x && s.y === head.y)) return stop();
+
+    snake.unshift(head);
+    if (head.x === apple.x && head.y === apple.y) {
+      score += 1;
+      scoreEl.textContent = `${score} ${score === 1 ? 'apple' : 'apples'}`;
+      placeApple();
+      // Speed up gently, with a floor so it stays playable.
+      clearInterval(timer);
+      timer = setInterval(tick, Math.max(80, START_SPEED - score * 6));
+    } else {
+      snake.pop();
+    }
+    draw();
+  }
+
+  draw();
+  timer = setInterval(tick, START_SPEED);
+}
+
+/* ------------------------------------------------------------ Memory Match */
+
+function playMemory(stage, finish, live) {
+  const FACES = ['🍎', '🌟', '🎈', '🐙', '🍄', '🚀', '🎧', '🧊', '🌵', '🍩'];
+  const PAIRS = 6;
+  const SECONDS = 60;
+
+  let matched = 0;
+  let remaining = SECONDS;
+  let busy = false;
+  let first = null;
+  let ticker;
+
+  stage.innerHTML = `
+    <div class="memory">
+      <div class="game__bar">
+        <span data-score>0 pairs</span>
+        <span class="game__clock" data-clock>${SECONDS}s</span>
+      </div>
+      <div class="memory__grid" data-grid></div>
+    </div>`;
+
+  const grid = stage.querySelector('[data-grid]');
+  const scoreEl = stage.querySelector('[data-score]');
+
+  function deal() {
+    const faces = [...FACES].sort(() => Math.random() - 0.5).slice(0, PAIRS);
+    const deck = [...faces, ...faces].sort(() => Math.random() - 0.5);
+    grid.innerHTML = deck
+      .map(
+        (face) => `
+        <button class="card" data-face="${face}" aria-label="Hidden card">
+          <span class="card__face">${face}</span>
+        </button>`
+      )
+      .join('');
+    grid.querySelectorAll('[data-face]').forEach((card) =>
+      card.addEventListener('click', () => flip(card))
+    );
+    first = null;
+    busy = false;
+  }
+
+  function flip(card) {
+    if (busy || card.classList.contains('is-up') || card.classList.contains('is-done')) return;
+    card.classList.add('is-up');
+
+    if (!first) { first = card; return; }
+
+    if (first.dataset.face === card.dataset.face) {
+      first.classList.add('is-done');
+      card.classList.add('is-done');
+      matched += 1;
+      scoreEl.textContent = `${matched} ${matched === 1 ? 'pair' : 'pairs'}`;
+      first = null;
+      // Board cleared: deal a fresh one so the clock is the only limit.
+      if (grid.querySelectorAll('.is-done').length === PAIRS * 2) {
+        setTimeout(() => live() && deal(), 450);
+      }
+      return;
+    }
+
+    busy = true;
+    const previous = first;
+    first = null;
+    setTimeout(() => {
+      previous.classList.remove('is-up');
+      card.classList.remove('is-up');
+      busy = false;
+    }, 700);
   }
 
   ticker = setInterval(() => {
-    if (!live()) { clearInterval(ticker); return; }
+    if (!live()) return clearInterval(ticker);
     remaining -= 1;
-    const clock = stage.querySelector('[data-clock]');
-    if (clock) clock.textContent = `${remaining}s`;
-    if (remaining <= 0) stop();
+    stage.querySelector('[data-clock]').textContent = `${remaining}s`;
+    if (remaining <= 0) {
+      clearInterval(ticker);
+      setTimeout(() => live() && finish(matched, `${matched} pairs in ${SECONDS}s`), 400);
+    }
   }, 1000);
 
-  round();
+  deal();
 }
 
-/* --------------------------------------------------------------- Type Sprint
-   Retype a snippet. Score is words per minute scaled by accuracy, so racing
-   ahead with mistakes scores worse than typing it properly. */
+/* -------------------------------------------------------------- Bubble Pop */
 
-function playSprint(stage, finish, live = () => true) {
-  const snippet = SNIPPETS[Math.floor(Math.random() * SNIPPETS.length)];
-  let started = null;
+function playPop(stage, finish, live) {
+  const SECONDS = 30;
+  const COLOURS = [
+    'var(--accent)',
+    'var(--accent-2, var(--accent))',
+    'var(--accent-3, var(--accent))',
+    'var(--success)'
+  ];
+
+  let score = 0;
+  let remaining = SECONDS;
+  let ticker;
+  let spawner;
 
   stage.innerHTML = `
-    <div class="sprint">
-      <p class="sprint__target" data-target>${renderTarget(snippet, '')}</p>
-      <textarea class="sprint__input" data-input rows="3"
-        placeholder="Start typing to begin the clock…" spellcheck="false"></textarea>
-      <div class="sprint__meta"><span data-stats>0 wpm · 100% accurate</span></div>
+    <div class="pop">
+      <div class="game__bar">
+        <span data-score>0 pops</span>
+        <span class="game__clock" data-clock>${SECONDS}s</span>
+      </div>
+      <div class="pop__field" data-field></div>
     </div>`;
 
-  const input = stage.querySelector('[data-input]');
-  const target = stage.querySelector('[data-target]');
-  const stats = stage.querySelector('[data-stats]');
-  input.focus();
+  const field = stage.querySelector('[data-field]');
+  const scoreEl = stage.querySelector('[data-score]');
 
-  input.addEventListener('input', () => {
-    if (!started) started = Date.now();
-    const typed = input.value;
-    target.innerHTML = renderTarget(snippet, typed);
+  function spawn() {
+    if (!live()) return;
+    const bubble = document.createElement('button');
+    const size = 34 + Math.random() * 34;
+    bubble.className = 'bubble';
+    bubble.setAttribute('aria-label', 'Pop the bubble');
+    bubble.style.width = `${size}px`;
+    bubble.style.height = `${size}px`;
+    bubble.style.left = `${Math.random() * Math.max(0, field.clientWidth - size)}px`;
+    bubble.style.top = `${Math.random() * Math.max(0, field.clientHeight - size)}px`;
+    bubble.style.background = COLOURS[Math.floor(Math.random() * COLOURS.length)];
 
-    const correct = [...typed].filter((ch, i) => ch === snippet[i]).length;
-    const accuracy = typed.length ? correct / typed.length : 1;
-    const minutes = (Date.now() - started) / 60000;
-    const wpm = minutes > 0 ? correct / 5 / minutes : 0;
-    stats.textContent = `${Math.round(wpm)} wpm · ${Math.round(accuracy * 100)}% accurate`;
+    let popped = false;
+    bubble.addEventListener('click', () => {
+      if (popped) return;
+      popped = true;
+      score += 1;
+      scoreEl.textContent = `${score} ${score === 1 ? 'pop' : 'pops'}`;
+      bubble.classList.add('is-popped');
+      setTimeout(() => bubble.remove(), 180);
+    });
 
-    if (typed.length >= snippet.length) {
-      input.disabled = true;
-      // Accuracy is squared so a sloppy fast run cannot beat a clean one.
-      const score = Math.max(0, Math.min(200, Math.round(wpm * accuracy * accuracy)));
-      setTimeout(() => live() && finish(score, `${Math.round(accuracy * 100)}% accurate`), 500);
+    field.appendChild(bubble);
+    // Bubbles drift away on their own, so hesitating costs you.
+    setTimeout(() => { if (!popped) bubble.remove(); }, 1400);
+  }
+
+  function cleanup() {
+    clearInterval(ticker);
+    clearInterval(spawner);
+  }
+
+  spawner = setInterval(spawn, 520);
+  spawn();
+
+  ticker = setInterval(() => {
+    if (!live()) return cleanup();
+    remaining -= 1;
+    stage.querySelector('[data-clock]').textContent = `${remaining}s`;
+    if (remaining <= 0) {
+      cleanup();
+      field.innerHTML = '';
+      setTimeout(() => live() && finish(score, `${score} in ${SECONDS}s`), 400);
     }
-  });
+  }, 1000);
 }
 
-function renderTarget(snippet, typed) {
-  return [...snippet]
-    .map((ch, i) => {
-      const state =
-        i >= typed.length ? '' : typed[i] === ch ? 'is-ok' : 'is-bad';
-      const safe = ch === ' ' ? '&nbsp;' : escapeHtml(ch);
-      return `<span class="${state}">${safe}</span>`;
-    })
-    .join('');
-}
+/* --------------------------------------------------------- Colour Sequence */
 
-/* ------------------------------------------------------------------ Sequence
-   Simon: watch the pattern, play it back, one longer each round. */
-
-function playSequence(stage, finish, live = () => true) {
+function playSequence(stage, finish, live) {
   const PADS = 4;
   const pattern = [];
   let round = 0;
@@ -300,28 +460,27 @@ function playSequence(stage, finish, live = () => true) {
     pattern.push(Math.floor(Math.random() * PADS));
     let position = 0;
 
-    const onPad = async (event) => {
+    const onPad = (event) => {
       const index = Number(event.currentTarget.dataset.pad);
       event.currentTarget.classList.add('is-lit');
       setTimeout(() => event.currentTarget.classList.remove('is-lit'), 180);
 
-      if (index !== pattern[position]) {
+      const release = () =>
         pads.forEach((p) => {
           p.disabled = true;
           p.removeEventListener('click', onPad);
         });
+
+      if (index !== pattern[position]) {
+        release();
         status.textContent = `Wrong pad — you reached round ${round}`;
-        // Score is rounds *completed*, so failing round 1 scores zero.
         setTimeout(() => live() && finish(round - 1, `reached round ${round}`), 800);
         return;
       }
 
       position += 1;
       if (position === pattern.length) {
-        pads.forEach((p) => {
-          p.disabled = true;
-          p.removeEventListener('click', onPad);
-        });
+        release();
         setTimeout(nextRound, 500);
       }
     };

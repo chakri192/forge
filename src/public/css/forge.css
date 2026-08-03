@@ -1366,43 +1366,6 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 .game__empty { margin: 0; padding-top: var(--sp-3); border-top: 1px solid var(--line-faint);
                font-size: .8125rem; color: var(--text-faint); }
 
-/* --- Hex Hunt --- */
-
-.hex { display: flex; flex-direction: column; gap: var(--sp-3); }
-.hex__bar {
-  display: flex; justify-content: space-between; align-items: baseline;
-  font-size: .8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums;
-}
-.hex__clock { font-weight: 700; color: var(--text); }
-.hex__swatch {
-  height: 116px;
-  border-radius: var(--r-md);
-  border: 1px solid var(--line);
-}
-.hex__options { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: var(--sp-2); }
-.hex__option { font-family: var(--font-mono, ui-monospace, monospace); text-transform: uppercase; }
-.hex__option.is-right { border-color: var(--success); color: var(--success); }
-.hex__option.is-wrong { border-color: var(--danger); color: var(--danger); }
-
-/* --- Type Sprint --- */
-
-.sprint { display: flex; flex-direction: column; gap: var(--sp-3); }
-.sprint__target {
-  margin: 0;
-  padding: var(--sp-3);
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: .875rem;
-  line-height: 1.7;
-  word-break: break-word;
-  color: var(--text-faint);
-}
-.sprint__target .is-ok { color: var(--success); }
-.sprint__target .is-bad { color: var(--danger); background: var(--danger-wash); border-radius: 2px; }
-.sprint__input { font-family: var(--font-mono, ui-monospace, monospace); font-size: .875rem; }
-.sprint__meta { font-size: .8125rem; color: var(--text-muted); font-variant-numeric: tabular-nums; }
-
 /* --- Sequence --- */
 
 .seq { display: flex; flex-direction: column; gap: var(--sp-3); align-items: center; }
@@ -1416,15 +1379,18 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   width: 96px; height: 96px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--surface-2);
   cursor: pointer;
-  transition: background .12s var(--ease), transform .08s var(--ease);
+  transition: opacity .12s var(--ease), transform .08s var(--ease), box-shadow .12s var(--ease);
 }
-.seq__pad:nth-child(1).is-lit { background: var(--accent); }
-.seq__pad:nth-child(2).is-lit { background: var(--accent-2, var(--accent)); }
-.seq__pad:nth-child(3).is-lit { background: var(--accent-3, var(--accent)); }
-.seq__pad:nth-child(4).is-lit { background: var(--success); }
-.seq__pad:not(:disabled):hover { background: var(--surface-3); }
+/* Four distinct colours, dimmed at rest and full when lit — otherwise the
+   pads are identical grey and the game does not earn its name. */
+.seq__pad:nth-child(1) { background: var(--accent); }
+.seq__pad:nth-child(2) { background: var(--accent-2, var(--accent)); }
+.seq__pad:nth-child(3) { background: var(--accent-3, var(--accent)); }
+.seq__pad:nth-child(4) { background: var(--success); }
+.seq__pad { opacity: .34; }
+.seq__pad.is-lit { opacity: 1; box-shadow: 0 0 22px -4px currentColor; }
+.seq__pad:not(:disabled):hover { opacity: .6; }
 .seq__pad:not(:disabled):active { transform: scale(.96); }
 .seq__pad:disabled { cursor: default; }
 
@@ -1437,4 +1403,122 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 
 @media (prefers-reduced-motion: reduce) {
   .seq__pad { transition: none; }
+}
+
+/* --- shared game chrome --- */
+
+.game__bar {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: var(--sp-3); margin-bottom: var(--sp-3);
+  font-size: .8125rem; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.game__clock { font-weight: 700; color: var(--text); }
+.game__hint { font-size: .75rem; color: var(--text-faint); }
+
+/* --- Snake --- */
+
+.snake { display: flex; flex-direction: column; align-items: center; }
+.snake .game__bar { width: 100%; max-width: 360px; }
+
+.snake__board {
+  display: grid;
+  grid-template-columns: repeat(var(--cells), 1fr);
+  gap: 1px;
+  width: min(360px, 82vw);
+  aspect-ratio: 1;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  touch-action: none;
+  transition: border-color .2s var(--ease);
+}
+.snake__board.is-over { border-color: var(--danger); }
+.snake__board i { border-radius: 2px; }
+.snake__board i.is-body { background: var(--accent); opacity: .75; }
+.snake__board i.is-head { background: var(--accent); }
+.snake__board i.is-apple { background: var(--success); border-radius: 50%; }
+
+/* Thumb pad, so Snake is playable without a keyboard. */
+.pad {
+  display: grid;
+  grid-template-areas: '. up .' 'left down right';
+  gap: var(--sp-1);
+  margin-top: var(--sp-4);
+}
+.pad__btn {
+  width: 46px; height: 46px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.pad__btn:active { background: var(--accent); color: var(--accent-on); }
+.pad__up { grid-area: up; }
+.pad__left { grid-area: left; }
+.pad__down { grid-area: down; }
+.pad__right { grid-area: right; }
+
+/* --- Memory Match --- */
+
+.memory { display: flex; flex-direction: column; }
+.memory__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--sp-2);
+  max-width: 420px;
+}
+.card {
+  aspect-ratio: 3 / 4;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  cursor: pointer;
+  font-size: 1.5rem;
+  display: grid;
+  place-items: center;
+  transition: background .16s var(--ease), border-color .16s var(--ease);
+}
+.card__face { opacity: 0; transition: opacity .12s var(--ease); }
+.card.is-up, .card.is-done { background: var(--accent-wash); border-color: var(--accent-line); }
+.card.is-up .card__face, .card.is-done .card__face { opacity: 1; }
+.card.is-done { border-color: var(--success); cursor: default; }
+.card:not(.is-up):not(.is-done):hover { background: var(--surface-3); }
+
+/* --- Bubble Pop --- */
+
+.pop__field {
+  position: relative;
+  height: 300px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.bubble {
+  position: absolute;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: inset 0 -4px 10px rgba(0, 0, 0, .18), inset 0 4px 8px rgba(255, 255, 255, .25);
+  animation: bubble-in .18s var(--ease);
+  transition: transform .12s var(--ease);
+}
+.bubble:hover { transform: scale(1.06); }
+.bubble.is-popped { transform: scale(1.5); opacity: 0; }
+
+@keyframes bubble-in { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+@media (max-width: 560px) {
+  .memory__grid { max-width: 100%; }
+  .pop__field { height: 240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble { animation: none; transition: none; }
+  .card { transition: none; }
 }

@@ -90,12 +90,11 @@ transaction covering XP, streak, and badges together.
 history rather than counting forward, so an achievement added today is
 immediately earned by anyone who already qualified.
 
-**Mini games** are short, replayable rounds that sharpen everyday skills:
-Hex Hunt reads a colour and asks for its hex, Type Sprint scores a retyped
-snippet by speed scaled against accuracy, and Sequence is pattern recall that
-grows by one each round. Beating your own previous best awards XP, so the
-reward is improvement rather than grinding. Scores are capped server-side,
-since a game running in the browser can only ever submit a claim.
+**Mini games** are four classics, each about a minute long: Snake, Memory
+Match, Bubble Pop, and Colour Sequence. Beating your own previous best awards
+XP, so the reward is improvement rather than repetition. Scores are capped
+per game server-side, since a game running in the browser can only ever
+submit a claim.
 
 **Hall of Fame** ranks by XP with medals for the top three, a season toggle, and
 awarded titles.
