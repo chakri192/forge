@@ -39,8 +39,11 @@ const ALLOWED_TRANSITIONS = {
   open: ['in_progress', 'active', 'archived'],
   marketplace: ['active', 'in_progress', 'archived'],
   in_progress: ['pending_review', 'pending_approval', 'archived'],
-  pending_review: ['completed', 'in_progress', 'archived'],
-  pending_approval: ['completed', 'in_progress', 'archived'],
+  pending_review: ['completed', 'changes_requested', 'in_progress', 'archived'],
+  pending_approval: ['completed', 'changes_requested', 'in_progress', 'archived'],
+  // Requested changes return the work to the submitter rather than
+  // dead-ending it, which is the point of the state.
+  changes_requested: ['in_progress', 'pending_review', 'archived'],
   completed: ['archived'],
   archived: ['draft', 'active']
 };
