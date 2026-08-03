@@ -9,7 +9,8 @@
     "dev": "node --watch src/server/index.js",
     "seed": "node src/server/db/seed.js",
     "test": "node --test",
-    "test:watch": "node --test --watch"
+    "test:watch": "node --test --watch",
+    "migrate:rollback": "node src/server/db/rollback.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

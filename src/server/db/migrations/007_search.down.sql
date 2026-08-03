@@ -1,0 +1,14 @@
+DROP TRIGGER IF EXISTS trg_search_tasks_ins;
+DROP TRIGGER IF EXISTS trg_search_tasks_upd;
+DROP TRIGGER IF EXISTS trg_search_tasks_del;
+DROP TRIGGER IF EXISTS trg_search_threads_ins;
+DROP TRIGGER IF EXISTS trg_search_threads_upd;
+DROP TRIGGER IF EXISTS trg_search_threads_del;
+DROP TRIGGER IF EXISTS trg_search_posts_ins;
+DROP TRIGGER IF EXISTS trg_search_posts_del;
+DROP TRIGGER IF EXISTS trg_search_ann_ins;
+DROP TRIGGER IF EXISTS trg_search_ann_upd;
+DROP TRIGGER IF EXISTS trg_search_ann_del;
+DROP TRIGGER IF EXISTS trg_search_quiz_ins;
+DROP TRIGGER IF EXISTS trg_search_quiz_del;
+DROP TABLE IF EXISTS search_index;
