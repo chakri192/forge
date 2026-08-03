@@ -11,8 +11,8 @@ export function renderFileUpload({
       ${label ? `<label class="text-xs font-semibold text-outline">${label}</label>` : ''}
       <div class="forge-dropzone" id="${id}_dropzone">
         <input type="file" id="${id}_input" class="hidden" accept="${accept}" multiple />
-        <span class="material-symbols-outlined text-3xl text-royal-slate-blue mb-2">cloud_upload</span>
-        <p class="text-xs font-bold text-white mb-0.5">Drag & drop files here, or <span class="text-royal-slate-blue hover:underline">browse</span></p>
+        <span class="material-symbols-outlined text-3xl text-accent-text mb-2">cloud_upload</span>
+        <p class="text-xs font-bold text-white mb-0.5">Drag & drop files here, or <span class="text-accent-text hover:underline">browse</span></p>
         <p class="text-[10px] text-outline">Supports files up to 10MB</p>
         
         <div class="file-progress-bar hidden w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-4">
@@ -76,7 +76,7 @@ export function attachFileUploadEvents(containerId, onFilesSelected) {
       preview.innerHTML = fileArray.map(f => `
         <div class="flex items-center justify-between p-2 rounded-lg bg-white/5 border border-white/10 text-xs">
           <div class="flex items-center gap-2 truncate">
-            <span class="material-symbols-outlined text-base text-royal-slate-blue">description</span>
+            <span class="material-symbols-outlined text-base text-accent-text">description</span>
             <span class="font-semibold text-white truncate">${f.name}</span>
             <span class="text-[10px] text-outline">(${(f.size / 1024).toFixed(1)} KB)</span>
           </div>

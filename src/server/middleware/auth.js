@@ -14,6 +14,9 @@ export function authenticateUser(req, _res, next) {
     token = authHeader.substring(7).trim();
   } else if (req.cookies && req.cookies.token) {
     token = req.cookies.token;
+  } else if (req.query && typeof req.query.token === 'string' && req.query.token) {
+    // EventSource cannot set headers, so the SSE stream authenticates via query token
+    token = req.query.token;
   }
 
   if (token) {

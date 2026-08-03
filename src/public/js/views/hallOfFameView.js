@@ -1,84 +1,164 @@
 // The Hall of Fame View Renderer (Marble & Granite Theme)
-import { getIcon } from '../components/icons.js';
 import { openModal } from '../components/modal.js';
 import { awardTitle } from '../services/api.js';
+import { escapeHtml } from '../utils/dom.js';
 
 export function renderHallOfFameView(state) {
   const { hallOfFameData, currentUser } = state;
   const allTime = hallOfFameData.allTime || [];
   const season1 = hallOfFameData.season1 || [];
   const titles = hallOfFameData.titles || [];
-  const userRole = currentUser ? (currentUser.public_role || currentUser.role) : '';
-  const isTeacherOrDev = ['TEACHER'].includes(userRole);
+  // Mirror the server's HOF_AWARD permission (leader/teacher/admin, plus the
+  // DEV_STEALTH overlay whose public_role is masked to "member").
+  const rawRole = currentUser ? currentUser.role : '';
+  const publicRole = currentUser ? currentUser.public_role || currentUser.role : '';
+  const isTeacherOrDev =
+    ['leader', 'teacher', 'admin'].includes(publicRole) ||
+    ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'].includes(rawRole);
 
   return `
-    <div class="hall-of-fame-wrapper">
-      <div class="hall-header">
-        <h2>
-          ${getIcon('hall', 'svg-icon')} The Hall of Fame
-        </h2>
-        <p style="opacity:0.8; margin-top:0.4rem;">Honoring Academic Excellence, Coding Mastery & Community Titles</p>
+    <div class="space-y-5">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-3xl accent-target">emoji_events</span> Hall of Fame
+          </h2>
+          <p class="text-xs text-outline mt-1">Academic excellence, coding mastery, and community titles.</p>
+        </div>
         ${isTeacherOrDev ? `
-          <div style="margin-top:1rem;">
-            <button id="btnAwardTitle" class="btn btn-primary" style="font-size:0.85rem;">
-              ${getIcon('award')} Award Title
-            </button>
-          </div>
+          <button id="btnAwardTitle" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+            <span class="material-symbols-outlined text-base" aria-hidden="true">workspace_premium</span> Award Title
+          </button>
         ` : ''}
       </div>
 
-      <div class="hall-grid">
-        <!-- All-Time Leaderboard Sideboard -->
-        <div>
-          <h3 style="margin-bottom:0.75rem; border-bottom:1px solid var(--border-color); padding-bottom:0.4rem;">All-Time Rankings</h3>
-          <ol style="padding-left:1.2rem;">
-            ${allTime.map(u => `
-              <li style="margin-bottom:0.6rem; font-weight:600;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span>${u.name} ${u.tag ? `<small style="opacity:0.7">(${u.tag})</small>` : ''}</span>
-                  <span class="badge badge-accent2">${u.points} PTS</span>
-                </div>
-              </li>
-            `).join('')}
-          </ol>
-        </div>
-
-        <!-- Central Monument Wall (Awarded Titles) -->
-        <div class="hall-monument">
-          <h3 style="margin-bottom:1rem;">Awarded Honors</h3>
-          ${titles.length === 0 ? `<p style="opacity:0.7;">No titles awarded yet.</p>` : ''}
-          ${titles.map(t => `
-            <div class="plaque">
-              <div style="font-size:1.05rem; display:flex; align-items:center; gap:0.4rem; justify-content:center;">
-                ${getIcon('trophy')} ${t.title_name}
-              </div>
-              <div style="font-size:0.8rem; opacity:0.9;">
-                Awarded to: ${t.user_name || t.team_name || 'Cohort'} (${t.category})
-              </div>
+      <div class="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-5 items-start">
+        <!-- Leaderboard with season toggle -->
+        <section class="glass-card rounded-2xl overflow-hidden">
+          <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/10 flex-wrap">
+            <h3 class="text-sm font-bold flex items-center gap-2">
+              <span class="material-symbols-outlined text-base accent-target" aria-hidden="true">leaderboard</span>
+              Rankings
+            </h3>
+            <div class="flex gap-1 p-1 rounded-xl bg-white/5 border border-white/10" role="tablist" aria-label="Ranking period">
+              <button role="tab" aria-selected="true" data-season="allTime"
+                class="season-tab px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all bg-royal-slate-blue/25 text-white">
+                All-time
+              </button>
+              <button role="tab" aria-selected="false" data-season="season1"
+                class="season-tab px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all text-outline hover:text-white">
+                Season 1
+              </button>
             </div>
-          `).join('')}
-        </div>
+          </div>
+          <div id="seasonPanel-allTime" class="season-panel">
+            ${renderRankingList(allTime, currentUser)}
+          </div>
+          <div id="seasonPanel-season1" class="season-panel hidden">
+            ${renderRankingList(season1, currentUser)}
+          </div>
+        </section>
 
-        <!-- Season 1 Leaderboard Sideboard -->
-        <div>
-          <h3 style="margin-bottom:0.75rem; border-bottom:1px solid var(--border-color); padding-bottom:0.4rem;">Season 1 Rankings</h3>
-          <ol style="padding-left:1.2rem;">
-            ${season1.map(u => `
-              <li style="margin-bottom:0.6rem; font-weight:600;">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <span>${u.name} ${u.tag ? `<small style="opacity:0.7">(${u.tag})</small>` : ''}</span>
-                  <span class="badge badge-accent1">${u.points} PTS</span>
-                </div>
-              </li>
-            `).join('')}
-          </ol>
-        </div>
+        <!-- Awarded honors -->
+        <section class="glass-card rounded-2xl p-5">
+          <h3 class="text-sm font-bold flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-base accent-target" aria-hidden="true">workspace_premium</span>
+            Awarded Honors
+          </h3>
+          ${
+            titles.length === 0
+              ? `<div class="text-center py-8 space-y-2">
+                  <span class="material-symbols-outlined text-3xl text-outline" aria-hidden="true">military_tech</span>
+                  <p class="text-xs text-outline">No titles awarded yet.</p>
+                  ${isTeacherOrDev ? '<p class="text-[11px] text-outline/70">Recognise a standout member with the Award Title button.</p>' : ''}
+                </div>`
+              : `<ul class="space-y-2.5">
+                  ${titles
+                    .map(
+                      (t) => `
+                    <li class="p-3.5 rounded-xl bg-gradient-to-br from-amber-500/10 to-transparent border border-amber-500/25">
+                      <div class="flex items-center gap-2 text-sm font-bold text-amber-300">
+                        <span class="material-symbols-outlined text-base" aria-hidden="true">trophy</span>
+                        ${escapeHtml(t.title_name)}
+                      </div>
+                      <div class="text-[11px] text-outline mt-1">
+                        ${escapeHtml(t.user_name || t.team_name || 'Cohort')}${t.category ? ` · ${escapeHtml(t.category)}` : ''}
+                      </div>
+                    </li>`
+                    )
+                    .join('')}
+                </ul>`
+          }
+        </section>
       </div>
     </div>
   `;
 }
 
+const MEDALS = [
+  'bg-amber-400/20 text-amber-300 border-amber-400/40',
+  'bg-slate-300/20 text-slate-200 border-slate-300/40',
+  'bg-orange-600/20 text-orange-300 border-orange-600/40'
+];
+
+function renderRankingList(entries, currentUser) {
+  if (!entries.length) {
+    return `
+      <div class="text-center py-12 space-y-2">
+        <span class="material-symbols-outlined text-3xl text-outline" aria-hidden="true">social_leaderboard</span>
+        <p class="text-sm text-white font-semibold">No rankings yet</p>
+        <p class="text-xs text-outline">Points appear here once tasks are completed and approved.</p>
+      </div>`;
+  }
+
+  return `
+    <ol class="divide-y divide-white/5">
+      ${entries
+        .map((u, index) => {
+          const isSelf = currentUser && u.id === currentUser.id;
+          const medal = MEDALS[index] || 'bg-white/5 text-outline border-white/10';
+          return `
+            <li class="flex items-center gap-3 px-5 py-3 transition-colors ${isSelf ? 'bg-royal-slate-blue/10' : 'hover:bg-white/[0.03]'}">
+              <span class="w-7 h-7 shrink-0 rounded-lg border flex items-center justify-center text-[11px] font-black ${medal}">
+                ${index + 1}
+              </span>
+              <span class="flex-1 min-w-0">
+                <span class="flex items-center gap-2 text-sm font-semibold text-white truncate">
+                  ${escapeHtml(u.name)}
+                  ${isSelf ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-royal-slate-blue/30 text-white shrink-0">You</span>' : ''}
+                </span>
+                ${u.tag ? `<span class="block text-[11px] text-outline truncate">${escapeHtml(u.tag)}</span>` : ''}
+              </span>
+              <span class="text-right shrink-0">
+                <span class="block text-sm font-black text-white tabular-nums">
+                  ${Number(u.xp || 0).toLocaleString()}
+                  <span class="text-[10px] font-bold text-outline ml-0.5">XP</span>
+                </span>
+                <span class="block text-[10px] text-outline tabular-nums">${Number(u.points || 0).toLocaleString()} pts</span>
+              </span>
+            </li>`;
+        })
+        .join('')}
+    </ol>`;
+}
+
+
 export function attachHallOfFameEvents(state, refreshData) {
+  const seasonTabs = [...document.querySelectorAll('.season-tab')];
+  seasonTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      seasonTabs.forEach((other) => {
+        const isActive = other === tab;
+        other.setAttribute('aria-selected', String(isActive));
+        other.classList.toggle('bg-royal-slate-blue/25', isActive);
+        other.classList.toggle('text-white', isActive);
+        other.classList.toggle('text-outline', !isActive);
+        const panel = document.getElementById(`seasonPanel-${other.dataset.season}`);
+        if (panel) panel.classList.toggle('hidden', !isActive);
+      });
+    });
+  });
+
   const awardBtn = document.getElementById('btnAwardTitle');
   if (awardBtn) {
     awardBtn.addEventListener('click', () => {

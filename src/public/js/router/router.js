@@ -8,10 +8,28 @@ import { renderSignUpView, attachSignUpEvents } from '../views/signUpView.js';
 import { renderSettingsView, attachSettingsEvents } from '../views/settingsView.js';
 import { renderDevDashboardView, attachDevDashboardEvents } from '../views/devDashboardView.js';
 import { renderComponentsTestView, attachComponentsTestEvents } from '../views/componentsTestView.js';
+import { renderMessagesView, attachMessagesEvents } from '../views/messagesView.js';
+import { renderAnnouncementsView, attachAnnouncementsEvents } from '../views/announcementsView.js';
+import { renderProfileView, attachProfileEvents } from '../views/profileView.js';
+import { renderForumView, attachForumEvents } from '../views/forumView.js';
+import { renderMarketplaceView, attachMarketplaceEvents } from '../views/marketplaceView.js';
+import { renderCalendarView, attachCalendarEvents } from '../views/calendarView.js';
+import { renderJournalView, attachJournalEvents } from '../views/journalView.js';
+import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsView.js';
+import { renderQuizzesView, attachQuizzesEvents } from '../views/quizzesView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
   dashboard: { render: renderDashboard, attach: attachDashboardEvents },
+  messages: { render: renderMessagesView, attach: attachMessagesEvents },
+  announcements: { render: renderAnnouncementsView, attach: attachAnnouncementsEvents },
+  profile: { render: renderProfileView, attach: attachProfileEvents },
+  forum: { render: renderForumView, attach: attachForumEvents },
+  marketplace: { render: renderMarketplaceView, attach: attachMarketplaceEvents },
+  calendar: { render: renderCalendarView, attach: attachCalendarEvents },
+  journal: { render: renderJournalView, attach: attachJournalEvents },
+  analytics: { render: renderAnalyticsView, attach: attachAnalyticsEvents },
+  quizzes: { render: renderQuizzesView, attach: attachQuizzesEvents },
   tasks: { render: renderTasksView, attach: attachTasksEvents },
   challenges: { render: renderChallengesView, attach: attachChallengesEvents },
   teams: { render: renderTeamsView, attach: attachTeamsEvents },

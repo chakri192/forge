@@ -26,7 +26,7 @@ export function getAuthToken(userOrId = 'u_dev') {
   return generateToken({ id: userOrId, username: userOrId, role: 'DEV_STEALTH' });
 }
 
-export function loginAndGetToken(identifier = 'aaron_dev', password = 'pass123') {
+export function loginAndGetToken(identifier = 'chakradhar_dev', password = 'pass123') {
   const user = db.prepare('SELECT * FROM users WHERE id = ? OR username = ? OR email = ? OR phone = ?').get(identifier, identifier, identifier, identifier);
   if (user && bcrypt.compareSync(password, user.password_hash)) {
     const token = generateToken(user);
@@ -65,7 +65,7 @@ export function resetDatabase() {
     INSERT INTO users (id, name, username, email, phone, password_hash, role, tag)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  insertUser.run('u_dev', 'Aaron', 'aaron_dev', 'aaron@forge.local', '9990001111', hashedPass, 'DEV_STEALTH', 'Creator');
+  insertUser.run('u_dev', 'V Chakradhar', 'chakradhar_dev', 'chakradhar@forge.local', '9990001111', hashedPass, 'DEV_STEALTH', 'Creator');
   insertUser.run('u_teacher', 'Prof. Vance', 'teacher_vance', 'teacher@forge.local', '9990000000', hashedPass, 'TEACHER', 'Instructor');
   insertUser.run('u_l1', 'Marcus (Leader 01)', 'marcus_lead', 'marcus@forge.local', '9990002222', hashedPass, 'STUDENT_LEADER', 'Student Leader');
   insertUser.run('u_l2', 'Sarah (Leader 02)', 'sarah_lead', 'sarah@forge.local', '9990003333', hashedPass, 'STUDENT_LEADER', 'Student Leader');

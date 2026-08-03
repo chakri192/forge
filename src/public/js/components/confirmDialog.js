@@ -14,7 +14,7 @@ export function showConfirmDialog({
     backdrop.innerHTML = `
       <div class="forge-modal-card" role="dialog" aria-modal="true">
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-full ${danger ? 'bg-red-500/20 text-red-400' : 'bg-royal-slate-blue/20 text-royal-slate-blue'} flex items-center justify-center">
+          <div class="w-10 h-10 rounded-full ${danger ? 'bg-red-500/20 text-red-400' : 'bg-royal-slate-blue/20 text-accent-text'} flex items-center justify-center">
             <span class="material-symbols-outlined text-xl">${danger ? 'warning' : 'help_outline'}</span>
           </div>
           <h3 class="text-base font-bold text-white">${title}</h3>

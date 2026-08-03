@@ -18,7 +18,7 @@ export function renderDevDashboardView(state) {
           </div>
 
           <span class="text-xs font-bold px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-ice-blue">
-            Admin Account: Aaron (Dev / Owner)
+            Admin Account: V Chakradhar (Dev / Owner)
           </span>
         </div>
       </div>
@@ -29,7 +29,7 @@ export function renderDevDashboardView(state) {
         <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
           <div class="flex items-center justify-between pb-3 border-b border-white/10">
             <h2 class="text-base font-bold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-royal-slate-blue accent-target">how_to_reg</span>
+              <span class="material-symbols-outlined text-accent-text accent-target">how_to_reg</span>
               Sign-Up Registration Controls
             </h2>
             <span id="devStatusBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
@@ -74,7 +74,7 @@ export function renderDevDashboardView(state) {
               System Security & Role Integrity
             </h2>
             <p class="text-xs text-outline mt-3 leading-relaxed">
-              Your account <strong>Aaron (Dev / Owner)</strong> holds absolute owner privileges (`DEV_STEALTH`). It cannot be deleted or modified by any public API endpoint. You hold full authority over member role promotions and capacity locking.
+              Your account <strong>V Chakradhar (Dev / Owner)</strong> holds absolute owner privileges (DEV_STEALTH). It cannot be deleted or modified by any public API endpoint. You hold full authority over member role promotions and capacity locking.
             </p>
           </div>
 
@@ -87,7 +87,7 @@ export function renderDevDashboardView(state) {
       <!-- Member Roster Management Table -->
       <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
         <h2 class="text-base font-bold text-white flex items-center gap-2 pb-2 border-b border-white/10">
-          <span class="material-symbols-outlined text-royal-slate-blue accent-target">group</span>
+          <span class="material-symbols-outlined text-accent-text accent-target">group</span>
           Member Roster & Role Management
         </h2>
 

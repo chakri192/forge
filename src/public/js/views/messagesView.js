@@ -1,0 +1,477 @@
+// Messages View: channel list + live thread over SSE
+import {
+  fetchChannels,
+  fetchChannelMessages,
+  sendChannelMessage,
+  editChannelMessage,
+  deleteChannelMessage,
+  createChannel,
+  fetchTeams
+} from '../services/api.js';
+import { onStreamEvent } from '../services/stream.js';
+import { showToast } from '../components/toast.js';
+import { openModal } from '../components/modal.js';
+import { withUndo } from '../utils/undo.js';
+import { saveDraft, readDraft, clearDraft } from '../utils/drafts.js';
+import { renderSkeleton } from '../components/spinner.js';
+import { pushHash, currentParam } from '../router/hashRouter.js';
+import { escapeHtml, timeAgo } from '../utils/dom.js';
+
+const MANAGE_ROLES = ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'];
+const SEEN_KEY = 'forge_channel_seen';
+
+let activeChannelId = null;
+let unsubscribeStream = null;
+
+/** Per-channel "last read" marks, used to derive unread state locally. */
+function readSeenMap() {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_KEY)) || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function markChannelSeen(channelId, at = new Date().toISOString()) {
+  const seen = readSeenMap();
+  seen[channelId] = at;
+  try {
+    localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+  } catch (_) {}
+}
+
+function isChannelUnread(channel, seen) {
+  if (!channel.last_message_at) return false;
+  const lastSeen = seen[channel.id];
+  if (!lastSeen) return true;
+  return new Date(channel.last_message_at).getTime() > new Date(lastSeen).getTime();
+}
+
+export function renderMessagesView(state) {
+  const user = state.currentUser;
+  if (!user) {
+    return `
+      <div class="glass-card p-10 rounded-2xl text-center space-y-2">
+        <span class="material-symbols-outlined text-4xl text-outline">forum</span>
+        <p class="text-sm text-outline">Sign in to access community messaging.</p>
+      </div>`;
+  }
+  const canManage = MANAGE_ROLES.includes(user.role);
+
+  return `
+    <div class="space-y-5">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-3xl accent-target">forum</span> Messages
+          </h2>
+          <p class="text-xs text-outline mt-1">Community channels with live delivery over SSE.</p>
+        </div>
+        ${
+          canManage
+            ? `<button id="btnNewChannel" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue text-white rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md">
+                <span class="material-symbols-outlined text-base">add</span> New Channel
+              </button>`
+            : ''
+        }
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-[280px_1fr] gap-4" style="height: calc(100vh - 240px); min-height: 420px;">
+        <div class="glass-card rounded-2xl p-2.5 space-y-1 overflow-y-auto" id="channelList">
+          ${[0, 1, 2]
+            .map(
+              () => `
+            <div class="px-3.5 py-2.5 space-y-2">
+              ${renderSkeleton('text', { width: '60%', height: '13px' })}
+              ${renderSkeleton('text', { width: '85%', height: '10px' })}
+            </div>`
+            )
+            .join('')}
+        </div>
+        <div class="glass-card rounded-2xl flex flex-col overflow-hidden">
+          <div class="px-5 py-3.5 border-b border-white/10 flex items-center gap-2 min-h-[52px]" id="threadHeader">
+            <span class="text-sm font-semibold text-outline">Select a channel</span>
+          </div>
+          <div class="flex-1 overflow-y-auto p-5 space-y-4" id="threadBody">
+            <div class="h-full flex flex-col items-center justify-center gap-2 text-center py-10">
+              <span class="material-symbols-outlined text-4xl text-outline">chat_bubble</span>
+              <p class="text-outline text-sm">Pick a channel on the left to start chatting.</p>
+            </div>
+          </div>
+          <form class="p-3.5 border-t border-white/10 flex gap-2.5 hidden" id="composerForm">
+            <textarea id="composerInput" rows="1" maxlength="4000" autocomplete="off" placeholder="Write a message…  (Shift+Enter for a new line)"
+              class="flex-1 resize-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60 transition-colors"></textarea>
+            <button type="submit" class="flex items-center gap-1.5 px-5 py-2.5 bg-royal-slate-blue text-white rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md">
+              <span class="material-symbols-outlined text-base">send</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>`;
+}
+
+export function attachMessagesEvents(state) {
+  const user = state.currentUser;
+  if (!user) return;
+
+  const channelListEl = document.getElementById('channelList');
+  const threadHeaderEl = document.getElementById('threadHeader');
+  const threadBodyEl = document.getElementById('threadBody');
+  const composerForm = document.getElementById('composerForm');
+  const composerInput = document.getElementById('composerInput');
+
+  let channels = [];
+  const isAdmin = user.role === 'admin' || user.role === 'DEV_STEALTH';
+
+  const channelIcon = (c) =>
+    c.type === 'announcement' ? 'campaign' : c.is_private ? 'lock' : 'tag';
+
+  function renderChannelList() {
+    if (!channels.length) {
+      channelListEl.innerHTML = `
+        <div class="flex flex-col items-center justify-center gap-2 py-10 text-center">
+          <span class="material-symbols-outlined text-3xl text-outline">tag</span>
+          <p class="text-outline text-xs">No channels yet.</p>
+        </div>`;
+      return;
+    }
+    const seen = readSeenMap();
+    let unreadTotal = 0;
+
+    channelListEl.innerHTML = channels
+      .map((c) => {
+        const active = c.id === activeChannelId;
+        const unread = !active && isChannelUnread(c, seen);
+        if (unread) unreadTotal += 1;
+        return `
+          <button data-channel-id="${c.id}" class="channel-item w-full text-left px-3.5 py-2.5 rounded-xl transition-all ${
+            active
+              ? 'bg-royal-slate-blue/20 border border-royal-slate-blue/40 text-white'
+              : 'text-outline hover:text-white hover:bg-white/5 border border-transparent'
+          }">
+            <span class="flex items-center gap-2 text-[13px] ${unread ? 'font-bold text-white' : 'font-semibold'}">
+              <span class="material-symbols-outlined text-base ${active ? 'accent-target' : ''}">${channelIcon(c)}</span>
+              <span class="truncate">${escapeHtml(c.name)}</span>
+              ${
+                unread
+                  ? '<span class="ml-auto w-2 h-2 rounded-full bg-royal-slate-blue shrink-0" aria-label="Unread messages"></span>'
+                  : c.type === 'announcement'
+                    ? '<span class="ml-auto text-[9px] font-bold uppercase tracking-wider text-amber-400/80">Read-only</span>'
+                    : ''
+              }
+            </span>
+            ${
+              c.last_message
+                ? `<span class="block text-[11px] ${unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(c.last_message.slice(0, 64))}</span>`
+                : `<span class="block text-[11px] text-outline/60 italic mt-1 pl-6">No messages yet</span>`
+            }
+          </button>`;
+      })
+      .join('');
+
+    // Surface the total on the sidebar nav item so unread activity is visible
+    // from anywhere in the app.
+    document.dispatchEvent(
+      new CustomEvent('forge:unread-channels', { detail: { count: unreadTotal } })
+    );
+
+    channelListEl.querySelectorAll('.channel-item').forEach((btn) => {
+      btn.addEventListener('click', () => openChannel(btn.dataset.channelId));
+    });
+  }
+
+  function initialsOf(name) {
+    return String(name || '?')
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0] || '')
+      .join('')
+      .toUpperCase();
+  }
+
+  function messageHtml(m, { pending = false } = {}) {
+    const mine = m.user_id === user.id;
+    const canEdit = mine && !pending;
+    const canDelete = (mine || isAdmin) && !pending;
+    const edited = m.updated_at && m.updated_at !== m.created_at ? ' · edited' : '';
+    return `
+      <div class="msg-row group flex gap-3 ${mine ? 'flex-row-reverse' : ''} ${pending ? 'opacity-60' : ''}" data-message-id="${m.id}">
+        <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${
+          mine ? 'bg-royal-slate-blue/40 text-white' : 'bg-white/10 text-outline'
+        }">${escapeHtml(initialsOf(m.user_name))}</div>
+        <div class="max-w-[75%] ${mine ? 'text-right' : ''}">
+          <div class="text-[11px] text-outline mb-1">${escapeHtml(m.user_name || 'Unknown')} · ${timeAgo(m.created_at)}${edited}</div>
+          <div class="msg-bubble inline-block text-left px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed break-words ${
+            mine
+              ? 'bg-royal-slate-blue/25 border border-royal-slate-blue/40 rounded-tr-md'
+              : 'bg-white/5 border border-white/10 rounded-tl-md'
+          }">${escapeHtml(m.content)}</div>
+          ${
+            canEdit || canDelete
+              ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex gap-2.5 ${mine ? 'justify-end' : ''}">
+                  ${canEdit ? `<button class="msg-edit text-[11px] font-semibold text-outline hover:text-white" data-message-id="${m.id}">Edit</button>` : ''}
+                  ${canDelete ? `<button class="msg-delete text-[11px] font-semibold text-red-400/80 hover:text-red-300" data-message-id="${m.id}">Delete</button>` : ''}
+                </div>`
+              : ''
+          }
+        </div>
+      </div>`;
+  }
+
+  function emptyThreadHtml() {
+    return `
+      <div class="h-full flex flex-col items-center justify-center gap-2 text-center py-10" id="threadEmpty">
+        <span class="material-symbols-outlined text-4xl text-outline">waving_hand</span>
+        <p class="text-outline text-sm">No messages yet — say hello!</p>
+      </div>`;
+  }
+
+  function bindMessageActions() {
+    threadBodyEl.querySelectorAll('.msg-delete').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.messageId;
+        const row = threadBodyEl.querySelector(`[data-message-id="${id}"]`);
+        if (!row) return;
+        const anchor = row.nextElementSibling;
+
+        // No confirm dialog: hide it now, delete for real in 6s unless undone.
+        withUndo({
+          title: 'Message deleted',
+          message: 'It will be removed for everyone.',
+          optimistic: () => row.remove(),
+          revert: () => {
+            if (anchor && anchor.isConnected) threadBodyEl.insertBefore(row, anchor);
+            else threadBodyEl.appendChild(row);
+            bindMessageActions();
+          },
+          apply: () => deleteChannelMessage(id)
+        });
+      });
+    });
+
+    threadBodyEl.querySelectorAll('.msg-edit').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const row = threadBodyEl.querySelector(`[data-message-id="${btn.dataset.messageId}"]`);
+        const current = row?.querySelector('.msg-bubble')?.textContent ?? '';
+        openModal({
+          title: 'Edit message',
+          contentHtml: `
+            <textarea id="editMessageInput" maxlength="4000" rows="4"
+              class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-royal-slate-blue/60">${escapeHtml(current)}</textarea>`,
+          onConfirm: async (overlay) => {
+            const content = overlay.querySelector('#editMessageInput').value.trim();
+            if (!content) return false;
+            try {
+              await editChannelMessage(btn.dataset.messageId, content);
+              return true;
+            } catch (_) {
+              return false;
+            }
+          }
+        });
+      });
+    });
+  }
+
+  async function openChannel(channelId) {
+    activeChannelId = channelId;
+    markChannelSeen(channelId);
+    pushHash('messages', channelId);
+    renderChannelList();
+    try {
+      const { channel, messages } = await fetchChannelMessages(channelId);
+      threadHeaderEl.innerHTML = `
+        <span class="material-symbols-outlined text-lg accent-target">${channelIcon(channel)}</span>
+        <span class="text-sm font-bold">${escapeHtml(channel.name)}</span>
+        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-outline ml-1.5">${channel.type}</span>
+        ${channel.is_private ? '<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400">Private</span>' : ''}`;
+      threadBodyEl.innerHTML = messages.length ? messages.map(messageHtml).join('') : emptyThreadHtml();
+      bindMessageActions();
+      composerForm.classList.remove('hidden');
+      composerInput.value = readDraft(`channel:${channelId}`) || '';
+      composerInput.focus();
+      threadBodyEl.scrollTop = threadBodyEl.scrollHeight;
+      if (messages.length) markChannelSeen(channelId, messages[messages.length - 1].created_at);
+    } catch (_) {
+      threadBodyEl.innerHTML = `
+        <div class="h-full flex flex-col items-center justify-center gap-2 text-center py-10">
+          <span class="material-symbols-outlined text-4xl text-outline">lock</span>
+          <p class="text-outline text-sm">Unable to load this channel.</p>
+        </div>`;
+    }
+  }
+
+  async function refreshChannels() {
+    try {
+      const data = await fetchChannels();
+      channels = data.channels || [];
+      renderChannelList();
+    } catch (_) {}
+  }
+
+  composerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const content = composerInput.value.trim();
+    if (!content || !activeChannelId) return;
+    composerInput.value = '';
+    clearDraft(`channel:${activeChannelId}`);
+
+    // Show the message immediately at reduced opacity; the SSE echo replaces
+    // this placeholder with the server's copy (dedupe keys off the real id).
+    const pendingId = `pending_${Date.now()}`;
+    const channelAtSend = activeChannelId;
+    document.getElementById('threadEmpty')?.remove();
+    threadBodyEl.insertAdjacentHTML(
+      'beforeend',
+      messageHtml(
+        {
+          id: pendingId,
+          user_id: user.id,
+          user_name: user.name,
+          content,
+          created_at: new Date().toISOString()
+        },
+        { pending: true }
+      )
+    );
+    threadBodyEl.scrollTop = threadBodyEl.scrollHeight;
+
+    try {
+      const { message } = await sendChannelMessage(channelAtSend, content);
+      const placeholder = threadBodyEl.querySelector(`[data-message-id="${pendingId}"]`);
+      if (placeholder) {
+        if (threadBodyEl.querySelector(`[data-message-id="${message.id}"]`)) placeholder.remove();
+        else {
+          placeholder.outerHTML = messageHtml(message);
+          bindMessageActions();
+        }
+      }
+    } catch (err) {
+      const placeholder = threadBodyEl.querySelector(`[data-message-id="${pendingId}"]`);
+      if (placeholder) {
+        placeholder.classList.add('opacity-60');
+        const bubble = placeholder.querySelector('.msg-bubble');
+        if (bubble) bubble.classList.add('border-red-500/50');
+        const retry = document.createElement('button');
+        retry.className = 'text-[11px] font-semibold text-red-400 hover:text-red-300 mt-1';
+        retry.textContent = 'Failed — retry';
+        retry.addEventListener('click', () => {
+          placeholder.remove();
+          composerInput.value = content;
+          composerForm.requestSubmit();
+        });
+        placeholder.querySelector('div:last-child')?.appendChild(retry);
+      }
+    }
+  });
+
+  // Enter sends, Shift+Enter inserts a newline — the convention every chat app
+  // shares. The textarea also grows with the message up to a sane ceiling.
+  composerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      composerForm.requestSubmit();
+    }
+  });
+
+  // Keep unsent text across reloads and channel switches.
+  composerInput.addEventListener('input', () => {
+    if (activeChannelId) saveDraft(`channel:${activeChannelId}`, composerInput.value);
+    composerInput.style.height = 'auto';
+    composerInput.style.height = `${Math.min(composerInput.scrollHeight, 140)}px`;
+  });
+
+  const newChannelBtn = document.getElementById('btnNewChannel');
+  if (newChannelBtn) {
+    newChannelBtn.addEventListener('click', async () => {
+      let teams = [];
+      try {
+        teams = (await fetchTeams()) || [];
+      } catch (_) {}
+      openModal({
+        title: 'Create channel',
+        contentHtml: `
+          <div class="space-y-4">
+            <div>
+              <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Name</label>
+              <input id="newChannelName" maxlength="60" placeholder="e.g. project-updates"
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60" />
+            </div>
+            <input type="hidden" id="newChannelType" value="text" />
+            <p class="text-[11px] text-outline">
+              Need a broadcast that everyone reads but nobody replies to? Use
+              <strong class="text-white">Announcements</strong> instead — it supports priority and audience targeting.
+            </p>
+            ${
+              teams.length
+                ? `<div>
+                    <label class="block text-[11px] font-bold text-outline uppercase tracking-wider mb-1.5">Visibility</label>
+                    <select id="newChannelTeam" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none">
+                      <option value="">Public — visible to everyone</option>
+                      ${teams.map((t) => `<option value="${t.id}">Private — ${escapeHtml(t.name)} only</option>`).join('')}
+                    </select>
+                  </div>`
+                : ''
+            }
+          </div>`,
+        onConfirm: async (overlay) => {
+          const name = overlay.querySelector('#newChannelName').value.trim();
+          if (!name) {
+            showToast({ title: 'Name required', message: 'Give the channel a name.', type: 'error' });
+            return false;
+          }
+          const teamId = overlay.querySelector('#newChannelTeam')?.value || '';
+          try {
+            const data = await createChannel({
+              name,
+              type: overlay.querySelector('#newChannelType').value,
+              ...(teamId ? { team_id: teamId, is_private: true } : {})
+            });
+            showToast({ title: 'Channel created', message: `#${data.channel.name} is live`, type: 'success' });
+            await refreshChannels();
+            openChannel(data.channel.id);
+            return true;
+          } catch (_) {
+            return false;
+          }
+        }
+      });
+    });
+  }
+
+  if (unsubscribeStream) unsubscribeStream();
+  unsubscribeStream = onStreamEvent((event) => {
+    if (event.type !== 'message') return;
+    if (!document.getElementById('threadBody')) return;
+    if (event.action === 'created' && event.channelId === activeChannelId) {
+      markChannelSeen(activeChannelId, event.message.created_at);
+    }
+    if (event.channelId === activeChannelId) {
+      const existing = threadBodyEl.querySelector(`[data-message-id="${event.message.id}"]`);
+      if (event.action === 'deleted') {
+        existing?.remove();
+        if (!threadBodyEl.querySelector('.msg-row')) threadBodyEl.innerHTML = emptyThreadHtml();
+      } else if (event.action === 'updated' && existing) {
+        existing.outerHTML = messageHtml(event.message);
+        bindMessageActions();
+      } else if (event.action === 'created' && !existing) {
+        document.getElementById('threadEmpty')?.remove();
+        threadBodyEl.insertAdjacentHTML('beforeend', messageHtml(event.message));
+        bindMessageActions();
+        threadBodyEl.scrollTop = threadBodyEl.scrollHeight;
+      }
+    }
+    refreshChannels();
+  });
+
+  // Deep link (#/messages/chn_123) wins over the previously active channel.
+  const linkedChannel = currentParam();
+  if (linkedChannel) activeChannelId = linkedChannel;
+
+  refreshChannels().then(() => {
+    if (activeChannelId && channels.some((c) => c.id === activeChannelId)) {
+      openChannel(activeChannelId);
+    }
+  });
+}
+
+

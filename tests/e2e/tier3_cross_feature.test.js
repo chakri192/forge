@@ -71,7 +71,7 @@ export async function runTier3Tests() {
   });
 
   await runTest(ctx, 'T3_06: Stealth Dev Action + Hall Exclusion — Dev upvotes & completes task but remains invisible in rankings', async () => {
-    await post('/api/auth/login', { identifier: 'aaron_dev', password: 'pass123' }, { noAuth: true });
+    await post('/api/auth/login', { identifier: 'chakradhar_dev', password: 'pass123' }, { noAuth: true });
     await post('/api/tasks/market2/upvote');
 
     const hallRes = await get('/api/hall-of-fame');
@@ -147,7 +147,7 @@ export async function runTier3Tests() {
 
   await runTest(ctx, 'T3_15: Stealth Dev User Creation + Login — Create stealth dev, login, check mapped role', async () => {
     await new Promise(r => setTimeout(r, 550));
-    const loginRes = await post('/api/auth/login', { identifier: 'aaron_dev', password: 'pass123' }, { noAuth: true });
+    const loginRes = await post('/api/auth/login', { identifier: 'chakradhar_dev', password: 'pass123' }, { noAuth: true });
     ctx.assertEqual(loginRes.status, 200, 'Login status 200');
     ctx.assert(loginRes.json.user.public_role === 'OPERATIVE' || loginRes.json.user.public_role === 'member', 'Created stealth dev public_role must be OPERATIVE or member');
   });

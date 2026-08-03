@@ -18,7 +18,7 @@ test('Input Validation & Edge Cases Security Suite', async (t) => {
     const res1 = await request(app).post('/api/auth/login').send({});
     assert.equal(res1.status, 400);
 
-    const res2 = await request(app).post('/api/auth/login').send({ identifier: 'aaron' });
+    const res2 = await request(app).post('/api/auth/login').send({ identifier: 'chakradhar' });
     assert.equal(res2.status, 400);
   });
 

@@ -35,7 +35,7 @@ export function renderDataTable({
       <th data-col-key="${col.key}" data-sortable="${col.sortable !== false}">
         <div class="flex items-center gap-1.5 cursor-pointer select-none">
           <span>${col.label}</span>
-          ${col.sortable !== false ? `<span class="material-symbols-outlined text-xs ${isSorted ? 'text-royal-slate-blue' : 'text-outline'}">${arrow}</span>` : ''}
+          ${col.sortable !== false ? `<span class="material-symbols-outlined text-xs ${isSorted ? 'text-accent-text' : 'text-outline'}">${arrow}</span>` : ''}
         </div>
       </th>
     `;
