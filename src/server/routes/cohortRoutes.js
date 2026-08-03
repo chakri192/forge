@@ -2,7 +2,7 @@ import express from 'express';
 import { z } from 'zod';
 import { requireAuth, requirePermission } from '../middleware/auth.js';
 import { validate } from '../middleware/validation.js';
-import { CalendarModel, JournalModel, EVENT_TYPES } from '../models/Calendar.js';
+import { CalendarModel, EVENT_TYPES } from '../models/Calendar.js';
 import { AnalyticsService } from '../services/analyticsService.js';
 import { hasRole } from '../middleware/rbac.js';
 
@@ -17,15 +17,6 @@ const eventSchema = {
     location: z.string().trim().max(200).nullable().optional(),
     event_type: z.enum(EVENT_TYPES).optional(),
     team_id: z.string().nullable().optional()
-  })
-};
-
-const journalSchema = {
-  body: z.object({
-    title: z.string().trim().min(1).max(160),
-    content: z.string().trim().min(1).max(20000),
-    mood: z.string().trim().max(40).nullable().optional(),
-    tags: z.string().trim().max(200).nullable().optional()
   })
 };
 
@@ -100,58 +91,6 @@ router.delete('/calendar/:id', requireAuth, validate({}), (req, res, next) => {
       throw { status: 403, message: 'Only the organiser or a teacher can delete this event' };
     }
     CalendarModel.delete(req.params.id);
-    res.json({ success: true, id: req.params.id });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// --------------------------------------------------------------- Journal
-// Journal entries are strictly private: every handler scopes by req.user.id
-// so one member can never read or mutate another's reflections.
-
-router.get('/journal', requireAuth, validate({}), (req, res, next) => {
-  try {
-    res.json({ entries: JournalModel.listForUser(req.user.id) });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post('/journal', requireAuth, validate(journalSchema), (req, res, next) => {
-  try {
-    const entry = JournalModel.create({
-      userId: req.user.id,
-      title: req.body.title,
-      content: req.body.content,
-      mood: req.body.mood ?? null,
-      tags: req.body.tags ?? null
-    });
-    res.status(201).json({ entry });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.patch('/journal/:id', requireAuth, validate({}), (req, res, next) => {
-  try {
-    const entry = JournalModel.getById(req.params.id);
-    if (!entry || entry.user_id !== req.user.id) {
-      throw { status: 404, message: 'Entry not found' };
-    }
-    res.json({ entry: JournalModel.update(req.params.id, req.body) });
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.delete('/journal/:id', requireAuth, validate({}), (req, res, next) => {
-  try {
-    const entry = JournalModel.getById(req.params.id);
-    if (!entry || entry.user_id !== req.user.id) {
-      throw { status: 404, message: 'Entry not found' };
-    }
-    JournalModel.delete(req.params.id);
     res.json({ success: true, id: req.params.id });
   } catch (err) {
     next(err);

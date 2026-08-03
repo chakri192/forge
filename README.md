@@ -121,9 +121,6 @@ submit a claim.
 **Hall of Fame** ranks by XP with medals for the top three, a season toggle, and
 awarded titles.
 
-**Journal** gives each member a private space for reflections, with mood and
-tags. Entries never leave the owner's account.
-
 ### Manage
 
 **Analytics** derives cohort health from existing history: completion rates,
@@ -215,7 +212,7 @@ tests/                   Unit, integration, RBAC matrix, and E2E suites
 
 Coverage focuses on the parts most likely to break quietly: progression
 transaction rollback and retry, streak behaviour across month and year
-boundaries, mini-game score validation and XP awards, the journal privacy
+boundaries, mini-game score validation and XP awards, the
 boundary, and RBAC rejections on every protected route.
 
 ---

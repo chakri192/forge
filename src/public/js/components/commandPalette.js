@@ -18,7 +18,6 @@ const SECTIONS = [
   { tab: 'marketplace', label: 'Task Marketplace', icon: 'storefront' },
   { tab: 'calendar', label: 'Calendar', icon: 'calendar_month' },
   { tab: 'profile', label: 'My Progress', icon: 'military_tech' },
-  { tab: 'journal', label: 'Reflection Journal', icon: 'menu_book' },
   { tab: 'analytics', label: 'Cohort Analytics', icon: 'insights' },
   { tab: 'games', label: 'Mini Games', icon: 'stadia_controller' },
   { tab: 'duels', label: 'Duels', icon: 'swords' },

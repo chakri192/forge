@@ -14,7 +14,6 @@ const GOTO_MAP = {
   k: 'marketplace',
   l: 'calendar',
   p: 'profile',
-  j: 'journal',
   s: 'settings'
 };
 
