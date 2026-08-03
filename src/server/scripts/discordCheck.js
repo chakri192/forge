@@ -8,7 +8,7 @@
  *   npm run discord:check
  */
 import 'dotenv/config';
-import { Client, GatewayIntentBits, PermissionFlagsBits } from 'discord.js';
+import { Client, GatewayIntentBits, PermissionFlagsBits, ChannelType } from 'discord.js';
 
 const BOTS = [
   {
@@ -87,6 +87,69 @@ async function checkBot(spec, guildId) {
   }
 }
 
+/**
+ * Every configured id must point at the kind of object it is used as.
+ *
+ * The System Bot creates channels *inside* the TEAMS and DIRECT-MESSAGES
+ * categories, so those two must be categories. Pointing them at a text channel
+ * is an easy mistake — the names read the same in the sidebar — and it would
+ * otherwise fail much later, when creating a team tries to nest a channel
+ * inside a channel.
+ */
+async function checkIdTypes(guildId) {
+  const token = process.env.DISCORD_SYSTEM_BOT_TOKEN;
+  if (!token || !guildId) return;
+
+  const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  try {
+    await client.login(token);
+    await new Promise((resolve, reject) => {
+      client.once('clientReady', resolve);
+      setTimeout(() => reject(new Error('timeout')), 15000);
+    });
+    const guild = await client.guilds.fetch(guildId);
+    const all = await guild.channels.fetch();
+
+    const expect = [
+      ['DISCORD_CATEGORY_TEAMS', ChannelType.GuildCategory, 'a category'],
+      ['DISCORD_CATEGORY_DIRECT_MESSAGES', ChannelType.GuildCategory, 'a category'],
+      ...Object.keys(process.env)
+        .filter((k) => k.startsWith('DISCORD_CHANNEL_') && process.env[k])
+        .map((k) => [k, ChannelType.GuildText, 'a text channel'])
+    ];
+
+    for (const [key, wantType, wantLabel] of expect) {
+      const id = process.env[key];
+      if (!id) {
+        if (key.startsWith('DISCORD_CATEGORY_')) {
+          console.log(`${tick(false)} ${key} is not set — create ${wantLabel} and add its id`);
+          problems += 1;
+        }
+        continue;
+      }
+      const channel = all.get(id);
+      if (!channel) {
+        console.log(`${tick(false)} ${key}: no channel with that id in this server`);
+        problems += 1;
+      } else if (channel.type !== wantType) {
+        const actual = ChannelType[channel.type] || channel.type;
+        console.log(`${tick(false)} ${key}: "${channel.name}" is ${actual}, but must be ${wantLabel}`);
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${key}: "${channel.name}" is ${wantLabel}`);
+      }
+    }
+
+    const forums = [...all.values()].filter((c) => c?.type === ChannelType.GuildForum);
+    console.log(`${tick(forums.length >= 8)} ${forums.length} forum channel(s) — milestone 3.4 needs 8`);
+  } catch (err) {
+    console.log(`${tick(false)} could not inspect channels: ${err.message}`);
+    problems += 1;
+  } finally {
+    await client.destroy();
+  }
+}
+
 async function main() {
   const guildId = process.env.DISCORD_GUILD_ID;
   console.log('\nDiscord setup check\n');
@@ -105,6 +168,8 @@ async function main() {
   const channels = Object.keys(process.env).filter((k) => k.startsWith('DISCORD_CHANNEL_') && process.env[k]);
   console.log(`${tick(channels.length > 0)} ${channels.length} static channel id(s) configured`);
   if (!channels.length) problems += 1;
+
+  await checkIdTypes(guildId);
 
   console.log(
     problems === 0
