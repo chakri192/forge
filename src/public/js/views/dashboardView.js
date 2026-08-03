@@ -1,189 +1,157 @@
-// Dashboard View Renderer (FORGE Platform Theme)
-import { label, labelUpper } from '../utils/labels.js';
+// Dashboard: what is assigned to you, where you stand, what is open.
+//
+// The previous version opened with a hero banner, a watermark, an "Active
+// Session" chip and a paragraph describing the page you were already looking
+// at. None of it was information. What remains is three figures and two lists.
+import { label } from '../utils/labels.js';
+import { escapeHtml } from '../utils/dom.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 export function renderDashboard(state) {
   const { tasksData = {}, teamsData = [], hallOfFameData = {}, currentUser } = state;
-  const teamTasks = (tasksData && tasksData.teamTasks) || [];
-  const challenges = (tasksData && tasksData.challenges) || [];
-  const allTasks = [...teamTasks, ...challenges];
-  const leaders = (hallOfFameData && hallOfFameData.allTime) || [];
+  const teamTasks = tasksData?.teamTasks || [];
+  const challenges = tasksData?.challenges || [];
+  const openWork = [...teamTasks, ...challenges];
+  const leaders = hallOfFameData?.allTime || [];
 
-  // Total points earned
-  const userLeaderData = leaders.find(l => l.id === currentUser?.id);
-  const totalPoints = userLeaderData ? userLeaderData.points : 0;
+  const myStanding = leaders.find((l) => l.id === currentUser?.id);
+  const points = myStanding ? myStanding.points : 0;
+  const teams = Array.isArray(teamsData) ? teamsData : [];
+  const myTeam = teams.find((t) => t?.members?.some((m) => m?.id === currentUser?.id));
 
-  // Find user's active team
-  const safeTeams = Array.isArray(teamsData) ? teamsData : [];
-  const myTeam = safeTeams.find(t => t && Array.isArray(t.members) && t.members.some(m => m && m.id === currentUser?.id));
-
-  return `
-    <div class="space-y-8 max-w-6xl mx-auto">
-      
-      <!-- Welcome Hero Banner -->
-      <div class="glass-card p-8 rounded-2xl relative overflow-hidden border border-white/10 shadow-2xl">
-        <!-- Ambient Watermark Logo Glow -->
-        <div class="absolute -top-12 -right-12 opacity-20 pointer-events-none">
-          <img src="/assets/logo/HALF.png" alt="" aria-hidden="true" data-decorative class="w-72 h-72 object-contain" />
-        </div>
-
-        <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div class="space-y-2">
-            <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-royal-slate-blue/20 text-accent-text border border-royal-slate-blue/40 accent-target">
-                FORGE Platform
-              </span>
-              <span class="text-xs text-outline">• Active Session</span>
-            </div>
-            <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Welcome back, <span class="text-accent-text accent-target">${currentUser ? currentUser.name : 'V Chakradhar (Dev)'}</span>
-            </h1>
-            <p class="text-sm text-outline max-w-xl">
-              Community platform dashboard. View assigned missions, open community challenges, and track active team progress.
-            </p>
-          </div>
-
-          <!-- Quick Action Buttons -->
-          <div class="flex flex-wrap items-center gap-3">
-            <button class="nav-drawer-item px-4 py-2.5 rounded-xl bg-royal-slate-blue hover:bg-royal-slate-blue/80 text-white font-bold text-xs shadow-lg transition-all flex items-center gap-2" data-tab="tasks">
-              <span class="material-symbols-outlined text-sm">assignment</span>
-              <span>View Tasks</span>
-            </button>
-            <button class="nav-drawer-item px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold text-xs border border-white/10 transition-all flex items-center gap-2" data-tab="challenges">
-              <span class="material-symbols-outlined text-sm">bolt</span>
-              <span>Challenges</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Personal Progress Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="glass-card p-6 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all">
-          <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-accent-text accent-target">
-            <span class="material-symbols-outlined text-2xl">insights</span>
-          </div>
-          <div>
-            <span class="text-xs text-outline font-semibold uppercase block">Total Earned Points</span>
-            <span class="text-2xl font-black text-white">${totalPoints} PTS</span>
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all">
-          <div class="w-12 h-12 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-            <span class="material-symbols-outlined text-2xl">local_fire_department</span>
-          </div>
-          <div>
-            <span class="text-xs text-outline font-semibold uppercase block">Active Streak</span>
-            <span class="text-2xl font-black text-white">Active</span>
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all">
-          <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-            <span class="material-symbols-outlined text-2xl">groups</span>
-          </div>
-          <div>
-            <span class="text-xs text-outline font-semibold uppercase block">Active Team</span>
-            <span class="text-lg font-extrabold text-white truncate max-w-[120px] block">${myTeam ? myTeam.name : 'Unassigned'}</span>
-          </div>
-        </div>
-
-        <div class="glass-card p-6 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all">
-          <div class="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400">
-            <span class="material-symbols-outlined text-2xl">shield</span>
-          </div>
-          <div>
-            <span class="text-xs text-outline font-semibold uppercase block">Role Privilege</span>
-            <span class="text-sm font-extrabold text-white uppercase">${currentUser ? (currentUser.public_role || currentUser.role) : 'MEMBER'}</span>
-
-          </div>
-        </div>
-      </div>
-
-      <!-- Active Objectives & Community Leaderboard Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Objectives Section (2 Cols) -->
-        <div class="lg:col-span-2 space-y-4">
-          <div class="flex justify-between items-center">
-            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-accent-text accent-target">task_alt</span>
-              Active Missions & Tasks
-            </h2>
-            <button class="nav-drawer-item text-xs text-accent-text hover:underline accent-target font-bold" data-tab="tasks">View All Tasks →</button>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            ${allTasks.length === 0 ? `
-              <div class="col-span-2 glass-card p-8 rounded-2xl text-center text-outline">
-                No active tasks currently registered.
-              </div>
-            ` : allTasks.slice(0, 4).map(t => `
-              <div class="glass-card p-6 rounded-2xl flex flex-col justify-between hover:border-royal-slate-blue/40 transition-all group">
-                <div class="space-y-3">
-                  <div class="flex justify-between items-start">
-                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-royal-slate-blue/20 text-accent-text border border-royal-slate-blue/40 accent-target">
-                      ${labelUpper(t.task_type === 'CHALLENGE' ? 'CHALLENGE' : 'TEAM_TASK')}
-                    </span>
-                    <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-white/5 text-ice-blue border border-white/10">
-                      ${t.total_points} PTS
-                    </span>
-                  </div>
-                  <div>
-                    <h3 class="font-bold text-base text-white group-hover:text-accent-text transition-colors line-clamp-1">
-                      ${t.title}
-                    </h3>
-                    <p class="text-xs text-outline mt-1 line-clamp-2">${t.description}</p>
-                  </div>
-                </div>
-                <div class="pt-4 mt-4 border-t border-white/5 flex justify-between items-center text-xs">
-                  <span class="text-outline flex items-center gap-1">
-                    <span class="material-symbols-outlined text-sm">schedule</span>
-                    ${label(t.status)}
-                  </span>
-                  <button class="nav-drawer-item text-accent-text hover:underline font-bold" data-tab="${t.task_type === 'CHALLENGE' ? 'challenges' : 'tasks'}">
-                    Details →
-                  </button>
-                </div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <!-- Leaderboard Preview Sidebar (1 Col) -->
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-amber-400">emoji_events</span>
-              Hall of Fame Top 3
-            </h2>
-            <button class="nav-drawer-item text-xs text-accent-text hover:underline accent-target font-bold" data-tab="halloffame">View All →</button>
-          </div>
-
-          <div class="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
-            ${leaders.length === 0 ? `
-              <p class="text-xs text-outline text-center py-4">No points recorded yet in Hall of Fame.</p>
-            ` : leaders.slice(0, 3).map((l, idx) => `
-              <div class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                <div class="flex items-center gap-3">
-                  <div class="w-7 h-7 rounded-lg flex items-center justify-center font-black text-xs ${idx === 0 ? 'bg-amber-400 text-black' : idx === 1 ? 'bg-slate-300 text-black' : 'bg-amber-700 text-white'}">
-                    #${idx + 1}
-                  </div>
-                  <div>
-                    <span class="font-bold text-sm text-white block">${l.name}</span>
-                    <span class="text-[10px] text-outline">@${l.username} • ${l.public_role}</span>
-                  </div>
-                </div>
-                <span class="font-black text-sm text-amber-400">${l.points} PTS</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-
-    </div>
-  `;
+  return renderScreen({
+    title: currentUser ? `Hello, ${currentUser.name.split(' ')[0]}` : 'Dashboard',
+    subtitle: `${openWork.length} open ${openWork.length === 1 ? 'item' : 'items'} assigned to you.`,
+    toolbar: {
+      groups: [
+        { actions: [{ id: 'tasks', label: 'View tasks', icon: 'assignment', variant: 'primary' }] },
+        {
+          collapsible: true,
+          actions: [
+            { id: 'challenges', label: 'Challenges', icon: 'bolt' },
+            { id: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard', iconOnly: true }
+          ]
+        }
+      ]
+    },
+    body: `
+      ${statsHtml({ points, team: myTeam, user: currentUser })}
+      <div class="split">
+        ${workHtml(openWork)}
+        ${standingsHtml(leaders, currentUser)}
+      </div>`
+  });
 }
 
-export function attachDashboardEvents(state, refreshData) {
-  // Event listeners for dashboard actions if any
+/* Figures first, at one size, on one line. No icon tiles — the tile was
+   larger than the number it decorated. */
+function statsHtml({ points, team, user }) {
+  const stats = [
+    { label: 'Points', value: points.toLocaleString() },
+    { label: 'Team', value: team ? team.name : 'Unassigned' },
+    { label: 'Role', value: user ? user.public_role || user.role : 'Member' }
+  ];
+  return `
+    <dl class="stats">
+      ${stats
+        .map(
+          (s) => `
+        <div class="stats__item">
+          <dt class="stats__label">${escapeHtml(s.label)}</dt>
+          <dd class="stats__value">${escapeHtml(String(s.value))}</dd>
+        </div>`
+        )
+        .join('')}
+    </dl>`;
+}
+
+function workHtml(items) {
+  return `
+    <section class="block">
+      <div class="block__head">
+        <h2 class="block__label">Assigned to you</h2>
+        <button class="tool" data-action="tasks-all" type="button">
+          <span class="tool__label">All tasks</span>
+        </button>
+      </div>
+      ${
+        items.length
+          ? `<ul class="rows">${items.slice(0, 5).map(rowHtml).join('')}</ul>`
+          : `<p class="rows__empty">Nothing assigned right now.</p>`
+      }
+    </section>`;
+}
+
+/* A row, not a card: title, one line of context, the figure right-aligned.
+   Five of these fit in the space two cards used. */
+function rowHtml(task) {
+  const isChallenge = task.task_type === 'CHALLENGE';
+  return `
+    <li class="row-item" data-tab="${isChallenge ? 'challenges' : 'tasks'}" tabindex="0" role="link">
+      <span class="row-item__main">
+        <span class="row-item__title">${escapeHtml(task.title)}</span>
+        <span class="row-item__meta">
+          ${isChallenge ? 'Challenge' : 'Team task'} · ${escapeHtml(label(task.status))}
+        </span>
+      </span>
+      <span class="row-item__value">${task.total_points}<small>pts</small></span>
+    </li>`;
+}
+
+function standingsHtml(leaders, currentUser) {
+  return `
+    <section class="block">
+      <div class="block__head">
+        <h2 class="block__label">Standings</h2>
+        <button class="tool" data-action="leaderboard-all" type="button">
+          <span class="tool__label">Full board</span>
+        </button>
+      </div>
+      ${
+        leaders.length
+          ? `<ol class="rows rows--ranked">
+              ${leaders
+                .slice(0, 5)
+                .map(
+                  (l, i) => `
+                <li class="row-item ${l.id === currentUser?.id ? 'is-you' : ''}">
+                  <span class="row-item__rank">${i + 1}</span>
+                  <span class="row-item__main">
+                    <span class="row-item__title">${escapeHtml(l.name)}</span>
+                    <span class="row-item__meta">@${escapeHtml(l.username)}</span>
+                  </span>
+                  <span class="row-item__value">${l.points}<small>pts</small></span>
+                </li>`
+                )
+                .join('')}
+            </ol>`
+          : `<p class="rows__empty">No scores recorded yet.</p>`
+      }
+    </section>`;
+}
+
+export function attachDashboardEvents() {
+  const go = (tab) => document.dispatchEvent(new CustomEvent('forge:navigate', { detail: { tab } }));
+
+  attachToolbar(document.querySelector('.screen__header'), {
+    tasks: () => go('tasks'),
+    challenges: () => go('challenges'),
+    leaderboard: () => go('leaderboard')
+  });
+
+  document.querySelector('[data-action="tasks-all"]')?.addEventListener('click', () => go('tasks'));
+  document.querySelector('[data-action="leaderboard-all"]')?.addEventListener('click', () => go('leaderboard'));
+
+  // Rows behave like links, including from the keyboard.
+  document.querySelectorAll('.row-item[data-tab]').forEach((row) => {
+    const open = () => go(row.dataset.tab);
+    row.addEventListener('click', open);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        open();
+      }
+    });
+  });
 }
