@@ -1,0 +1,371 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>FORGE | Tasks &amp; Marketplace</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#1c1c1c",
+                        "outline": "#717880",
+                        "primary": "#95b8d1",
+                        "surface-container-high": "#2a2a2a",
+                        "sage-white": "#f3f8f2",
+                        "on-surface-variant": "#c0c7d1",
+                        "on-secondary-fixed": "#410007",
+                        "on-tertiary-fixed-variant": "#643f00",
+                        "surface-container-highest": "#333333",
+                        "tertiary-container": "#9a6300",
+                        "secondary": "#a13c3f",
+                        "surface-dim": "#dcd9d9",
+                        "warm-coral": "#ff8484",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffddb6",
+                        "on-tertiary-fixed": "#2a1800",
+                        "surface-tint": "#95b8d1",
+                        "surface-container-lowest": "#141414",
+                        "on-secondary-container": "#751c22",
+                        "error-container": "#ffdad6",
+                        "surface": "#333333",
+                        "on-primary": "#191919",
+                        "royal-slate-blue": "#2374ab",
+                        "secondary-fixed": "#ffdad8",
+                        "surface-variant": "#e5e2e1",
+                        "secondary-container": "#ff8484",
+                        "primary-fixed-dim": "#94ccff",
+                        "tertiary-fixed-dim": "#ffb959",
+                        "surface-bright": "#fcf9f8",
+                        "on-secondary-fixed-variant": "#82252a",
+                        "inverse-surface": "#fcf9f8",
+                        "inverse-primary": "#005b8c",
+                        "primary-fixed": "#cde5ff",
+                        "on-primary-fixed-variant": "#004b74",
+                        "secondary-fixed-dim": "#ffb3b1",
+                        "outline-variant": "#717880",
+                        "on-tertiary-container": "#fff1e3",
+                        "on-secondary": "#ffffff",
+                        "border-translucent": "rgba(255, 255, 255, 0.12)",
+                        "surface-container": "#202020",
+                        "deep-obsidian": "#191919",
+                        "on-tertiary": "#ffffff",
+                        "background": "#333333",
+                        "on-surface": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#ecf4ff",
+                        "primary-container": "#95b8d1",
+                        "on-background": "#ffffff",
+                        "inverse-on-surface": "#1c1b1b",
+                        "on-primary-fixed": "#001d32",
+                        "tertiary": "#e8ddb5",
+                        "error": "#ba1a1a",
+                        "ice-blue": "#95b8d1",
+                        "muted-slate": "#94ccff",
+                        "warm-cream-gold": "#e8ddb5",
+                        "dark-charcoal": "#333333"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "max-width": "1280px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "display": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #333333;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .glass-card {
+            background: rgba(20, 20, 20, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+        .spring-btn {
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease;
+        }
+        .spring-btn:active {
+            transform: scale(0.97);
+        }
+        .spring-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s ease-out, height 0.4s ease-out;
+        }
+        .spring-btn:hover::after {
+            width: 300%;
+            height: 300%;
+        }
+        .progress-spring {
+            transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col bg-background text-on-surface">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-desktop h-16 max-w-max-width mx-auto bg-surface/80 backdrop-blur-md border-b border-border-translucent">
+<div class="flex items-center gap-base h-full">
+<img alt="FORGE Logo" class="h-8 w-auto" src="https://lh3.googleusercontent.com/aida/AP1WRLssjANYrusSF6A16ZKngGcw0sGk_9zX1N1RbAGBdpzaFz6PL1axoTppyrdQKTmZplDQ4hzW4yLdJXewv5gK_PU117t6BPSc9mzrh9DZVl7oeNhjfSpvCWQ5OI9UEYOkm5LQh9zsDiGIOf8yrXGXSNGIE4EBeeD4KrLgEmD359lWVwhS07zMlzPa6-4pkTt8SBqBut0NVvWbM0aUbiV0tfyVczsNamT3gvGZsM7TvvGuCWAEZTO7rdck4BQ">
+<span class="font-display text-headline-md uppercase tracking-wider text-on-surface ml-2">FORGE</span>
+</div>
+<nav class="hidden md:flex items-center gap-gutter h-full">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Dashboard</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Tasks</a>
+<a class="font-body-md text-body-md text-primary border-b-2 border-primary pb-1" href="#"><a class="flex items-center gap-base p-base rounded-sm text-primary font-bold bg-surface-container-low" href="https://app-companion-430619.appspot.com/projects/6247391305768664728?usegapi=1&amp;jsh=m%3B%2F_%2Fscs%2Fabc-static%2F_%2Fjs%2Fk%3Dgapi.lb.en.9vdPKhB0RUg.O%2Fd%3D1%2Frs%3DAHpOoo97anj7zZ432JcN58tqJJp_A6WeOw%2Fm%3D__features__#">Challenges</a></a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Marketplace</a>
+</nav>
+<div class="flex items-center gap-base">
+<button class="spring-btn bg-ice-blue text-deep-obsidian font-label-md text-label-md px-6 py-2 rounded-sm font-bold uppercase tracking-wide">
+            + Suggest Marketplace Task
+        </button>
+</div>
+</header>
+<!-- SideNavBar (Desktop Only) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] hidden lg:flex flex-col p-base w-64 bg-surface border-r border-border-translucent">
+<div class="flex items-center gap-base p-base mb-margin-mobile">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-border-translucent">
+<span class="material-symbols-outlined text-outline">person</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-on-surface leading-tight">Forge Member</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Rank: Apprentice</p>
+</div>
+</div>
+<div class="space-y-1">
+<a class="flex items-center gap-base p-base rounded-sm text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="flex items-center gap-base p-base rounded-sm text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="font-label-md text-label-md">Missions</span>
+</a>
+<a class="flex items-center gap-base p-base rounded-sm text-primary font-bold bg-surface-container-low" href="#">
+<span class="material-symbols-outlined">storefront</span>
+<span class="font-label-md text-label-md">Challenges</span>
+</a>
+<a class="flex items-center gap-base p-base rounded-sm text-on-surface-variant hover:bg-surface-container-high transition-colors" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-label-md text-label-md">Archive</span>
+</a>
+<a class="flex items-center gap-base p-base rounded-sm text-on-surface-variant hover:bg-surface-container-high transition-colors mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-grow pt-24 pb-12 px-margin-mobile md:px-margin-desktop lg:ml-64 max-w-max-width mx-auto w-full">
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-base">
+<div>
+<h1 class="font-display text-display text-on-surface">Challenges&nbsp;&amp;&nbsp; Marketplace</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mt-base">
+                Hone your skills through official curriculum tasks or propose new challenges to the community marketplace.
+            </p>
+</div>
+</div>
+<!-- Official Tasks Section -->
+<section class="mb-16">
+<div class="flex items-center justify-between mb-gutter">
+<h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-base">
+                Official Challenges<span class="h-px w-32 bg-border-translucent"></span>
+</h2>
+<div class="flex gap-base">
+<span class="font-label-sm text-label-sm px-3 py-1 border border-border-translucent rounded-full text-on-surface-variant">Filter: Active</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-gutter">
+<!-- Task Card 1 -->
+<div class="glass-card p-6 flex flex-col min-h-[280px]">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest border border-border-translucent px-2 py-0.5 rounded-sm">Logic &amp; Ethics</span>
+<span class="font-label-md text-label-md text-ice-blue">8 pts</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">The Socratic Synthesis</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-auto">Construct a 500-word rebuttal to a classic philosophical paradox using modern symbolic logic frameworks.</p>
+<div class="mt-8">
+<button class="w-full spring-btn bg-ice-blue text-deep-obsidian font-label-md text-label-md py-3 rounded-sm uppercase tracking-wide font-bold">Submit Task Proof</button>
+</div>
+</div>
+<!-- Task Card 2 -->
+<div class="glass-card p-6 flex flex-col min-h-[280px]">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest border border-border-translucent px-2 py-0.5 rounded-sm">Technical Rigor</span>
+<span class="font-label-md text-label-md text-ice-blue">12 pts</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Algorithm Forge</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-auto">Optimize a search algorithm for a massive unstructured dataset. Target efficiency improvement: &gt;15%.</p>
+<div class="mt-8">
+<button class="w-full spring-btn bg-ice-blue text-deep-obsidian font-label-md text-label-md py-3 rounded-sm uppercase tracking-wide font-bold">Submit Task Proof</button>
+</div>
+</div>
+<!-- Task Card 3 -->
+<div class="glass-card p-6 flex flex-col min-h-[280px]">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest border border-border-translucent px-2 py-0.5 rounded-sm">Rhetoric</span>
+<span class="font-label-md text-label-md text-ice-blue">5 pts</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">The Orator's Gambit</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-auto">Record a 3-minute persuasive pitch focusing on structural clarity and emotional cadence.</p>
+<div class="mt-8">
+<button class="w-full spring-btn bg-ice-blue text-deep-obsidian font-label-md text-label-md py-3 rounded-sm uppercase tracking-wide font-bold">Submit Task Proof</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Task Marketplace Section -->
+<section>
+<div class="flex items-center justify-between mb-gutter">
+<h2 class="font-headline-lg text-headline-lg text-on-surface flex items-center gap-base"><span class="h-px w-32 bg-border-translucent"></span>
+</h2>
+<div class="flex gap-base">
+<span class="font-label-sm text-label-sm px-3 py-1 border border-warm-cream-gold/30 rounded-full text-warm-cream-gold">Trending</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Marketplace Idea 1 -->
+<div class="glass-card p-margin-mobile flex gap-gutter border-l-2 border-l-warm-cream-gold/50">
+<div class="flex flex-col items-center gap-1">
+<button class="group">
+<span class="material-symbols-outlined text-warm-cream-gold transition-transform group-hover:-translate-y-1">expand_less</span>
+</button>
+<span class="font-label-md text-label-md text-warm-cream-gold">42</span>
+<button class="group">
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-hover:translate-y-1">expand_more</span>
+</button>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Group Project: Decentralized Wiki</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant italic">Suggested by @Marcus_Aurelius</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Create a knowledge base that rewards contributors with Forge points via smart contract verification.</p>
+<div class="flex items-center gap-gutter">
+<button class="flex items-center gap-2 text-warm-cream-gold font-label-md text-label-md group">
+<span class="material-symbols-outlined group-hover:fill-current" style="font-variation-settings: &quot;FILL&quot; 0;">thumb_up</span>
+                            Upvote (42)
+                        </button>
+<button class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">forum</span>
+                            Discuss (12)
+                        </button>
+</div>
+</div>
+</div>
+<!-- Marketplace Idea 2 -->
+<div class="glass-card p-margin-mobile flex gap-gutter border-l-2 border-l-warm-cream-gold/50">
+<div class="flex flex-col items-center gap-1">
+<button class="group">
+<span class="material-symbols-outlined text-warm-cream-gold transition-transform group-hover:-translate-y-1">expand_less</span>
+</button>
+<span class="font-label-md text-label-md text-warm-cream-gold">28</span>
+<button class="group">
+<span class="material-symbols-outlined text-on-surface-variant transition-transform group-hover:translate-y-1">expand_more</span>
+</button>
+</div>
+<div class="flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-headline-md text-on-surface">Real-time Translation Hub</h3>
+<span class="font-label-sm text-label-sm text-on-surface-variant italic">Suggested by @Cyber_Stoic</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">Build a latency-free translation layer for global members to collaborate in real-time within the Forge Slack.</p>
+<div class="flex items-center gap-gutter">
+<button class="flex items-center gap-2 text-warm-cream-gold font-label-md text-label-md group">
+<span class="material-symbols-outlined group-hover:fill-current">thumb_up</span>
+                            Upvote (28)
+                        </button>
+<button class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined">forum</span>
+                            Discuss (5)
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 px-margin-desktop flex flex-col md:flex-row justify-between items-center max-w-max-width mx-auto border-t border-border-translucent bg-surface mt-auto">
+<div class="flex flex-col items-center md:items-start mb-6 md:mb-0">
+<span class="font-display text-label-md uppercase text-on-surface mb-2 tracking-widest">FORGE. DISCIPLINE. FOCUS. RIGOR.</span>
+<p class="font-label-sm text-label-sm text-on-surface-variant">© 2024 FORGE. ALL RIGHTS RESERVED.</p>
+</div>
+<div class="flex gap-gutter">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Honor Code</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Privacy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors duration-200" href="#">Support</a>
+</div>
+</footer>
+<!-- Simple Hover Logic and State Scripts -->
+<script>
+    // Upvote Counter Simulation
+    document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+        if (icon.innerText === 'thumb_up') {
+            icon.parentElement.addEventListener('click', function() {
+                const counterMatch = this.innerText.match(/\d+/);
+                if (counterMatch) {
+                    const newCount = parseInt(counterMatch[0]) + 1;
+                    this.innerHTML = `<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">thumb_up</span> Upvote (${newCount})`;
+                    this.classList.add('text-ice-blue');
+                    this.classList.remove('text-warm-cream-gold');
+                }
+            });
+        }
+    });
+</script>
+
+
+</body></html>

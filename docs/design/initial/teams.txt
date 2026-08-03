@@ -1,0 +1,352 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Manrope:wght@400;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-bright": "#f7f9fb",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-container-high": "#e6e8ea",
+                    "surface-container": "#eceef0",
+                    "on-surface": "#191c1e",
+                    "on-primary-fixed-variant": "#2934b4",
+                    "surface-dim": "#d8dadc",
+                    "secondary-container": "#a5d8ff",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#5b67e5",
+                    "on-background": "#191c1e",
+                    "secondary-fixed-dim": "#9accf3",
+                    "on-secondary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#c9e6ff",
+                    "on-secondary-container": "#285f80",
+                    "on-secondary-fixed": "#001e2f",
+                    "tertiary-fixed-dim": "#abd0b0",
+                    "inverse-surface": "#2d3133",
+                    "secondary": "#2e6385",
+                    "on-surface-variant": "#454654",
+                    "on-primary-container": "#fffbff",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-variant": "#e0e3e5",
+                    "primary-fixed": "#e0e0ff",
+                    "outline-variant": "#c6c5d6",
+                    "outline": "#767685",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#c6eccb",
+                    "surface-tint": "#444fcd",
+                    "primary-fixed-dim": "#bec2ff",
+                    "primary": "#414dca",
+                    "on-tertiary-fixed": "#01210d",
+                    "background": "#f7f9fb",
+                    "surface": "#f7f9fb",
+                    "on-primary": "#ffffff",
+                    "surface-container-lowest": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-secondary-fixed-variant": "#0c4b6c",
+                    "on-primary-fixed": "#000569",
+                    "tertiary-container": "#5a7c62",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-container": "#f6fff4",
+                    "tertiary": "#42634a",
+                    "on-tertiary-fixed-variant": "#2d4e36",
+                    "inverse-primary": "#bec2ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "base": "8px",
+                    "section-gap": "48px",
+                    "gutter": "24px",
+                    "container-padding": "32px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "label-sm": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "body-lg": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "display": ["Plus Jakarta Sans"],
+                    "body-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.3", "fontWeight": "700"}],
+                    "display": ["48px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.02), -4px -4px 10px #FFFFFF;
+        }
+        .neo-btn {
+            background: #f7f9fb;
+            box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.05), -4px -4px 10px #FFFFFF;
+            transition: all 0.2s ease;
+        }
+        .neo-btn:active {
+            box-shadow: inset 4px 4px 10px rgba(0, 0, 0, 0.05), inset -4px -4px 10px #FFFFFF;
+            transform: scale(0.98);
+        }
+        .neo-inset {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.05), inset -4px -4px 8px #FFFFFF;
+        }
+        .progress-glow {
+            filter: drop-shadow(0 0 8px rgba(65, 77, 202, 0.3));
+        }
+        body {
+            background-color: #f7f9fb;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(65, 77, 202, 0.05) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(165, 216, 255, 0.1) 0px, transparent 50%);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface min-h-screen">
+<!-- Side Navigation Bar -->
+<aside class="h-screen w-72 fixed left-0 top-0 border-r border-white/30 bg-surface/60 backdrop-blur-xl flex flex-col py-base z-50">
+<div class="px-container-padding py-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">Lumina</span>
+<p class="font-label-sm text-label-sm text-outline opacity-70">Student Workspace</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<a class="flex items-center gap-4 text-on-surface-variant p-4 hover:bg-surface-container-high/40 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-label-md text-label-md">Overview</span>
+</a>
+<!-- Active State: Tasks -->
+<a class="flex items-center gap-4 text-primary font-bold border-r-4 border-primary p-4 bg-white/20 rounded-l-xl transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-md text-label-md">Tasks</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant p-4 hover:bg-surface-container-high/40 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">group</span>
+<span class="font-label-md text-label-md">CollabHub</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant p-4 hover:bg-surface-container-high/40 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">calendar_today</span>
+<span class="font-label-md text-label-md">Calendar</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant p-4 hover:bg-surface-container-high/40 rounded-xl transition-all group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<div class="p-container-padding mt-auto">
+<div class="flex items-center gap-3 p-3 glass-card rounded-2xl">
+<img alt="Student Portrait" class="w-10 h-10 rounded-full object-cover" data-alt="A close-up professional portrait of a young student with a friendly expression. The lighting is soft and natural, emphasizing a bright and focused scholarly atmosphere. The background is a blurred academic library setting with soft pastel colors, maintaining a clean and minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0cY1nC2gTJgU4mERUxka9pt8FsYK7rCY839tLU8EnIoKBogr4P2nggN0T-GGtEr3aLOGLd367_7tKfqjQYFsYiV5wY4x-lq4j08T7jCQH3Q2oqgtkGv51aums8eC7LmCQOyQIUS2x9qbPHQvpVhvyqhKWlu4KuIo7vBiEBRPAGXkdmdrMnSN3QvAevaihDoZHX0qs0HAxJMhGGOj9Nqg2a9IWJXgRmEyXvrPgLhtn106ltzwIHT7a3akCHbMz7XVNc1wiKP0ABuzJ">
+<div>
+<p class="font-label-md text-label-md">Alex Rivera</p>
+<p class="text-[10px] text-outline">Architecture Major</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Top App Bar -->
+<header class="sticky top-0 w-full z-40 bg-surface/40 backdrop-blur-md border-b border-white/20 flex justify-between items-center px-container-padding py-4 ml-72 max-w-[calc(100%-18rem)]">
+<div class="flex items-center gap-4 flex-1">
+<div class="neo-inset px-4 py-2 rounded-full flex items-center gap-2 w-96 bg-surface-container-lowest/50">
+<span class="material-symbols-outlined text-outline text-lg">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder:text-outline/50" placeholder="Search tasks, docs, or people..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="neo-btn p-2 rounded-full flex items-center justify-center relative">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<span class="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+</button>
+<button class="neo-btn p-2 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">help</span>
+</button>
+<div class="h-8 w-[1px] bg-outline/20"></div>
+<div class="flex items-center gap-3">
+<span class="font-label-md text-label-md text-on-surface">May 24, 2024</span>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-72 p-container-padding">
+<div class="max-w-[1200px] mx-auto space-y-gutter">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-8">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-primary">Task Overview</h1>
+<p class="font-body-md text-on-surface-variant mt-1">Manage your active projects and collaborate with your squad.</p>
+</div>
+<button class="neo-btn px-6 py-3 rounded-xl flex items-center gap-2 text-primary font-bold">
+<span class="material-symbols-outlined">add</span>
+                    Create New Task
+                </button>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Main Task Card (8 cols) -->
+<section class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- Current Task Section -->
+<div class="glass-card p-8 rounded-3xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8">
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm bg-primary/10 text-primary px-3 py-1 rounded-full mb-2">High Priority</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Due in 3 days</span>
+</div>
+</div>
+<div class="flex items-start gap-6 mb-8">
+<div class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center text-on-primary-container shadow-lg">
+<span class="material-symbols-outlined text-3xl">architecture</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md mb-2">Urban Design Concept</h2>
+<p class="font-body-md text-on-surface-variant max-w-md">Develop a sustainable waterfront masterplan for the downtown district, focusing on green corridors and pedestrian-centric zones.</p>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-center">
+<span class="font-label-md text-label-md">Project Completion</span>
+<span class="font-label-md text-label-md text-primary">68%</span>
+</div>
+<div class="w-full h-4 neo-inset rounded-full overflow-hidden p-[2px]">
+<div class="h-full bg-gradient-to-r from-primary to-secondary rounded-full progress-glow" style="width: 68%"></div>
+</div>
+</div>
+<div class="mt-8 flex gap-4">
+<button class="neo-btn px-6 py-3 rounded-xl text-primary font-bold flex-1 w-full">View Project Docs</button>
+
+</div>
+</div>
+<!-- Team Assignments & Voting -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter"><!-- Team Leader Voting (Now Left) --><div class="glass-card p-6 rounded-3xl"><h3 class="font-headline-md text-headline-md mb-2 flex items-center gap-2"><span class="material-symbols-outlined text-secondary">how_to_vote</span> Project Lead </h3><p class="font-label-sm text-label-sm text-on-surface-variant mb-6">Vote for this sprint's coordinator.</p><div class="space-y-3"><div class="flex items-center justify-between gap-4"><div class="flex-1"><div class="flex justify-between mb-1"><span class="font-label-md text-label-md">Sarah Chen</span><span class="font-label-md text-label-md">4</span></div><div class="h-2 w-full neo-inset rounded-full overflow-hidden"><div class="h-full bg-primary" style="width: 80%"></div></div></div><button class="neo-btn p-2 rounded-lg"><span class="material-symbols-outlined text-primary text-xl">thumb_up</span></button></div><div class="flex items-center justify-between gap-4"><div class="flex-1"><div class="flex justify-between mb-1"><span class="font-label-md text-label-md">Marcus Tso</span><span class="font-label-md text-label-md">1</span></div><div class="h-2 w-full neo-inset rounded-full overflow-hidden"><div class="h-full bg-outline/20" style="width: 20%"></div></div></div><button class="neo-btn p-2 rounded-lg"><span class="material-symbols-outlined text-on-surface-variant text-xl">thumb_up</span></button></div></div><p class="text-center text-[10px] text-outline mt-6">Voting ends in 4 hours</p></div><!-- Team Members (Now Right) --><div class="glass-card p-6 rounded-3xl"><h3 class="font-headline-md text-headline-md mb-6 flex items-center gap-2"><span class="material-symbols-outlined text-primary">groups</span> Squad </h3><div class="space-y-4"><div class="flex items-center justify-between p-3 rounded-2xl hover:bg-white/40 transition-colors"><div class="flex items-center gap-3"><img alt="Sarah Chen" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of Sarah Chen, a professional woman with a calm and confident expression. Soft studio lighting on a neutral background, conveying clarity and expertise. The aesthetic is clean and modern, fitting a high-end educational dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZBZy-Tth1R6Vf3CLQ97F2-XQxsso2U8QWlYrnqaS9gqNCCUhmEcYOZpJgPq_3EKF1R88e7DNRGrFDnX_mN_jytgRArHd_dcXspp7Uxip_bxfeyamzLL_lQ7LuWGMChWoIQh4C86P3sf5_7KTlP09aF8KrMosZxNcNjNZt3TbhMLaeC7h5UDOwc6ikkBfxifYoZ2_-WJklSUHVb-uu9CgdWyCgmde6-1UpVfTD4COd7GKy70nq8EGlVfDL03hv5K2uKlC34zOm4WTF"><div><p class="font-label-md text-label-md">Sarah Chen</p><p class="text-[10px] text-primary">Lead Designer</p></div></div><span class="material-symbols-outlined text-outline text-lg">more_vert</span></div><div class="flex items-center justify-between p-3 rounded-2xl hover:bg-white/40 transition-colors"><div class="flex items-center gap-3"><img alt="Marcus Tso" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of Marcus Tso, a young man with glasses looking thoughtful. The lighting is warm and natural, creating an atmosphere of intellectual focus. Background is softly blurred, maintaining a minimalist and bright light-mode design style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAUNLCAxt2Dp2m9DF488py6KNuI8QVsDM19MSkXKzuMLqBiR3z9C5Ah-9A8qJWAsAJPNZk__M633trmQwrODoqlFnioi2OBoM4cD_G9UzKxg34vAaYxK6E9kqrmBMLNbr37jWtpsftQgm5x7csrFFeNoPuapBTGOrP5jJPdOljoVjq39sDkfTldj13OHi6_9gY_XhbWXlM4TNpqHwpaWrmMc5MDo6TiSguRdxEbZyWhpAn3_WMU7YLBdFM1Is2bivsranBs0J_NRwp"><div><p class="font-label-md text-label-md">Marcus Tso</p><p class="text-[10px] text-tertiary">Researcher</p></div></div><span class="material-symbols-outlined text-outline text-lg">more_vert</span></div><div class="flex items-center justify-between p-3 rounded-2xl hover:bg-white/40 transition-colors"><div class="flex items-center gap-3"><img alt="Elena Rodriguez" class="w-10 h-10 rounded-full object-cover" data-alt="Close-up portrait of Elena Rodriguez, smiling warmly with a professional yet approachable look. Bright, airy lighting that complements a clean minimalist UI. The color palette is soft with pastels, evoking a sense of calm and clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCux6ZMGKPZn56NcBPhBOc3yJi3e8FK05BcYYXjSX5YGSm3XNp6QHXWP9V5AV8CWTVrWGpxlYaJeyr1Hgrhk-cNJWsYZdEqji-Upsw_CKgNid09Oa9C8IZrdk7hQkziYmEj2GD0YrrAGrc3dCW7gwKLMtYyq2WZhnwJQBh3IRfxa651i-AraXKcIy0_XZ2MHMuPfKgVtJG3MZyLHP9OY-fE4hDxzWoDYqkUOaZfr3QfFhaP4KG8QFccUpc9bFc4UcQhwLG5zb9VorAb"><div><p class="font-label-md text-label-md">Elena Rodriguez</p><p class="text-[10px] text-secondary">Analyst</p></div></div><span class="material-symbols-outlined text-outline text-lg">more_vert</span></div></div></div></div>
+</section>
+<!-- Integrated Group Chat (4 cols) -->
+<aside class="col-span-12 lg:col-span-4">
+<div class="glass-card rounded-3xl flex flex-col h-[650px] sticky top-24">
+<div class="p-6 border-b border-white/20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="relative">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container">
+<span class="material-symbols-outlined">forum</span>
+</div>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md">Urban Design Chat</h3>
+<p class="text-[10px] text-outline">4 members active</p>
+</div>
+</div>
+<button class="neo-btn p-2 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant">more_horiz</span>
+</button>
+</div>
+<!-- Chat Messages -->
+<div class="flex-1 p-6 overflow-y-auto space-y-6 scroll-smooth" id="chat-container">
+<!-- Outgoing -->
+<div class="flex flex-col items-end">
+<div class="max-w-[80%] bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-md">
+<p class="font-body-md text-sm">Hey everyone, I just uploaded the initial draft for the waterfront zone! Check it in CollabHub.</p>
+</div>
+<span class="text-[10px] text-outline mt-1">10:15 AM</span>
+</div>
+<!-- Incoming -->
+<div class="flex flex-col items-start">
+<div class="flex items-end gap-2 max-w-[80%]">
+<img class="w-6 h-6 rounded-full" data-alt="Portrait avatar of Sarah Chen in a chat bubble context. Minimalist and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBGTWaMKukFb3QcCTuP-qgBEA4UCXGofFFc4ygE3Vthrg52K1-YkSs2BGfgnMPbn-l1xKcminoZgW2uY-W4lz1wStaHe6EEJSRGA9mAX7G54yVuWC2X3vbWlaZ3XoFulCqN4seV6lT0JUjvbx4HkqLW8JzbRHwoYJvQBs0OIWT1yBS2ECg59Lkxb_r-XFvv28JMGhK8AiPO_ez3_8silyWB9m7eYPj28ZAXbPZ5iIQW8LYrFtxDWBkV8VW7KThwDPm7VL9ElQSaPYp0">
+<div class="bg-white/60 backdrop-blur-md p-4 rounded-2xl rounded-bl-none shadow-sm border border-white/30">
+<p class="font-body-md text-sm text-on-surface">Just saw it, Marcus! The green corridor layout looks incredible. Exactly what we needed.</p>
+</div>
+</div>
+<span class="text-[10px] text-outline mt-1 ml-8">Sarah Chen • 10:18 AM</span>
+</div>
+<!-- Incoming -->
+<div class="flex flex-col items-start">
+<div class="flex items-end gap-2 max-w-[80%]">
+<img class="w-6 h-6 rounded-full" data-alt="Portrait avatar of Elena Rodriguez in a chat bubble context. Minimalist and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcd7bdgeghlkBW_288SmrPrLGAxWvvFQhmJ7GDXnY4Dq9bNLfb3m2gG-ukNhs5u2dQIN4-e60EMNILfDtMgke_nJCMnT_7wL9xaSBPwzNuwc16YTRBc3yF3CkyoxQmzK2FAm9DOJULfaRCUwZlsyMs06hyKp8YUkxCG9OouB9SR2mlyexYoZ4PksNwAalsiFa7qSM2BuzfoTvR-KNVc6QkvL4VTClDEi535APSQ5rWQoRz0bs0UvdpsMHQ19JAXd-z-D8mm6mp_LmN">
+<div class="bg-white/60 backdrop-blur-md p-4 rounded-2xl rounded-bl-none shadow-sm border border-white/30">
+<p class="font-body-md text-sm text-on-surface">Should I start running the environmental impact sim on these new zones?</p>
+</div>
+</div>
+<span class="text-[10px] text-outline mt-1 ml-8">Elena Rodriguez • 10:20 AM</span>
+</div>
+<!-- System message -->
+<div class="flex justify-center">
+<span class="font-label-sm text-[10px] bg-surface-container px-3 py-1 rounded-full text-outline uppercase tracking-wider">Project Files Updated</span>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-6 border-t border-white/20">
+<div class="neo-inset flex items-center p-2 rounded-2xl bg-surface-container-lowest/50">
+<button class="p-2 text-outline hover:text-primary transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2" id="chat-input" placeholder="Type a message..." type="text">
+<button class="bg-primary text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform active:scale-95" onclick="sendMessage()">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</div>
+</main>
+<script>
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const container = document.getElementById('chat-container');
+            
+            if (input.value.trim() !== '') {
+                const now = new Date();
+                const time = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'flex flex-col items-end opacity-0 transform translate-y-4 transition-all duration-300';
+                messageDiv.innerHTML = `
+                    <div class="max-w-[80%] bg-primary text-white p-4 rounded-2xl rounded-tr-none shadow-md">
+                        <p class="font-body-md text-sm">${input.value}</p>
+                    </div>
+                    <span class="text-[10px] text-outline mt-1">${time}</span>
+                `;
+                
+                container.appendChild(messageDiv);
+                
+                // Trigger animation
+                setTimeout(() => {
+                    messageDiv.classList.remove('opacity-0', 'translate-y-4');
+                    container.scrollTop = container.scrollHeight;
+                }, 10);
+                
+                input.value = '';
+            }
+        }
+
+        // Enter key to send
+        document.getElementById('chat-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+
+
+</body></html>

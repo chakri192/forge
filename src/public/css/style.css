@@ -1,0 +1,792 @@
+/* Forge Dynamic Design Tokens Baseline */
+:root {
+  /* Default Light Mode Token Values */
+  --bg-base: #f3f8f2;
+  --text-main: #191919;
+  --accent-1: #ff8484;
+  --accent-2: #2374ab;
+  --accent-3: #95b8d1;
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(25, 25, 25, 0.12);
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  --plaque-bg: linear-gradient(135deg, #e8ddb5, #c5b378);
+  --plaque-text: #191919;
+  --hall-bg: radial-gradient(circle at center, rgba(243, 248, 242, 0.95), rgba(210, 220, 210, 0.7));
+  --hall-border: rgba(35, 116, 171, 0.2);
+  --monument-bg: rgba(255, 255, 255, 0.75);
+}
+
+[data-theme="dark"] {
+  /* Dark Mode Token Overrides */
+  --bg-base: #333333;
+  --text-main: #ffffff;
+  --accent-1: #666a86;
+  --accent-2: #95b8d1;
+  --accent-3: #e8ddb5;
+  --card-bg: rgba(20, 20, 20, 0.75);
+  --border-color: rgba(255, 255, 255, 0.12);
+  --shadow-sm: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  --plaque-bg: linear-gradient(135deg, #3a3d52, #252836);
+  --plaque-text: #e8ddb5;
+  --hall-bg: radial-gradient(circle at center, #2b2b2b, #151515);
+  --hall-border: rgba(149, 184, 209, 0.25);
+  --monument-bg: rgba(40, 40, 40, 0.7);
+}
+
+[data-theme="dark"] .hall-of-fame-wrapper {
+  background: var(--hall-bg);
+  border-color: var(--hall-border);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Header & Navigation Bar */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.brand {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--accent-2);
+}
+
+nav {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-tab {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  opacity: 0.75;
+  padding: 0.5rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-tab:hover, .nav-tab.active {
+  opacity: 1;
+  background: var(--accent-2);
+  color: #ffffff;
+}
+
+/* Cards & Layout Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.badge-accent1 {
+  background: color-mix(in srgb, var(--accent-1) 20%, transparent);
+  color: var(--accent-1);
+}
+
+.badge-accent2 {
+  background: color-mix(in srgb, var(--accent-2) 20%, transparent);
+  color: var(--accent-2);
+}
+
+.badge-accent3 {
+  background: color-mix(in srgb, var(--accent-3) 20%, transparent);
+  color: var(--accent-3);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-primary {
+  background: var(--accent-2);
+  color: #ffffff;
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+/* Modal Overlay & Forms */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-card {
+  background: var(--bg-base);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  padding: 2rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-control {
+  background: var(--card-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+/* The Hall of Fame - Marble & Granite Theme */
+.hall-of-fame-wrapper {
+  background: var(--hall-bg);
+  border: 2px solid var(--hall-border);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 1rem;
+  color: var(--text-main);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+}
+
+.hall-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.hall-header h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.hall-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .hall-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.hall-monument {
+  background: var(--monument-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.plaque {
+  background: var(--plaque-bg);
+  color: var(--plaque-text);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.svg-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Forge Standard Component Library Styles
+   ========================================================================== */
+
+/* 1. Toast Notifications System */
+.forge-toast-container {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 400px;
+  width: calc(100vw - 2.5rem);
+  pointer-events: none;
+}
+
+.forge-toast {
+  pointer-events: auto;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: forgeToastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s ease;
+}
+
+.forge-toast-success { border-left: 4px solid #10b981; }
+.forge-toast-error { border-left: 4px solid #ef4444; }
+.forge-toast-warning { border-left: 4px solid #f59e0b; }
+.forge-toast-info { border-left: 4px solid var(--accent-2); }
+
+.forge-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: var(--accent-2);
+  width: 100%;
+  animation: forgeToastProgress linear forwards;
+}
+
+.forge-toast-success .forge-toast-progress { background: #10b981; }
+.forge-toast-error .forge-toast-progress { background: #ef4444; }
+.forge-toast-warning .forge-toast-progress { background: #f59e0b; }
+
+@keyframes forgeToastSlideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes forgeToastProgress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+/* 2. Loading Spinners & Skeleton Screens */
+.forge-spinner {
+  display: inline-block;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: var(--accent-2);
+  border-radius: 50%;
+  animation: forgeSpin 0.8s linear infinite;
+}
+.forge-spinner-sm { width: 18px; height: 18px; border-width: 2px; }
+.forge-spinner-md { width: 32px; height: 32px; border-width: 3px; }
+.forge-spinner-lg { width: 48px; height: 48px; border-width: 4px; }
+
+@keyframes forgeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.forge-skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.05) 75%);
+  background-size: 200% 100%;
+  animation: forgeShimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+@keyframes forgeShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 3. Empty State Card */
+.forge-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  border: 1px dashed var(--border-color);
+  border-radius: 16px;
+}
+
+.forge-empty-icon {
+  width: 64px;
+  height: 64px;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+  color: var(--accent-2);
+}
+
+/* 4. Dropdown Menus & Tab Bars */
+.forge-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.forge-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.5rem;
+  min-width: 200px;
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.5rem;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  z-index: 500;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forge-dropdown-menu.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.forge-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-main);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.forge-dropdown-item:hover, .forge-dropdown-item:focus {
+  background: color-mix(in srgb, var(--accent-2) 20%, transparent);
+  outline: none;
+}
+
+.forge-tab-bar {
+  display: flex;
+  gap: 0.25rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.forge-tab-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text-main);
+  opacity: 0.7;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.forge-tab-button.active {
+  background: var(--accent-2);
+  color: #ffffff;
+  opacity: 1;
+  box-shadow: 0 4px 12px rgba(35, 116, 171, 0.3);
+}
+
+/* 5. Data Tables */
+.forge-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+}
+
+.forge-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.forge-table th {
+  padding: 0.85rem 1.25rem;
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  user-select: none;
+}
+
+.forge-table th:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.forge-table td {
+  padding: 0.85rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.forge-table tr:last-child td {
+  border-bottom: none;
+}
+
+.forge-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.forge-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+/* 6. Badges & Avatars */
+.forge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.forge-badge-success { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.forge-badge-error { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.forge-badge-warning { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.forge-badge-info { background: color-mix(in srgb, var(--accent-2) 20%, transparent); color: var(--accent-2); border: 1px solid color-mix(in srgb, var(--accent-2) 40%, transparent); }
+
+.forge-avatar {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent-3));
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.forge-avatar-sm { width: 28px; height: 28px; font-size: 0.75rem; }
+.forge-avatar-md { width: 40px; height: 40px; font-size: 0.95rem; }
+.forge-avatar-lg { width: 56px; height: 56px; font-size: 1.25rem; }
+
+.forge-avatar-status {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 25%;
+  height: 25%;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-base);
+}
+.forge-avatar-status-online { background: #10b981; }
+.forge-avatar-status-away { background: #f59e0b; }
+.forge-avatar-status-offline { background: #6b7280; }
+
+.forge-avatar-group {
+  display: flex;
+  align-items: center;
+}
+.forge-avatar-group .forge-avatar {
+  margin-left: -0.65rem;
+  border: 2px solid var(--bg-base);
+}
+.forge-avatar-group .forge-avatar:first-child { margin-left: 0; }
+
+/* 7. Date & Time Picker */
+.forge-date-popover {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  width: 280px;
+}
+
+/* 8. Rich Text Editor */
+.forge-rte {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+}
+
+.forge-rte-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.forge-rte-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  opacity: 0.75;
+  padding: 0.35rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.forge-rte-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.forge-rte-content {
+  min-height: 120px;
+  padding: 0.85rem;
+  outline: none;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+
+/* 9. File Upload Dropzone */
+.forge-dropzone {
+  border: 2px dashed var(--border-color);
+  border-radius: 14px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.forge-dropzone:hover, .forge-dropzone.dragover {
+  border-color: var(--accent-2);
+  background: color-mix(in srgb, var(--accent-2) 10%, transparent);
+}
+
+/* 10. Confirmation Dialog / Modal */
+.forge-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.forge-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.forge-modal-card {
+  background: var(--bg-base);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 480px;
+  padding: 1.75rem;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  transform: scale(0.95);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forge-modal-backdrop.open .forge-modal-card {
+  transform: scale(1);
+}
+
+/* 11. Tooltip System */
+.forge-tooltip-bubble {
+  position: absolute;
+  padding: 0.4rem 0.75rem;
+  background: #191919;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+/* 12. Notification Bell & Dropdown Panel */
+.forge-notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  width: 360px;
+  max-width: calc(100vw - 2rem);
+  background: var(--card-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-10px);
+  pointer-events: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.forge-notification-dropdown.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.forge-notification-item {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.forge-notification-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.forge-notification-item.unread {
+  background: color-mix(in srgb, var(--accent-2) 12%, transparent);
+  border-left: 3px solid var(--accent-2);
+}
+

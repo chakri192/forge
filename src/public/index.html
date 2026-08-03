@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>FORGE | Community Platform</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "var(--accent-color, #2374ab)",
+            "royal-slate-blue": "var(--accent-color, #2374ab)",
+            "primary-container": "var(--accent-color, #2374ab)",
+            "warm-coral": "#ff8484",
+            "ice-blue": "#95b8d1",
+            "muted-slate": "#666a86",
+            "sage-white": "#f3f8f2",
+            "deep-obsidian": "#191919",
+            "dark-charcoal": "#333333",
+            "outline": "#767685",
+            "on-surface": "#ffffff",
+            "surface-variant": "#2a2a2a",
+            "secondary": "#a13c3f",
+            "border-translucent": "rgba(255, 255, 255, 0.12)"
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"],
+            "body": ["Inter", "sans-serif"]
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    :root {
+      --accent-color: #2374ab;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #191919;
+      color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .accent-target {
+      color: var(--accent-color);
+      fill: var(--accent-color);
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .spring-progress {
+      transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #191919;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body class="bg-deep-obsidian text-white min-h-screen selection:bg-royal-slate-blue/30 overflow-x-hidden">
+
+  <!-- Left Sidebar Drawer Backdrop Overlay -->
+  <div id="drawerBackdrop" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <!-- Left Sidebar Drawer -->
+  <aside id="sidebarDrawer" class="fixed top-0 left-0 h-full w-80 max-w-[85vw] bg-deep-obsidian/95 backdrop-blur-2xl border-r border-white/10 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-2xl">
+    <div>
+      <!-- Drawer Header with Full Forge Logo -->
+      <div class="flex items-center justify-between p-6 border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <img src="/assets/logo/FULL.png" alt="FORGE Logo" class="h-10 w-auto object-contain" />
+        </div>
+        <button id="drawerCloseBtn" class="p-2 text-outline hover:text-white rounded-lg hover:bg-white/10 transition-colors focus:outline-none">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <!-- Drawer Navigation Options -->
+      <nav class="p-4 space-y-1.5" id="drawerNavList">
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-white bg-royal-slate-blue/20 border border-royal-slate-blue/40 transition-all hover:bg-royal-slate-blue/30" data-tab="dashboard">
+          <span class="material-symbols-outlined text-royal-slate-blue text-xl accent-target">dashboard</span>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="tasks">
+          <span class="material-symbols-outlined text-xl">assignment</span>
+          <span>Tasks (Assigned)</span>
+        </button>
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="challenges">
+          <span class="material-symbols-outlined text-xl">bolt</span>
+          <span>Challenges</span>
+        </button>
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="teams">
+          <span class="material-symbols-outlined text-xl">groups</span>
+          <span>Teams</span>
+        </button>
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="halloffame">
+          <span class="material-symbols-outlined text-xl">emoji_events</span>
+          <span>Hall of Fame</span>
+        </button>
+
+        <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" data-tab="componentstest">
+          <span class="material-symbols-outlined text-xl text-cyan-400">widgets</span>
+          <span>Component Library</span>
+        </button>
+
+        <div class="pt-2 border-t border-white/10 my-2 space-y-1.5">
+          <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all hidden" id="drawerDevLink" data-tab="devdashboard">
+            <span class="material-symbols-outlined text-xl text-purple-400">admin_panel_settings</span>
+            <span>Dev Dashboard</span>
+          </button>
+          <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerSettingsLink" data-tab="settings">
+            <span class="material-symbols-outlined text-xl">settings</span>
+            <span>Account Settings</span>
+          </button>
+          <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerLoginLink" data-tab="login">
+            <span class="material-symbols-outlined text-xl">login</span>
+            <span>Sign In</span>
+          </button>
+          <button class="nav-drawer-item w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-outline hover:text-white hover:bg-white/5 transition-all" id="drawerSignUpLink" data-tab="signup">
+            <span class="material-symbols-outlined text-xl">person_add</span>
+            <span>Sign Up</span>
+          </button>
+          <button class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all cursor-pointer hidden" id="drawerLogoutBtn">
+            <span class="material-symbols-outlined text-xl">logout</span>
+            <span>Logout</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Drawer Footer Profile -->
+    <div class="p-4 border-t border-white/10 bg-white/[0.02]">
+      <div class="flex items-center gap-3 p-3 glass-card rounded-2xl">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-royal-slate-blue to-ice-blue p-[1px] flex items-center justify-center shadow-inner">
+          <span class="material-symbols-outlined text-sm text-white">person</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <p id="drawerUserName" class="text-xs font-bold text-white truncate">Aaron (Dev / Owner)</p>
+          <p id="drawerUserTag" class="text-[10px] text-royal-slate-blue font-semibold accent-target truncate">System Ops</p>
+        </div>
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Top Navigation Bar -->
+  <header class="fixed top-0 w-full z-40 bg-deep-obsidian/90 backdrop-blur-md border-b border-white/10 transition-all duration-300">
+    <div class="flex justify-between items-center h-16 px-4 md:px-8 max-w-7xl mx-auto">
+      <!-- Top Left: Logo Icon Trigger -->
+      <div class="flex items-center gap-4">
+        <button id="drawerToggleBtn" class="flex items-center group p-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-royal-slate-blue/50 transition-all focus:outline-none cursor-pointer" title="Click Logo to Open Sidebar Menu">
+          <img src="/assets/logo/HALF.png" alt="FORGE Logo" class="h-9 w-auto object-contain group-hover:scale-105 transition-transform" />
+        </button>
+      </div>
+
+      <!-- Header Right: Notification Bell & User Account Badge -->
+      <div class="flex items-center gap-3">
+        <!-- Notification Bell Component Mount Point -->
+        <div class="relative" id="notificationBellContainer">
+          <button id="notificationBellBtn" class="flex items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-outline hover:text-white transition-all cursor-pointer relative" title="Notifications">
+            <span class="material-symbols-outlined text-xl">notifications</span>
+            <span id="notificationUnreadBadge" class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white font-bold text-[10px] flex items-center justify-center border-2 border-deep-obsidian shadow-lg scale-0 transition-transform duration-200">0</span>
+          </button>
+
+          <div id="notificationDropdownPanel" class="forge-notification-dropdown">
+            <div class="p-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-base text-royal-slate-blue">notifications_active</span>
+                <h3 class="text-xs font-bold text-white uppercase tracking-wider">Notifications</h3>
+              </div>
+              <button id="markAllReadBtn" class="text-[11px] font-semibold text-royal-slate-blue hover:underline cursor-pointer">
+                Mark all read
+              </button>
+            </div>
+
+            <div id="notificationListContainer" class="max-h-80 overflow-y-auto divide-y divide-white/5">
+              <div class="p-6 text-center text-outline text-xs">
+                Loading notifications...
+              </div>
+            </div>
+
+            <div class="p-2 border-t border-white/10 text-center bg-white/[0.02]">
+              <span class="text-[10px] text-outline">Real-time polling active (10s interval)</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="currentUserBadge" class="flex items-center gap-2.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 hover:border-royal-slate-blue/50 transition-colors cursor-pointer">
+          <span id="userTagBadge" class="text-xs font-semibold text-royal-slate-blue accent-target">Aaron (Dev / Owner)</span>
+          <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-royal-slate-blue to-ice-blue p-[1px] flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm text-white">person</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main id="appView" class="pt-24 pb-16 px-4 md:px-8 max-w-7xl mx-auto min-h-[calc(100vh-140px)]">
+    <!-- Dynamic views injected here by app.js -->
+  </main>
+
+  <!-- Proper App Footer -->
+  <footer class="w-full py-6 px-4 md:px-8 border-t border-white/10 bg-deep-obsidian/90 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-outline">
+      <div class="flex items-center gap-3">
+        <img src="/assets/logo/HALF.png" alt="FORGE Logo" class="h-6 w-auto opacity-80" />
+        <span class="font-bold text-white tracking-wider">FORGE Platform</span>
+        <span class="px-2 py-0.5 rounded bg-royal-slate-blue/20 text-ice-blue border border-royal-slate-blue/40 text-[10px]">v0.50-alpha</span>
+      </div>
+      <div>
+        <span>FORGE © 2026 • Account: <strong class="text-white">Aaron (Dev / Owner)</strong></span>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
+
