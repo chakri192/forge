@@ -19,7 +19,7 @@ router.post(
   mutationRateLimiter,
   validate({
     body: z.object({
-      opponentIds: z.array(z.string().min(1)).length(2),
+      opponentId: z.string().min(1),
       stakePoints: z.number().int().min(0).max(5000).optional(),
       stakeXp: z.number().int().min(0).max(5000).optional()
     })

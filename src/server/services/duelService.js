@@ -6,7 +6,6 @@ import { hasRole } from '../middleware/rbac.js';
 import { NotificationService } from './notification.js';
 
 const JUDGE_ROLES = ['leader', 'teacher', 'admin'];
-const OPPONENT_COUNT = 2;
 const MAX_STAKE = 5000;
 
 function totals(userId) {
@@ -83,7 +82,6 @@ export const DuelService = {
 
   present(duel, viewer) {
     const participants = DuelModel.participants(duel.id);
-    const opponents = participants.filter((p) => p.side === 'OPPONENT');
     const me = participants.find((p) => p.user_id === viewer.id) || null;
 
     return {
@@ -110,19 +108,13 @@ export const DuelService = {
       viewer: me
         ? { side: me.side, accepted: me.accepted === 1, topicChoice: me.topic_choice }
         : null,
-      canJudge: hasRole(viewer, JUDGE_ROLES) && duel.status === 'ACTIVE',
-      // Shown while opponents are still disagreeing, so the hold-up is visible.
-      awaitingTopic:
-        duel.status === 'PENDING' &&
-        opponents.every((o) => o.accepted === 1) &&
-        new Set(opponents.map((o) => o.topic_choice)).size > 1
+      canJudge: hasRole(viewer, JUDGE_ROLES) && duel.status === 'ACTIVE'
     };
   },
 
-  create(user, { opponentIds, stakePoints = 0, stakeXp = 0 }) {
-    const unique = [...new Set(opponentIds || [])].filter((id) => id && id !== user.id);
-    if (unique.length !== OPPONENT_COUNT) {
-      throw { status: 400, message: 'A duel is you against exactly two other people' };
+  create(user, { opponentId, stakePoints = 0, stakeXp = 0 }) {
+    if (!opponentId || opponentId === user.id) {
+      throw { status: 400, message: 'Pick someone other than yourself to challenge' };
     }
     if (stakePoints < 0 || stakeXp < 0 || stakePoints > MAX_STAKE || stakeXp > MAX_STAKE) {
       throw { status: 400, message: `Stakes must be between 0 and ${MAX_STAKE}` };
@@ -131,12 +123,8 @@ export const DuelService = {
       throw { status: 400, message: 'Put something on it — set a points or XP stake' };
     }
 
-    const known = db
-      .prepare(`SELECT id FROM users WHERE id IN (${unique.map(() => '?').join(',')})`)
-      .all(...unique);
-    if (known.length !== OPPONENT_COUNT) {
-      throw { status: 400, message: 'One of those people does not exist' };
-    }
+    const known = db.prepare(`SELECT id FROM users WHERE id = ?`).get(opponentId);
+    if (!known) throw { status: 400, message: 'That person does not exist' };
 
     // The challenger has to cover their own stake before anyone is invited.
     const mine = totals(user.id);
@@ -151,29 +139,27 @@ export const DuelService = {
     db.transaction(() => {
       duelId = DuelModel.create({
         challengerId: user.id,
-        opponentIds: unique,
+        opponentIds: [opponentId],
         stakePoints,
         stakeXp
       });
       holdStake(DuelModel.byId(duelId), user.id);
     })();
 
-    for (const opponentId of unique) {
-      NotificationService.createNotification({
-        userId: opponentId,
-        title: 'You have been challenged',
-        message: `${user.name} staked ${stakePoints} points and ${stakeXp} XP. Pick a topic to accept.`,
-        type: 'INFO'
-      });
-    }
+    NotificationService.createNotification({
+      userId: opponentId,
+      title: 'You have been challenged',
+      message: `${user.name} staked ${stakePoints} points and ${stakeXp} XP. You choose the topic.`,
+      type: 'INFO'
+    });
 
     return this.present(DuelModel.byId(duelId), user);
   },
 
   /**
-   * An opponent accepts and names the topic they want. The duel only goes
-   * active once both opponents have accepted *and* named the same topic —
-   * that agreement is what "the two of them choose it" means.
+   * The challenged person accepts and names the topic. Their choice is the
+   * topic outright — the challenger already had their say by setting what is
+   * on the line, so the ground is not theirs to pick as well.
    */
   accept(user, duelId, topic) {
     const duel = DuelModel.byId(duelId);
@@ -183,7 +169,9 @@ export const DuelService = {
     const participants = DuelModel.participants(duelId);
     const me = participants.find((p) => p.user_id === user.id);
     if (!me) throw { status: 403, message: 'You are not part of this duel' };
-    if (me.side !== 'OPPONENT') throw { status: 403, message: 'Only the challenged pick the topic' };
+    if (me.side !== 'OPPONENT') {
+      throw { status: 403, message: 'The person challenged chooses the topic, not you' };
+    }
 
     const choice = String(topic || '').trim();
     if (!choice || choice.length > 80) {
@@ -200,15 +188,8 @@ export const DuelService = {
 
     db.transaction(() => {
       DuelModel.setAccepted(duelId, user.id, choice);
-      // Stake is taken once, on first acceptance, even if they change topic later.
       if (me.staked !== 1) holdStake(duel, user.id);
-
-      const opponents = DuelModel.participants(duelId).filter((p) => p.side === 'OPPONENT');
-      const allIn = opponents.every((o) => o.accepted === 1);
-      const agreed = new Set(opponents.map((o) => o.topic_choice));
-      if (allIn && agreed.size === 1) {
-        DuelModel.setStatus(duelId, 'ACTIVE', { topic: [...agreed][0] });
-      }
+      DuelModel.setStatus(duelId, 'ACTIVE', { topic: choice });
     })();
 
     const after = DuelModel.byId(duelId);
@@ -275,7 +256,7 @@ export const DuelService = {
 
     const participants = DuelModel.participants(duelId);
     if (!participants.some((p) => p.user_id === winnerId)) {
-      throw { status: 400, message: 'The winner has to be one of the three' };
+      throw { status: 400, message: 'The winner has to be one of the two' };
     }
 
     const potPoints = duel.stake_points * participants.length;
