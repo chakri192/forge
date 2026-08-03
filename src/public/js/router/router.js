@@ -20,6 +20,7 @@ import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
 import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
 import { renderLeaderboardView, attachLeaderboardEvents } from '../views/leaderboardView.js';
 import { renderGamesView, attachGamesEvents } from '../views/gamesView.js';
+import { renderStoreView, attachStoreEvents } from '../views/storeView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -40,6 +41,7 @@ const routes = {
   halloffame: { render: renderHallOfFameView, attach: attachHallOfFameEvents },
   leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },
   games: { render: renderGamesView, attach: attachGamesEvents },
+  store: { render: renderStoreView, attach: attachStoreEvents },
   login: { render: renderLoginView, attach: attachLoginEvents },
   signup: { render: renderSignUpView, attach: attachSignUpEvents },
   settings: { render: renderSettingsView, attach: attachSettingsEvents },

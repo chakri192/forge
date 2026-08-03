@@ -36,6 +36,7 @@ export { renderReviewView } from './views/reviewView.js';
 export { renderAppearanceView } from './views/appearanceView.js';
 export { renderLeaderboardView } from './views/leaderboardView.js';
 export { renderGamesView } from './views/gamesView.js';
+export { renderStoreView } from './views/storeView.js';
 
 const router = new Router('appView');
 

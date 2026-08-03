@@ -20,6 +20,7 @@ const VALID_TABS = new Set([
   'appearance',
   'leaderboard',
   'games',
+  'store',
   'settings',
   'devdashboard',
   'componentstest',

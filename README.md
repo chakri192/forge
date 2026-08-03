@@ -90,6 +90,18 @@ transaction covering XP, streak, and badges together.
 history rather than counting forward, so an achievement added today is
 immediately earned by anyone who already qualified.
 
+**Two currencies.** XP is progression — an append-only ledger that is never
+spent, and the only thing the leaderboard ranks on. Points are a wallet:
+earned by completing challenges an admin has hosted, spent in the cosmetics
+store. The balance is always derived from signed ledger rows rather than kept
+as a column, so a crash can never leave a purchase without its debit, and the
+balance check and the debit share one transaction so two requests racing
+cannot both overdraw.
+
+**The store** sells avatar rings, titles, and profile banners. Cosmetics store
+a colour and nothing else, validated as a hex on the way in and again before
+it reaches a style attribute. One item per kind can be worn at a time.
+
 **Mini games** are four classics, each about a minute long: Snake, Memory
 Match, Bubble Pop, and Colour Sequence. Beating your own previous best awards
 XP, so the reward is improvement rather than repetition. Scores are capped

@@ -617,3 +617,23 @@ export async function submitGameScore(game, score, detail = null) {
     body: JSON.stringify(detail ? { score, detail } : { score })
   });
 }
+
+export async function fetchStore() {
+  return requestApi('/store');
+}
+
+export async function fetchWallet() {
+  return requestApi('/wallet');
+}
+
+export async function buyCosmetic(id) {
+  return requestApi(`/store/${encodeURIComponent(id)}/buy`, { method: 'POST' });
+}
+
+export async function equipCosmetic(id, equipped) {
+  return requestApi(`/store/${encodeURIComponent(id)}/equip`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ equipped })
+  });
+}
