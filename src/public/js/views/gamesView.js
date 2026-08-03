@@ -3,21 +3,23 @@ import { fetchGames, submitGameScore } from '../services/api.js';
 import { showToast } from '../components/toast.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml } from '../utils/dom.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 export function renderGamesView(state) {
   if (!state.currentUser) {
     return `<div class="empty"><p class="empty__text">Sign in to play.</p></div>`;
   }
-  return `
-    <div class="page__inner">
-      <header class="page__head">
-        <div>
-          <h1 class="title">Mini games</h1>
-          <p class="subtitle">A minute each. Beat your own best to earn XP.</p>
-        </div>
-      </header>
-      <div id="gamesRoot">${renderSkeleton('card', { className: '' })}</div>
-    </div>`;
+  return renderScreen({
+    title: 'Mini games',
+    subtitle: 'Beating your own best earns XP.',
+    toolbar: {
+      groups: [
+        { collapsible: true, actions: [{ id: 'refresh', label: 'Refresh scores', icon: 'refresh', iconOnly: true }] }
+      ]
+    },
+    body: `<div id="gamesRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachGamesEvents(state) {
@@ -108,6 +110,8 @@ export function attachGamesEvents(state) {
     const runners = { snake: playSnake, memory: playMemory, pop: playPop, sequence: playSequence };
     runners[game.id](stage, finish, live);
   }
+
+  attachToolbar(document.querySelector('.screen__header'), { refresh: load });
 
   load();
 }

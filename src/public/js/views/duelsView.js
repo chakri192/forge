@@ -5,6 +5,8 @@ import { showToast } from '../components/toast.js';
 import { openModal } from '../components/modal.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 const STATUS_LABEL = {
   PENDING: 'Waiting',
@@ -18,19 +20,23 @@ export function renderDuelsView(state) {
   if (!state.currentUser) {
     return `<div class="empty"><p class="empty__text">Sign in to challenge anyone.</p></div>`;
   }
-  return `
-    <div class="page__inner">
-      <header class="page__head">
-        <div>
-          <h1 class="title">Duels</h1>
-          <p class="subtitle">
-            Challenge someone head to head. You set the stake, they choose the topic.
-          </p>
-        </div>
-        <button class="btn btn--primary" id="btnNewDuel">Challenge someone</button>
-      </header>
-      <div id="duelsRoot">${renderSkeleton('card', { className: '' })}</div>
-    </div>`;
+  return renderScreen({
+    title: 'Duels',
+    subtitle: 'You set the stake. The person you challenge picks the topic.',
+    toolbar: {
+      groups: [
+        { actions: [{ id: 'new', label: 'New duel', icon: 'add', variant: 'primary' }] },
+        {
+          collapsible: true,
+          actions: [
+            { id: 'refresh', label: 'Refresh', icon: 'refresh', iconOnly: true },
+            { id: 'rules', label: 'How duels work', icon: 'help', iconOnly: true }
+          ]
+        }
+      ]
+    },
+    body: `<div id="duelsRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachDuelsEvents(state) {
@@ -237,7 +243,7 @@ export function attachDuelsEvents(state) {
     void names;
   }
 
-  document.getElementById('btnNewDuel')?.addEventListener('click', async () => {
+  async function openNewDuel() {
     let people = [];
     try {
       const res = await fetchAllUsers();
@@ -292,6 +298,22 @@ export function attachDuelsEvents(state) {
         }
       }
     });
+  }
+
+  attachToolbar(document.querySelector('.screen__header'), {
+    new: openNewDuel,
+    refresh: load,
+    rules: () =>
+      openModal({
+        title: 'How duels work',
+        confirmLabel: 'Close',
+        contentHtml: `
+          <ol class="steps">
+            <li><strong>You challenge someone</strong> and set what is on the line — points, XP, or both.</li>
+            <li><strong>They choose the topic.</strong> You already decided the stake, so the subject is theirs.</li>
+            <li><strong>A leader calls the winner.</strong> Both stakes go to them. Declining returns everything.</li>
+          </ol>`
+      })
   });
 
   load();

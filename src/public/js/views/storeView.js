@@ -3,6 +3,8 @@ import { fetchStore, buyCosmetic, equipCosmetic } from '../services/api.js';
 import { showToast } from '../components/toast.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { escapeHtml } from '../utils/dom.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 const SAFE_COLOUR = /^#[0-9a-f]{6}$/i;
 
@@ -10,23 +12,31 @@ export function renderStoreView(state) {
   if (!state.currentUser) {
     return `<div class="empty"><p class="empty__text">Sign in to visit the store.</p></div>`;
   }
-  return `
-    <div class="page__inner">
-      <header class="page__head">
-        <div>
-          <h1 class="title">Store</h1>
-          <p class="subtitle">
-            Spend points on how you look. XP is your standing and is never spent.
-          </p>
-        </div>
-      </header>
-      <div id="storeRoot">${renderSkeleton('card', { className: '' })}</div>
-    </div>`;
+  return renderScreen({
+    title: 'Store',
+    subtitle: 'Points buy cosmetics. XP is your standing and is not spent here.',
+    toolbar: {
+      groups: [
+        {
+          actions: [
+            { id: 'all', label: 'All', pressed: true },
+            { id: 'owned', label: 'Owned', pressed: false }
+          ]
+        },
+        {
+          collapsible: true,
+          actions: [{ id: 'refresh', label: 'Refresh', icon: 'refresh', iconOnly: true }]
+        }
+      ]
+    },
+    body: `<div id="storeRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachStoreEvents(state) {
   if (!state.currentUser) return;
   const root = document.getElementById('storeRoot');
+  let filter = 'all';
 
   async function load() {
     try {
@@ -37,14 +47,15 @@ export function attachStoreEvents(state) {
   }
 
   function paint(data) {
+    const shown = filter === 'owned' ? data.items.filter((i) => i.owned) : data.items;
+
     const byKind = data.kinds
       .map((kind) => {
-        const items = data.items.filter((i) => i.kind === kind.id);
+        const items = shown.filter((i) => i.kind === kind.id);
         if (!items.length) return '';
         return `
-          <section class="section">
-            <h2 class="section__title">${escapeHtml(kind.label)}</h2>
-            <p class="section__sub">${escapeHtml(kind.blurb)}</p>
+          <section class="block">
+            <h2 class="block__label">${escapeHtml(kind.label)}</h2>
             <div class="store-grid">${items.map(itemHtml).join('')}</div>
           </section>`;
       })
@@ -53,18 +64,11 @@ export function attachStoreEvents(state) {
     root.innerHTML = `
       <div class="wallet">
         <div class="wallet__row">
-          <span class="wallet__label">Points to spend</span>
-          <strong class="wallet__value">${data.balance.toLocaleString()}</strong>
+          <span class="wallet__label">Balance</span>
+          <strong class="wallet__value">${data.balance.toLocaleString()}<small> points</small></strong>
         </div>
-        <p class="wallet__hint">
-          ${
-            data.earned
-              ? `${data.earned.toLocaleString()} earned in total. Points come from completing challenges.`
-              : 'Complete a challenge to earn your first points.'
-          }
-        </p>
       </div>
-      ${byKind}`;
+      ${byKind || '<p class="screen__subtitle">Nothing owned yet.</p>'}`;
 
     root.querySelectorAll('[data-buy]').forEach((btn) =>
       btn.addEventListener('click', () => buy(btn.dataset.buy, btn))
@@ -123,6 +127,21 @@ export function attachStoreEvents(state) {
       await equipCosmetic(id, on);
       load();
     } catch (_) {}
+  }
+
+  attachToolbar(document.querySelector('.screen__header'), {
+    all: (e) => setFilter('all', e),
+    owned: (e) => setFilter('owned', e),
+    refresh: load
+  });
+
+  function setFilter(next, event) {
+    filter = next;
+    document
+      .querySelectorAll('.screen__header [data-action="all"], .screen__header [data-action="owned"]')
+      .forEach((btn) => btn.setAttribute('aria-pressed', String(btn.dataset.action === next)));
+    void event;
+    load();
   }
 
   load();

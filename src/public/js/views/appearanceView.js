@@ -7,6 +7,8 @@ import {
 import { createColorWheel } from '../components/colorWheel.js';
 import { showToast } from '../components/toast.js';
 import { escapeHtml } from '../utils/dom.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 
 const ROLES = [
   { key: 'primary', label: 'Primary', hint: 'Buttons, active states, links' },
@@ -23,15 +25,16 @@ export function renderAppearanceView(state) {
   const harmony = getHarmony();
   const accents = resolveAccents();
 
-  return `
-    <div class="page__inner appearance">
-      <header class="page__head">
-        <div>
-          <h1 class="title">Appearance</h1>
-          <p class="subtitle">Only you see these changes. They apply the moment you make them.</p>
-        </div>
-        <button class="btn btn--subtle" id="btnResetAccents">Reset to defaults</button>
-      </header>
+  return renderScreen({
+    title: 'Appearance',
+    subtitle: 'These settings apply to you only, and take effect immediately.',
+    toolbar: {
+      groups: [
+        { collapsible: true, actions: [{ id: 'reset', label: 'Reset to defaults', icon: 'restart_alt' }] }
+      ]
+    },
+    body: `
+      <div class="appearance">
 
       <section class="section">
         <div class="section__head">
@@ -112,7 +115,8 @@ export function renderAppearanceView(state) {
           </div>
         </div>
       </section>
-    </div>`;
+      </div>`
+  });
 }
 
 /**
@@ -259,10 +263,12 @@ export function attachAppearanceEvents(state) {
   lightness.addEventListener('input', () => wheel.setLightness(Number(lightness.value)));
   lightness.addEventListener('change', () => wheel.commit());
 
-  document.getElementById('btnResetAccents').addEventListener('click', () => {
-    resetAccents();
-    showToast({ title: 'Reset', message: 'Back to the theme defaults.', type: 'info' });
-    rerender();
+  attachToolbar(document.querySelector('.screen__header'), {
+    reset: () => {
+      resetAccents();
+      showToast({ title: 'Reset to defaults', type: 'info' });
+      rerender();
+    }
   });
 
   paintSwatches(live);
