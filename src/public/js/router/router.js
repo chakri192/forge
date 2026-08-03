@@ -21,6 +21,7 @@ import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanc
 import { renderLeaderboardView, attachLeaderboardEvents } from '../views/leaderboardView.js';
 import { renderGamesView, attachGamesEvents } from '../views/gamesView.js';
 import { renderStoreView, attachStoreEvents } from '../views/storeView.js';
+import { renderDuelsView, attachDuelsEvents } from '../views/duelsView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -42,6 +43,7 @@ const routes = {
   leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },
   games: { render: renderGamesView, attach: attachGamesEvents },
   store: { render: renderStoreView, attach: attachStoreEvents },
+  duels: { render: renderDuelsView, attach: attachDuelsEvents },
   login: { render: renderLoginView, attach: attachLoginEvents },
   signup: { render: renderSignUpView, attach: attachSignUpEvents },
   settings: { render: renderSettingsView, attach: attachSettingsEvents },

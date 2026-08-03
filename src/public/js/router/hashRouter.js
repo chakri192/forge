@@ -21,6 +21,7 @@ const VALID_TABS = new Set([
   'leaderboard',
   'games',
   'store',
+  'duels',
   'settings',
   'devdashboard',
   'componentstest',
