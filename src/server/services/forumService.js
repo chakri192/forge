@@ -28,8 +28,8 @@ function rank(score, createdAt) {
 }
 
 export const ForumService = {
-  listThreads(user, { category, sort = 'hot' } = {}) {
-    const threads = ForumModel.listThreads({ category });
+  listThreads(user, { category, sort = 'hot', limit, offset } = {}) {
+    const threads = ForumModel.listThreads({ category, limit, offset });
     const ids = threads.map((t) => t.id);
     const scores = VoteModel.scoresFor('FORUM_THREAD', ids);
     const mine = VoteModel.userVotesFor(user.id, 'FORUM_THREAD', ids);

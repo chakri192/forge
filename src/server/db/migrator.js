@@ -24,7 +24,10 @@ export function runMigrations(db) {
   }
 
   const migrationFiles = fs.readdirSync(migrationsDir)
-    .filter(file => file.endsWith('.sql'))
+    // `.down.sql` files are rollbacks. They live beside their migration and
+    // must never be picked up as forward migrations — doing so executes a
+    // DROP immediately after the CREATE that produced it.
+    .filter(file => file.endsWith('.sql') && !file.endsWith('.down.sql'))
     .sort();
 
   const getAppliedStmt = db.prepare('SELECT name FROM schema_migrations WHERE name = ?');

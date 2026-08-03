@@ -45,7 +45,9 @@ router.get('/forum/threads', requireAuth, validate({}), (req, res, next) => {
     res.json({
       threads: ForumService.listThreads(req.user, {
         category: req.query.category || null,
-        sort: req.query.sort || 'hot'
+        sort: req.query.sort || 'hot',
+        limit: req.query.limit,
+        offset: req.query.offset
       })
     });
   } catch (err) {
