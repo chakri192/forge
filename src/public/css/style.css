@@ -63,7 +63,7 @@ body {
 }
 
 /* Header & Navigation Bar */
-header {
+.legacy-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -79,7 +79,7 @@ header {
   color: var(--accent-2);
 }
 
-nav {
+.legacy-nav {
   display: flex;
   gap: 0.5rem;
 }
@@ -103,7 +103,7 @@ nav {
 }
 
 /* Cards & Layout Grid */
-.grid {
+.legacy-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 1.5rem;
@@ -790,3 +790,58 @@ nav {
   border-left: 3px solid var(--accent-2);
 }
 
+
+/* ---------------------------------------------------------------
+   Accessibility & input-modality baseline
+   --------------------------------------------------------------- */
+
+/* Visible keyboard focus everywhere, without mouse-click focus rings */
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Touch devices cannot hover: never gate controls behind :hover */
+@media (hover: none) {
+  .group:hover .group-hover\:opacity-100,
+  .msg-row .opacity-0 {
+    opacity: 1 !important;
+  }
+}
+
+/* Minimum comfortable hit area for inline text actions */
+@media (pointer: coarse) {
+  .msg-edit,
+  .msg-delete,
+  .ann-edit,
+  .ann-delete {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.5rem;
+  }
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Logo assets are dark-on-transparent; force them legible on the dark shell */
+img[src*="/assets/logo/"]:not([data-decorative]) {
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+/* Decorative watermark stays a faint background texture */
+img[data-decorative] {
+  opacity: 0.06;
+}

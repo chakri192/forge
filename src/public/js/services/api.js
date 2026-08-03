@@ -1,4 +1,5 @@
 // Centralized API Service
+import { handleSessionExpired, isSessionExpiredHandled } from './session.js';
 
 const BASE_URL = '/api';
 
@@ -12,7 +13,10 @@ function getHeaders(customHeaders = {}) {
 }
 
 export async function requestApi(endpoint, options = {}) {
-  const url = endpoint.startsWith('/') ? endpoint : `${BASE_URL}/${endpoint}`;
+  const url =
+    endpoint.startsWith('/api') || endpoint.startsWith('http')
+      ? endpoint
+      : `${BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   const response = await fetch(url, {
     ...options,
     headers: getHeaders(options.headers || {})
@@ -26,6 +30,19 @@ export async function requestApi(endpoint, options = {}) {
   }
 
   if (!response.ok) {
+    // An expired or invalid session is not an "API error" the user can act on —
+    // tear the session down once and let the login view explain what happened.
+    // Every other in-flight 401 is swallowed so we never stack duplicate toasts.
+    if (response.status === 401) {
+      const alreadyHandled = isSessionExpiredHandled();
+      handleSessionExpired();
+      const err = new Error('Session expired');
+      err.status = 401;
+      err.handled = true;
+      err.silent = alreadyHandled;
+      throw err;
+    }
+
     let errorMsg = data.error || data.message || `Request failed with status ${response.status}`;
     if (Array.isArray(data.details)) {
       const detailStr = data.details.map(d => `${d.path ? d.path.join('.') + ': ' : ''}${d.message}`).join(', ');
@@ -34,7 +51,7 @@ export async function requestApi(endpoint, options = {}) {
 
     try {
       const { showToast } = await import('../components/toast.js');
-      showToast({ title: 'API Error', message: errorMsg, type: 'error' });
+      showToast({ title: 'Something went wrong', message: errorMsg, type: 'error' });
     } catch (_) {}
 
     const err = new Error(errorMsg);
@@ -285,4 +302,240 @@ export async function fetchUserActivity(userId, params = {}) {
   if (params.offset) query.append('offset', params.offset);
 
   return requestApi(`/activity/user/${userId}?${query.toString()}`);
+}
+
+// --- Messaging (Channels) ---
+
+export async function fetchChannels() {
+  return requestApi('/channels');
+}
+
+export async function createChannel(channelData) {
+  return requestApi('/channels', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(channelData)
+  });
+}
+
+export async function fetchChannelMessages(channelId, limit = 50) {
+  return requestApi(`/channels/${channelId}/messages?limit=${limit}`);
+}
+
+export async function sendChannelMessage(channelId, content) {
+  return requestApi(`/channels/${channelId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+}
+
+export async function editChannelMessage(messageId, content) {
+  return requestApi(`/messages/${messageId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+}
+
+export async function deleteChannelMessage(messageId) {
+  return requestApi(`/messages/${messageId}`, { method: 'DELETE' });
+}
+
+// --- Announcements ---
+
+export async function fetchAnnouncements() {
+  return requestApi('/announcements');
+}
+
+export async function createAnnouncement(announcementData) {
+  return requestApi('/announcements', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(announcementData)
+  });
+}
+
+export async function updateAnnouncement(announcementId, fields) {
+  return requestApi(`/announcements/${announcementId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(fields)
+  });
+}
+
+export async function deleteAnnouncement(announcementId) {
+  return requestApi(`/announcements/${announcementId}`, { method: 'DELETE' });
+}
+
+// --- Progression ---
+
+export async function fetchProgression() {
+  return requestApi('/progression/me');
+}
+
+export async function fetchAchievements() {
+  return requestApi('/progression/achievements');
+}
+
+// --- Forum & voting ---
+
+export async function fetchThreads(params = {}) {
+  const query = new URLSearchParams();
+  if (params.category) query.append('category', params.category);
+  if (params.sort) query.append('sort', params.sort);
+  const qs = query.toString();
+  return requestApi(`/forum/threads${qs ? '?' + qs : ''}`);
+}
+
+export async function fetchThread(threadId) {
+  return requestApi(`/forum/threads/${threadId}`);
+}
+
+export async function createThread(data) {
+  return requestApi('/forum/threads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function replyToThread(threadId, content) {
+  return requestApi(`/forum/threads/${threadId}/posts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+}
+
+export async function acceptAnswer(threadId, postId) {
+  return requestApi(`/forum/threads/${threadId}/accept/${postId}`, { method: 'POST' });
+}
+
+export async function castVote(targetType, targetId, value) {
+  return requestApi('/votes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ target_type: targetType, target_id: targetId, value })
+  });
+}
+
+// --- Marketplace ---
+
+export async function fetchSuggestions() {
+  return requestApi('/marketplace');
+}
+
+export async function createSuggestion(data) {
+  return requestApi('/marketplace', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function promoteSuggestion(id, data = {}) {
+  return requestApi(`/marketplace/${id}/promote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+// --- Subtasks ---
+
+export async function fetchSubtasks(taskId) {
+  return requestApi(`/tasks/${taskId}/subtasks`);
+}
+
+export async function createSubtask(taskId, title) {
+  return requestApi(`/tasks/${taskId}/subtasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title })
+  });
+}
+
+export async function toggleSubtask(id, isCompleted) {
+  return requestApi(`/subtasks/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ is_completed: isCompleted })
+  });
+}
+
+export async function deleteSubtask(id) {
+  return requestApi(`/subtasks/${id}`, { method: 'DELETE' });
+}
+
+// --- Calendar ---
+
+export async function fetchCalendar(params = {}) {
+  const query = new URLSearchParams();
+  if (params.from) query.append('from', params.from);
+  if (params.to) query.append('to', params.to);
+  const qs = query.toString();
+  return requestApi(`/calendar${qs ? '?' + qs : ''}`);
+}
+
+export async function createCalendarEvent(data) {
+  return requestApi('/calendar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function deleteCalendarEvent(id) {
+  return requestApi(`/calendar/${id}`, { method: 'DELETE' });
+}
+
+// --- Journal ---
+
+export async function fetchJournal() {
+  return requestApi('/journal');
+}
+
+export async function createJournalEntry(data) {
+  return requestApi('/journal', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+}
+
+export async function deleteJournalEntry(id) {
+  return requestApi(`/journal/${id}`, { method: 'DELETE' });
+}
+
+// --- Analytics ---
+
+export async function fetchAnalytics() {
+  return requestApi('/analytics');
+}
+
+// --- Quizzes & puzzles ---
+
+export async function fetchQuizzes(kind) {
+  return requestApi(`/quizzes${kind ? `?kind=${kind}` : ''}`);
+}
+
+export async function fetchQuiz(id) {
+  return requestApi(`/quizzes/${id}`);
+}
+
+export async function fetchDailyPuzzle() {
+  return requestApi('/quizzes/daily');
+}
+
+export async function submitQuiz(id, answers, durationSeconds) {
+  return requestApi(`/quizzes/${id}/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answers, duration_seconds: durationSeconds })
+  });
+}
+
+export async function fetchQuizLeaderboard() {
+  return requestApi('/quizzes/leaderboard');
 }

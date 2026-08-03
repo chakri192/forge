@@ -1,4 +1,5 @@
 // Dashboard View Renderer (FORGE Platform Theme)
+import { label, labelUpper } from '../utils/labels.js';
 
 export function renderDashboard(state) {
   const { tasksData = {}, teamsData = [], hallOfFameData = {}, currentUser } = state;
@@ -22,19 +23,19 @@ export function renderDashboard(state) {
       <div class="glass-card p-8 rounded-2xl relative overflow-hidden border border-white/10 shadow-2xl">
         <!-- Ambient Watermark Logo Glow -->
         <div class="absolute -top-12 -right-12 opacity-20 pointer-events-none">
-          <img src="/assets/logo/HALF.png" alt="FORGE Watermark" class="w-72 h-72 object-contain" />
+          <img src="/assets/logo/HALF.png" alt="" aria-hidden="true" data-decorative class="w-72 h-72 object-contain" />
         </div>
 
         <div class="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div class="space-y-2">
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-royal-slate-blue/20 text-royal-slate-blue border border-royal-slate-blue/40 accent-target">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-royal-slate-blue/20 text-accent-text border border-royal-slate-blue/40 accent-target">
                 FORGE Platform
               </span>
               <span class="text-xs text-outline">• Active Session</span>
             </div>
             <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">
-              Welcome back, <span class="text-royal-slate-blue accent-target">${currentUser ? currentUser.name : 'Aaron (Dev)'}</span>
+              Welcome back, <span class="text-accent-text accent-target">${currentUser ? currentUser.name : 'V Chakradhar (Dev)'}</span>
             </h1>
             <p class="text-sm text-outline max-w-xl">
               Community platform dashboard. View assigned missions, open community challenges, and track active team progress.
@@ -58,7 +59,7 @@ export function renderDashboard(state) {
       <!-- Personal Progress Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="glass-card p-6 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-white/20 transition-all">
-          <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-royal-slate-blue accent-target">
+          <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-accent-text accent-target">
             <span class="material-symbols-outlined text-2xl">insights</span>
           </div>
           <div>
@@ -105,10 +106,10 @@ export function renderDashboard(state) {
         <div class="lg:col-span-2 space-y-4">
           <div class="flex justify-between items-center">
             <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-royal-slate-blue accent-target">task_alt</span>
+              <span class="material-symbols-outlined text-accent-text accent-target">task_alt</span>
               Active Missions & Tasks
             </h2>
-            <button class="nav-drawer-item text-xs text-royal-slate-blue hover:underline accent-target font-bold" data-tab="tasks">View All Tasks →</button>
+            <button class="nav-drawer-item text-xs text-accent-text hover:underline accent-target font-bold" data-tab="tasks">View All Tasks →</button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -120,15 +121,15 @@ export function renderDashboard(state) {
               <div class="glass-card p-6 rounded-2xl flex flex-col justify-between hover:border-royal-slate-blue/40 transition-all group">
                 <div class="space-y-3">
                   <div class="flex justify-between items-start">
-                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-royal-slate-blue/20 text-royal-slate-blue border border-royal-slate-blue/40 accent-target">
-                      ${t.task_type === 'CHALLENGE' ? 'CHALLENGE' : 'TEAM TASK'}
+                    <span class="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-royal-slate-blue/20 text-accent-text border border-royal-slate-blue/40 accent-target">
+                      ${labelUpper(t.task_type === 'CHALLENGE' ? 'CHALLENGE' : 'TEAM_TASK')}
                     </span>
                     <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-white/5 text-ice-blue border border-white/10">
                       ${t.total_points} PTS
                     </span>
                   </div>
                   <div>
-                    <h3 class="font-bold text-base text-white group-hover:text-royal-slate-blue transition-colors line-clamp-1">
+                    <h3 class="font-bold text-base text-white group-hover:text-accent-text transition-colors line-clamp-1">
                       ${t.title}
                     </h3>
                     <p class="text-xs text-outline mt-1 line-clamp-2">${t.description}</p>
@@ -137,9 +138,9 @@ export function renderDashboard(state) {
                 <div class="pt-4 mt-4 border-t border-white/5 flex justify-between items-center text-xs">
                   <span class="text-outline flex items-center gap-1">
                     <span class="material-symbols-outlined text-sm">schedule</span>
-                    ${t.status}
+                    ${label(t.status)}
                   </span>
-                  <button class="nav-drawer-item text-royal-slate-blue hover:underline font-bold" data-tab="${t.task_type === 'CHALLENGE' ? 'challenges' : 'tasks'}">
+                  <button class="nav-drawer-item text-accent-text hover:underline font-bold" data-tab="${t.task_type === 'CHALLENGE' ? 'challenges' : 'tasks'}">
                     Details →
                   </button>
                 </div>

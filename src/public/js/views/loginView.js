@@ -1,7 +1,18 @@
 import { loginUser } from '../services/api.js';
+import { connectStream } from '../services/stream.js';
+import { saveSession, consumeReturnTo, hasPendingReturn, resetSessionExpiry } from '../services/session.js';
 import { store } from '../state/store.js';
 
 export function renderLoginView(state) {
+  const expiredNotice = hasPendingReturn()
+    ? `<div class="mb-5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5">
+        <span class="material-symbols-outlined text-base text-amber-400 shrink-0" aria-hidden="true">schedule</span>
+        <p class="text-xs text-amber-200 leading-relaxed">
+          Your session expired. Sign in to pick up right where you left off.
+        </p>
+      </div>`
+    : '';
+
   return `
     <div class="max-w-md mx-auto py-8 px-4">
       <div class="glass-card p-8 rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden">
@@ -10,14 +21,16 @@ export function renderLoginView(state) {
 
         <div class="flex flex-col items-center text-center mb-6 space-y-2">
           <img src="/assets/logo/FULL.png" alt="FORGE Logo" class="h-12 w-auto object-contain mb-1" />
-          <h2 class="text-xl font-extrabold text-white tracking-tight">Sign In to <span class="text-royal-slate-blue accent-target">FORGE</span></h2>
+          <h2 class="text-xl font-extrabold text-white tracking-tight">Sign In to <span class="text-accent-text accent-target">FORGE</span></h2>
           <p class="text-xs text-outline">Access your assigned tasks, team rosters, and challenges</p>
         </div>
+
+        ${expiredNotice}
 
         <!-- Quick Dev Account Shortcut Banner -->
         <div class="mb-6 p-3 rounded-xl bg-royal-slate-blue/15 border border-royal-slate-blue/30 text-xs flex items-center justify-between gap-2">
           <div class="text-left">
-            <span class="font-bold text-white block">Aaron (Dev / Owner)</span>
+            <span class="font-bold text-white block">V Chakradhar (Dev / Owner)</span>
             <span class="text-[10px] text-ice-blue">Pre-seeded developer profile</span>
           </div>
           <button id="btnQuickDevLogin" class="px-3 py-1.5 bg-royal-slate-blue hover:bg-royal-slate-blue/80 text-white font-bold text-xs rounded-lg transition-all shadow">
@@ -30,7 +43,7 @@ export function renderLoginView(state) {
 
           <div>
             <label class="block text-xs font-bold text-ice-blue uppercase tracking-wider mb-1">Username or Email</label>
-            <input type="text" id="loginIdentifier" required placeholder="e.g. aaron_dev or user@forge.local" 
+            <input type="text" id="loginIdentifier" required placeholder="e.g. chakradhar_dev or user@forge.local" 
               class="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/30 focus:border-royal-slate-blue focus:outline-none transition-all" />
           </div>
 
@@ -48,7 +61,7 @@ export function renderLoginView(state) {
 
         <div class="mt-6 pt-4 border-t border-white/10 text-center text-xs text-outline">
           <span>Don't have an account?</span>
-          <button class="nav-drawer-item text-royal-slate-blue hover:underline font-bold ml-1 accent-target" data-tab="signup">
+          <button class="nav-drawer-item text-accent-text hover:underline font-bold ml-1 accent-target" data-tab="signup">
             Create Account →
           </button>
         </div>
@@ -64,11 +77,12 @@ export function attachLoginEvents(state, reloadDataCallback) {
   if (quickDevBtn) {
     quickDevBtn.addEventListener('click', async () => {
       try {
-        const res = await loginUser('aaron_dev', 'devpass123');
+        const res = await loginUser('chakradhar_dev', 'devpass123');
         if (res && res.user) {
-          if (res.token) localStorage.setItem('forge_jwt_token', res.token);
-          localStorage.setItem('forge_user_session', JSON.stringify(res.user));
-          store.setState({ currentUser: res.user, activeTab: 'dashboard' });
+          saveSession(res.token, res.user);
+          resetSessionExpiry();
+          connectStream();
+          store.setState({ currentUser: res.user, activeTab: consumeReturnTo() });
           if (reloadDataCallback) reloadDataCallback();
         }
       } catch (err) {
@@ -96,9 +110,10 @@ export function attachLoginEvents(state, reloadDataCallback) {
 
       const res = await loginUser(identifier, password);
       if (res && res.user) {
-        if (res.token) localStorage.setItem('forge_jwt_token', res.token);
-        localStorage.setItem('forge_user_session', JSON.stringify(res.user));
-        store.setState({ currentUser: res.user, activeTab: 'dashboard' });
+        saveSession(res.token, res.user);
+        resetSessionExpiry();
+        connectStream();
+        store.setState({ currentUser: res.user, activeTab: consumeReturnTo() });
         if (reloadDataCallback) reloadDataCallback();
       }
     } catch (err) {

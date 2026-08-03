@@ -91,7 +91,7 @@ export async function runTier4Tests() {
   });
 
   await runTest(ctx, 'T4_05: Workflow 5 — Stealth Rules Compliance & Dev Isolation Audit', async () => {
-    const devLogin = await post('/api/auth/login', { identifier: 'aaron_dev', password: 'pass123' }, { noAuth: true });
+    const devLogin = await post('/api/auth/login', { identifier: 'chakradhar_dev', password: 'pass123' }, { noAuth: true });
     ctx.assert(devLogin.json.user.public_role === 'OPERATIVE' || devLogin.json.user.public_role === 'member', 'Public role must be OPERATIVE or member');
 
     await post('/api/tasks/suggest', { title: 'Dev System Task', description: 'Created by dev', total_points: 10 });

@@ -7,7 +7,7 @@ export function renderActivityFeed({ containerId, title = 'Activity Feed', isGlo
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
         <div>
           <h2 class="text-lg font-bold text-white flex items-center gap-2">
-            <span class="material-symbols-outlined text-royal-slate-blue accent-target">history</span>
+            <span class="material-symbols-outlined text-accent-text accent-target">history</span>
             ${title}
           </h2>
           <p class="text-xs text-outline mt-0.5">Real-time audit log of user actions and platform events</p>

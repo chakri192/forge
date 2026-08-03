@@ -218,3 +218,42 @@ export const hallOfFameSchemas = {
     })
   }
 };
+
+export const messageSchemas = {
+  createChannel: {
+    body: z.object({
+      name: z.string().trim().min(2, 'Channel name must be at least 2 characters').max(60),
+      type: z.enum(['text', 'announcement', 'team']).optional(),
+      team_id: z.string().nullable().optional(),
+      is_private: z.boolean().optional()
+    })
+  },
+  postMessage: {
+    body: z.object({
+      content: z.string().trim().min(1, 'Message content is required').max(4000)
+    })
+  }
+};
+
+export const announcementSchemas = {
+  create: {
+    body: z.object({
+      title: z.string().trim().min(2, 'Title must be at least 2 characters').max(120),
+      content: z.string().trim().min(1, 'Content is required').max(8000),
+      priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+      target_role: z.enum(['member', 'leader', 'teacher', 'admin']).nullable().optional(),
+      expires_at: z.string().nullable().optional()
+    })
+  },
+  update: {
+    body: z
+      .object({
+        title: z.string().trim().min(2).max(120).optional(),
+        content: z.string().trim().min(1).max(8000).optional(),
+        priority: z.enum(['LOW', 'NORMAL', 'HIGH', 'URGENT']).optional(),
+        target_role: z.enum(['member', 'leader', 'teacher', 'admin']).nullable().optional(),
+        expires_at: z.string().nullable().optional()
+      })
+      .refine((obj) => Object.keys(obj).length > 0, { message: 'No fields to update' })
+  }
+};

@@ -6,14 +6,28 @@
 
 ## ✨ Features
 
-- **🛡️ Role-Based Access Control (RBAC)**: Strict role permissions (`member`, `leader`, `teacher`, `admin`) with layered middleware enforcement and security against IDOR & privilege escalation.
-- **🎯 Tasks & Challenges Engine**: Full lifecycle state machine (`draft` ➔ `active` ➔ `in_progress` ➔ `pending_review` ➔ `completed`) for managing squad tasks and competitive challenges.
-- **🏆 Hall of Fame & Leaderboards**: Optimized SQL aggregation for real-time team and individual member point tracking without N+1 query bottlenecks.
-- **🤝 Squad & Team Management**: Squad roster controls, point distribution overrides, and active squad state management.
-- **🎨 Glassmorphism Component Library**: Framework-less UI built with pure ES Modules featuring Toast notifications, DataTables, Drawers, Modal Confirmations, User Badges, Activity Feeds, and Rich Inputs.
-- **🔔 Activity & Notification System**: Live feed auditing community events and user notifications.
+**Work**
+- **🎯 Tasks & Challenges**: Full lifecycle (`draft → active → in_progress → pending_review → completed`) with subtask checklists, inline proof submission, a teacher review queue, and deadline tracking.
+- **🤝 Squads**: Roster management, per-member point-share overrides, and auto-dissolve on completion.
+- **📅 Cohort Calendar**: Events, workshops, and task deadlines merged into one agenda; team events are visible only to their members.
 
----
+**Community**
+- **💬 Real-Time Messaging**: Public and team-private channels delivered live over Server-Sent Events, with optimistic send, edit/delete, per-channel unread counts, and drafts.
+- **📣 Announcements**: Priority levels (LOW → URGENT), role-targeted audiences, and expiry.
+- **💡 Forum**: Threaded Q&A with up/down voting, accepted answers, pinning and locking, and hot/new/top ranking.
+- **🏪 Task Marketplace**: Members propose work, the community votes, and leaders promote the winners into real tasks.
+
+**Growth**
+- **⚡ Progression Engine**: An XP ledger with derived levels, daily activity streaks, and a 90-day contribution graph. Every award is one atomic transaction.
+- **🏅 Badges & Achievements**: A declarative rules engine over durable history — new achievements backfill for members who already qualified.
+- **🧩 Quizzes & Puzzles**: Five question types (multiple choice, multi-select, true/false, short answer, and code-output), graded server-side, with a scheduled Puzzle of the Day and explanations on every review.
+- **🏆 Hall of Fame**: XP-ranked leaderboard with medals, season toggle, and awarded titles.
+- **📓 Reflection Journal**: Private per-member retros with mood and tags.
+
+**Manage**
+- **📊 Cohort Analytics**: Completion rates, review-latency percentiles, weekly activity, and automatic at-risk detection (inactive, no submissions, repeated rejections, broken streak).
+- **🛡️ RBAC**: Strict `member` / `leader` / `teacher` / `admin` enforcement in middleware and per-resource checks, hardened against IDOR and privilege escalation.
+- **🔔 Notifications**: Live bell driven by SSE, with session-expiry recovery and a connection-status indicator.
 
 ## 🛠️ Tech Stack
 
@@ -55,12 +69,16 @@ npm run dev
 
 ## 🧪 Testing
 
-Forge features a suite of automated unit, integration, RBAC matrix, and E2E tests:
+188 automated tests across unit, integration, RBAC-matrix, and E2E suites.
 
 ```bash
-# Run all test suites
 npm test
 ```
+
+`node --test` discovers every `*.test.js` under `tests/` recursively. Coverage
+includes progression atomicity (a failed award rolls back and stays retryable),
+streak date boundaries, quiz grading for all five question types, and the
+guarantee that quiz answers are never serialised to a player.
 
 ---
 
@@ -72,7 +90,12 @@ Forge/
 ├── src/
 │   ├── public/           # Frontend SPA (Vanilla JS, CSS Tokens, Component Library)
 │   │   ├── css/          # Glassmorphism styling and custom property tokens
-│   │   ├── js/           # Single Page Application router, views, & reusable components
+│   │   ├── js/
+│   │   │   ├── components/  # Reusable UI (modals, toasts, palette, drawer, bell)
+│   │   │   ├── router/      # Tab router + hash routing for shareable URLs
+│   │   │   ├── services/    # API client, SSE stream, session, theme, shortcuts
+│   │   │   ├── utils/       # Shared helpers (dom, drafts, labels, undo)
+│   │   │   └── views/       # One module per screen
 │   │   └── assets/       # Static branding and media assets
 │   └── server/           # Backend API (Express application & SQLite database)
 │       ├── config/       # Environment & global configuration constants

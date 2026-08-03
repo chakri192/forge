@@ -9,7 +9,7 @@ export function renderSettingsView(state) {
     <div class="max-w-2xl mx-auto space-y-8">
       <!-- Header -->
       <div class="flex items-center gap-3 pb-4 border-b border-white/10">
-        <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-royal-slate-blue accent-target">
+        <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-accent-text accent-target">
           <span class="material-symbols-outlined text-2xl">settings</span>
         </div>
         <div>
@@ -71,7 +71,7 @@ export function renderSettingsView(state) {
       <!-- Password Change Card -->
       <div class="glass-card p-8 rounded-2xl border border-white/10 shadow-2xl space-y-6">
         <div class="flex items-center gap-3 border-b border-white/10 pb-4">
-          <span class="material-symbols-outlined text-xl text-royal-slate-blue accent-target">lock</span>
+          <span class="material-symbols-outlined text-xl text-accent-text accent-target">lock</span>
           <h2 class="text-lg font-bold text-white uppercase tracking-tight">Security & Password</h2>
         </div>
         <form id="changePasswordForm" class="space-y-4">

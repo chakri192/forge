@@ -17,6 +17,15 @@ import hallOfFameRoutes from './routes/hallOfFameRoutes.js';
 import leaderRoutes from './routes/leaderRoutes.js';
 import notificationRoutes from './routes/notifications.js';
 import activityRoutes from './routes/activity.js';
+import messageRoutes from './routes/messageRoutes.js';
+import announcementRoutes from './routes/announcementRoutes.js';
+import streamRoutes from './routes/streamRoutes.js';
+import progressionRoutes from './routes/progressionRoutes.js';
+import forumRoutes from './routes/forumRoutes.js';
+import cohortRoutes from './routes/cohortRoutes.js';
+import quizRoutes from './routes/quizRoutes.js';
+import { seedQuizzes } from './db/seedQuizzes.js';
+import { seedProgression } from './db/seedProgression.js';
 import { TaskModel } from './models/Task.js';
 
 dotenv.config();
@@ -26,6 +35,15 @@ const __dirname = path.dirname(__filename);
 
 // Initialize DB Schema
 initSchema();
+
+// Badges and achievements are reference data, not user data — seed them on
+// every boot so new definitions appear without a manual migration step.
+try {
+  seedProgression();
+  seedQuizzes();
+} catch (err) {
+  console.error('Reference-data seed failed:', err);
+}
 
 export const app = express();
 
@@ -49,6 +67,13 @@ app.use('/api', hallOfFameRoutes);
 app.use('/api', leaderRoutes);
 app.use('/api', notificationRoutes);
 app.use('/api', activityRoutes);
+app.use('/api', messageRoutes);
+app.use('/api', announcementRoutes);
+app.use('/api', streamRoutes);
+app.use('/api', progressionRoutes);
+app.use('/api', forumRoutes);
+app.use('/api', cohortRoutes);
+app.use('/api', quizRoutes);
 
 // Auto-seed initial demo tasks/teams if database is empty (disabled during test runs)
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));

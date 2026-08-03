@@ -3,6 +3,35 @@ import { TaskModel } from '../models/Task.js';
 import { TeamModel } from '../models/Team.js';
 import { UserModel } from '../models/User.js';
 import { ActivityService } from './activity.js';
+import { ProgressionService } from './progressionService.js';
+import { db } from '../db/database.js';
+
+/**
+ * Who earns progression for a completed task: the submitter if there is one,
+ * otherwise the assigned individual, otherwise every member of the assigned
+ * team. Returns a de-duplicated list of user ids.
+ */
+function earnersFor(task, submissionId) {
+  const earners = new Set();
+
+  if (submissionId) {
+    const submission = db
+      .prepare(`SELECT submitted_by FROM task_submissions WHERE id = ?`)
+      .get(submissionId);
+    if (submission && submission.submitted_by) earners.add(submission.submitted_by);
+  }
+
+  if (task.assigned_user_id) earners.add(task.assigned_user_id);
+
+  if (task.assigned_team_id) {
+    const members = db
+      .prepare(`SELECT user_id FROM team_memberships WHERE team_id = ?`)
+      .all(task.assigned_team_id);
+    for (const member of members) earners.add(member.user_id);
+  }
+
+  return [...earners].filter(Boolean);
+}
 
 const ALLOWED_TRANSITIONS = {
   draft: ['active', 'archived'],
@@ -207,6 +236,38 @@ export const TaskService = {
     TaskModel.complete(taskId, submissionId, currentUser ? currentUser.id : null);
     const dissolved = TeamModel.tryAutoDissolve(task.assigned_team_id);
     ActivityService.logTaskReview(currentUser, taskId, submissionId, 'COMPLETED');
-    return { taskId, status: 'completed', auto_dissolved: dissolved, team_dissolved: dissolved };
+
+    // Approval is the moment work turns into progression: credit XP to every
+    // earner, roll their streaks, and evaluate achievements. Keyed on the task
+    // id so re-approving cannot pay out twice.
+    // Tasks created before XP existed carry xp_reward = 0; fall back to a
+    // multiple of the point value so historical work still earns progression.
+    const xpAmount = task.xp_reward || Math.round((task.total_points || 0) * 1.5);
+
+    const progression = [];
+    for (const userId of earnersFor(task, submissionId)) {
+      try {
+        progression.push({
+          userId,
+          ...ProgressionService.award({
+            userId,
+            amount: xpAmount,
+            sourceType: 'TASK_COMPLETED',
+            sourceId: taskId,
+            description: `Completed "${task.title}"`
+          })
+        });
+      } catch (err) {
+        console.error('Progression award failed:', err);
+      }
+    }
+
+    return {
+      taskId,
+      status: 'completed',
+      auto_dissolved: dissolved,
+      team_dissolved: dissolved,
+      progression
+    };
   }
 };

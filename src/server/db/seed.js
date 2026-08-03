@@ -28,7 +28,7 @@ export function seedDatabase() {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertUser.run('u_dev', 'Aaron (Dev)', 'aaron_dev', 'aaron@forge.local', '+1000000000', bcrypt.hashSync('devpass123', 10), 'DEV_STEALTH', 'System Ops');
+  insertUser.run('u_dev', 'V Chakradhar (Dev)', 'chakradhar_dev', 'chakradhar@forge.local', '+1000000000', bcrypt.hashSync('devpass123', 10), 'DEV_STEALTH', 'System Ops');
   insertUser.run('u_leader1', 'Sarah Jenkins', 'sarah_j', 'sarah@forge.local', '+1000000001', bcrypt.hashSync('pass123', 10), 'leader', 'Leader');
   insertUser.run('u_leader2', 'David Kim', 'david_k', 'david@forge.local', '+1000000002', bcrypt.hashSync('pass123', 10), 'leader', 'Leader');
   insertUser.run('u_teacher', 'Prof. Vance', 'prof_vance', 'vance@forge.local', '+1000000003', bcrypt.hashSync('adminpass', 10), 'teacher', 'Instructor');

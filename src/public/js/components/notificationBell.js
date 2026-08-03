@@ -22,10 +22,10 @@ export function renderNotificationBell() {
       <div id="notificationDropdownPanel" class="forge-notification-dropdown">
         <div class="p-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
           <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-base text-royal-slate-blue">notifications_active</span>
+            <span class="material-symbols-outlined text-base text-accent-text">notifications_active</span>
             <h3 class="text-xs font-bold text-white uppercase tracking-wider">Notifications</h3>
           </div>
-          <button id="markAllReadBtn" class="text-[11px] font-semibold text-royal-slate-blue hover:underline cursor-pointer">
+          <button id="markAllReadBtn" class="text-[11px] font-semibold text-accent-text hover:underline cursor-pointer">
             Mark all read
           </button>
         </div>
@@ -69,6 +69,7 @@ export function initNotificationBell() {
   bellBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleDropdown();
+    bellBtn.setAttribute('aria-expanded', String(dropdown.classList.contains('open')));
   });
 
   document.addEventListener('click', (e) => {
@@ -90,10 +91,18 @@ export function initNotificationBell() {
     });
   }
 
-  // Start initial check and setup 10-second polling
+  // SSE now pushes notifications the moment they happen, so polling is only a
+  // slow safety net. It must stop the instant a session dies, otherwise a dead
+  // token re-fires a failing request (and a toast) every few seconds forever.
   refreshUnreadCount();
   if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = setInterval(refreshUnreadCount, 10000);
+  pollingInterval = setInterval(refreshUnreadCount, 60000);
+
+  document.addEventListener('forge:session-expired', () => {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = null;
+    updateBadge(0);
+  });
 }
 
 export async function refreshUnreadCount() {
@@ -154,7 +163,7 @@ async function loadNotifications() {
     listContainer.innerHTML = notifications.map(n => `
       <div class="forge-notification-item ${n.is_read ? '' : 'unread'}" data-id="${n.id}" data-link="${n.link || ''}">
         <div class="flex items-start gap-3">
-          <div class="w-7 h-7 rounded-lg ${n.is_read ? 'bg-white/5 text-outline' : 'bg-royal-slate-blue/20 text-royal-slate-blue'} flex items-center justify-center shrink-0 mt-0.5">
+          <div class="w-7 h-7 rounded-lg ${n.is_read ? 'bg-white/5 text-outline' : 'bg-royal-slate-blue/20 text-accent-text'} flex items-center justify-center shrink-0 mt-0.5">
             <span class="material-symbols-outlined text-base">${typeIcons[n.type] || 'notifications'}</span>
           </div>
           <div class="flex-1 min-w-0">

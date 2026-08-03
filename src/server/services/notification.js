@@ -1,11 +1,14 @@
 import { NotificationModel } from '../models/Notification.js';
+import { publish } from './sse.js';
 
 export const NotificationService = {
   createNotification({ userId, title, message, type = 'INFO', link = null }) {
     if (!userId || !title || !message) {
       throw { status: 400, message: 'userId, title, and message are required' };
     }
-    return NotificationModel.create({ userId, title, message, type, link });
+    const notification = NotificationModel.create({ userId, title, message, type, link });
+    publish(userId, { type: 'notification', notification });
+    return notification;
   },
 
   createBulkNotifications(notifications) {

@@ -65,7 +65,7 @@ export function renderComponentsTestView(state) {
         <!-- 1. Toast Notifications & Notification Engine Triggers -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">notifications_active</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">notifications_active</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">1. Notifications & Toasts</h2>
           </div>
           <p class="text-xs text-outline">Test toast alerts and backend Notification Engine polling.</p>
@@ -74,7 +74,7 @@ export function renderComponentsTestView(state) {
             <button id="btnToastSuccess" class="px-3 py-2 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-xl text-xs font-semibold transition-all">Success Toast</button>
             <button id="btnToastError" class="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 rounded-xl text-xs font-semibold transition-all">Error Toast</button>
             <button id="btnToastWarning" class="px-3 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded-xl text-xs font-semibold transition-all">Warning Toast</button>
-            <button id="btnToastInfo" class="px-3 py-2 bg-royal-slate-blue/20 hover:bg-royal-slate-blue/30 text-royal-slate-blue border border-royal-slate-blue/30 rounded-xl text-xs font-semibold transition-all">Info Toast</button>
+            <button id="btnToastInfo" class="px-3 py-2 bg-royal-slate-blue/20 hover:bg-royal-slate-blue/30 text-accent-text border border-royal-slate-blue/30 rounded-xl text-xs font-semibold transition-all">Info Toast</button>
           </div>
 
           <div class="pt-3 border-t border-white/10 space-y-2">
@@ -94,7 +94,7 @@ export function renderComponentsTestView(state) {
         <!-- 2. Badges & Avatars -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">badge</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">badge</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">2. Badges & Avatars</h2>
           </div>
           
@@ -109,7 +109,7 @@ export function renderComponentsTestView(state) {
 
             <h4 class="text-xs font-bold text-white pt-2">User Avatars & Groups</h4>
             <div class="flex items-center gap-4">
-              ${renderAvatar({ name: 'Aaron Dev', size: 'sm', status: 'online' })}
+              ${renderAvatar({ name: 'V Chakradhar', size: 'sm', status: 'online' })}
               ${renderAvatar({ name: 'Sarah Tech', size: 'md', status: 'away' })}
               ${renderAvatar({ name: 'Marcus Lead', size: 'lg', status: 'offline' })}
               <div class="pl-4 border-l border-white/10">
@@ -131,7 +131,7 @@ export function renderComponentsTestView(state) {
         <!-- 3. Dropdown Menus & Tab Bars -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">tab</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">tab</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">3. Dropdown & Tabs</h2>
           </div>
 
@@ -167,7 +167,7 @@ export function renderComponentsTestView(state) {
         <!-- 4. Modals & Confirmation Dialogs -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">web_asset</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">web_asset</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">4. Confirmation Modal & Tooltips</h2>
           </div>
           <p class="text-xs text-outline">Test focus-trapped dialogs and declarative tooltip hover bubbles.</p>
@@ -188,7 +188,7 @@ export function renderComponentsTestView(state) {
         <!-- 5. Spinners & Skeleton Loaders -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">autorenew</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">autorenew</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">5. Spinners & Skeleton Screens</h2>
           </div>
           
@@ -213,7 +213,7 @@ export function renderComponentsTestView(state) {
         <!-- 6. Empty State Component -->
         <div class="glass-card p-6 space-y-4">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">block</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">block</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">6. Empty State Component</h2>
           </div>
           ${renderEmptyState({
@@ -228,7 +228,7 @@ export function renderComponentsTestView(state) {
         <!-- 7. Date/Time Picker & Rich Text Editor -->
         <div class="glass-card p-6 space-y-4 md:col-span-2">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">edit_note</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">edit_note</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">7. Date Picker & Rich Text Editor</h2>
           </div>
 
@@ -253,7 +253,7 @@ export function renderComponentsTestView(state) {
         <!-- 8. File Upload Component -->
         <div class="glass-card p-6 space-y-4 md:col-span-2">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">cloud_upload</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">cloud_upload</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">8. Drag & Drop File Upload</h2>
           </div>
           ${renderFileUpload({
@@ -266,7 +266,7 @@ export function renderComponentsTestView(state) {
         <!-- 9. Data Table with Sorting & Pagination -->
         <div class="glass-card p-6 space-y-4 md:col-span-2">
           <div class="flex items-center gap-2 border-b border-white/10 pb-3">
-            <span class="material-symbols-outlined text-royal-slate-blue text-xl">table_chart</span>
+            <span class="material-symbols-outlined text-accent-text text-xl">table_chart</span>
             <h2 class="text-sm font-bold text-white uppercase tracking-wider">9. Data Table Component</h2>
           </div>
           

@@ -9,11 +9,11 @@ export function renderSignUpView(state) {
         <div class="absolute -top-24 -right-24 w-64 h-64 bg-royal-slate-blue/20 rounded-full blur-3xl pointer-events-none"></div>
 
         <div class="flex items-center gap-3 mb-6">
-          <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-royal-slate-blue shadow-lg accent-target">
+          <div class="w-12 h-12 rounded-xl bg-royal-slate-blue/20 border border-royal-slate-blue/40 flex items-center justify-center text-accent-text shadow-lg accent-target">
             <span class="material-symbols-outlined text-2xl">person_add</span>
           </div>
           <div>
-            <h2 class="text-2xl font-black tracking-tight text-white uppercase">Join <span class="text-royal-slate-blue accent-target">FORGE</span></h2>
+            <h2 class="text-2xl font-black tracking-tight text-white uppercase">Join <span class="text-accent-text accent-target">FORGE</span></h2>
             <p class="text-xs text-outline">Create your operative account to access tasks, teams, & challenges</p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function renderSignUpView(state) {
 
         <div class="mt-6 pt-4 border-t border-white/10 text-center text-xs text-outline">
           <span>Already have an account?</span>
-          <button class="nav-drawer-item text-royal-slate-blue hover:underline font-bold ml-1 accent-target" data-tab="login">
+          <button class="nav-drawer-item text-accent-text hover:underline font-bold ml-1 accent-target" data-tab="login">
             Sign In →
           </button>
         </div>

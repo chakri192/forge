@@ -120,8 +120,8 @@ test('Frontend Vanilla JS Components Suite (JSDOM Environment)', async (t) => {
   });
 
   await t.test('7. Avatar Component - Initials Calculation & Status Indicator', () => {
-    const avatarHtml = renderAvatar({ name: 'Aaron Dev', status: 'online', size: 'lg' });
-    assert.ok(avatarHtml.includes('AD'));
+    const avatarHtml = renderAvatar({ name: 'V Chakradhar', status: 'online', size: 'lg' });
+    assert.ok(avatarHtml.includes('VC'));
     assert.ok(avatarHtml.includes('forge-avatar-lg'));
     assert.ok(avatarHtml.includes('forge-avatar-status-online'));
   });

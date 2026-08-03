@@ -1,9 +1,16 @@
 // Main ES Module Entry Point
 import { store } from './state/store.js';
 import { fetchCurrentUser, fetchTasks, fetchTeams, fetchHallOfFame } from './services/api.js';
-import { initDrawerNav } from './components/drawer.js';
+import { initDrawerNav, applyNavRoleVisibility } from './components/drawer.js';
 import { updateUserBadges } from './components/userBadges.js';
-import { initNotificationBell } from './components/notificationBell.js';
+import { initNotificationBell, refreshUnreadCount } from './components/notificationBell.js';
+import { connectStream, disconnectStream, onStreamEvent } from './services/stream.js';
+import { initTheme } from './services/theme.js';
+import { initConnectionStatus } from './components/connectionStatus.js';
+import { initCommandPalette } from './components/commandPalette.js';
+import { initKeyboardShortcuts } from './services/keyboard.js';
+import { clearSession, rememberView, lastView, resetSessionExpiry } from './services/session.js';
+import { initRouting, syncHash } from './router/hashRouter.js';
 import { Router } from './router/router.js';
 
 // Explicit view imports re-exported for static asset inspection and router dispatch
@@ -17,12 +24,31 @@ export { renderSignUpView } from './views/signUpView.js';
 export { renderSettingsView } from './views/settingsView.js';
 export { renderDevDashboardView } from './views/devDashboardView.js';
 export { renderComponentsTestView } from './views/componentsTestView.js';
+export { renderMessagesView } from './views/messagesView.js';
+export { renderAnnouncementsView } from './views/announcementsView.js';
+export { renderProfileView } from './views/profileView.js';
+export { renderForumView } from './views/forumView.js';
+export { renderMarketplaceView } from './views/marketplaceView.js';
+export { renderCalendarView } from './views/calendarView.js';
+export { renderJournalView } from './views/journalView.js';
+export { renderAnalyticsView } from './views/analyticsView.js';
+export { renderQuizzesView } from './views/quizzesView.js';
 
 const router = new Router('appView');
 
 function bootApp() {
+  initTheme();
   initDrawerNav();
   initNotificationBell();
+  initConnectionStatus();
+  initCommandPalette();
+  initKeyboardShortcuts();
+
+  // Restore the section the user was last in before validating the session,
+  // so a reload lands where they left off instead of always on the dashboard.
+  const restored = initRouting() || lastView();
+  if (restored) store.setState({ activeTab: restored });
+
   initUserSession();
 
   document.addEventListener('forge:navigate', (e) => {
@@ -31,14 +57,22 @@ function bootApp() {
     }
   });
 
+  let lastRenderedTab = null;
   store.subscribe((state) => {
     router.renderRoute(state, loadAllData);
     updateUserBadges(state.currentUser);
+    applyNavRoleVisibility(state.currentUser);
+    if (state.activeTab !== lastRenderedTab) {
+      lastRenderedTab = state.activeTab;
+      rememberView(state.activeTab);
+      syncHash(state.activeTab);
+    }
   });
 
   // Render initial view immediately so page is never empty on load
   router.renderRoute(store.getState(), loadAllData);
   updateUserBadges(store.getState().currentUser);
+  applyNavRoleVisibility(store.getState().currentUser);
 
   loadAllData();
 }
@@ -49,30 +83,53 @@ if (document.readyState === 'loading') {
   bootApp();
 }
 
+// Live updates: refresh the notification bell whenever the server pushes a
+// notification; message events are consumed directly by the messages view.
+onStreamEvent(async (event) => {
+  if (event.type === 'notification') {
+    try {
+      await refreshUnreadCount();
+    } catch (_) {}
+    if (event.notification && event.notification.title) {
+      try {
+        const { showToast } = await import('./components/toast.js');
+        showToast({
+          title: event.notification.title,
+          message: event.notification.message || '',
+          type: 'info'
+        });
+      } catch (_) {}
+    }
+  }
+});
+
 export async function logoutUser() {
-  localStorage.removeItem('forge_jwt_token');
-  localStorage.removeItem('forge_user_session');
+  clearSession();
+  disconnectStream();
   store.setState({ currentUser: null, activeTab: 'login' });
 }
 
 export async function initUserSession() {
   const token = localStorage.getItem('forge_jwt_token');
   if (token) {
+    resetSessionExpiry();
     try {
       const userRes = await fetchCurrentUser();
       if (userRes && userRes.user) {
         localStorage.setItem('forge_user_session', JSON.stringify(userRes.user));
         store.setState({ currentUser: userRes.user });
+        connectStream();
         return;
       }
     } catch (e) {
-      console.error('Session validation failed:', e);
+      // A 401 here has already routed to login via the session handler.
+      if (e.status !== 401) console.error('Session validation failed:', e);
+      return;
     }
   }
 
-  localStorage.removeItem('forge_jwt_token');
-  localStorage.removeItem('forge_user_session');
-  store.setState({ currentUser: null });
+  clearSession();
+  store.setState({ currentUser: null, activeTab: 'login' });
 }
 
 export async function loadAllData() {

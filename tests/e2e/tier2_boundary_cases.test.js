@@ -69,8 +69,8 @@ export async function runTier2Tests() {
   await runTest(ctx, 'T2_F2_05: Stealth developer public_role remains OPERATIVE/member under repeated logins', async () => {
     // Wait for rate limit window reset if needed
     await new Promise(r => setTimeout(r, 2100));
-    const res1 = await post('/api/auth/login', { identifier: 'aaron_dev', password: 'pass123' }, { noAuth: true });
-    const res2 = await post('/api/auth/login', { identifier: 'aaron@forge.local', password: 'pass123' }, { noAuth: true });
+    const res1 = await post('/api/auth/login', { identifier: 'chakradhar_dev', password: 'pass123' }, { noAuth: true });
+    const res2 = await post('/api/auth/login', { identifier: 'chakradhar@forge.local', password: 'pass123' }, { noAuth: true });
     ctx.assert(res1.json && res1.json.user && (res1.json.user.public_role === 'OPERATIVE' || res1.json.user.public_role === 'member'), 'First login public role');
     ctx.assert(res2.json && res2.json.user && (res2.json.user.public_role === 'OPERATIVE' || res2.json.user.public_role === 'member'), 'Second login public role');
   });

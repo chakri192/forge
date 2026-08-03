@@ -1,6 +1,10 @@
 // Complete Task System & Lifecycle View Renderer
+import { labelUpper } from '../utils/labels.js';
+import { bindDraft, saveDraft, readDraft, clearDraft } from '../utils/drafts.js';
 import { openModal, closeModal } from '../components/modal.js';
 import { showConfirmDialog } from '../components/confirmDialog.js';
+import { showToast } from '../components/toast.js';
+import { withUndo } from '../utils/undo.js';
 import {
   submitTaskProof,
   approveTask,
@@ -11,6 +15,7 @@ import {
   fetchTaskDetails,
   filterTasks
 } from '../services/api.js';
+import { escapeHtml } from '../utils/dom.js';
 
 let filterState = {
   search: '',
@@ -26,10 +31,17 @@ export function renderTasksView(state) {
   if (Array.isArray(tasksData)) {
     allTasks = tasksData;
   } else if (tasksData && typeof tasksData === 'object') {
-    const teamTasks = tasksData.teamTasks || [];
-    const challenges = tasksData.challenges || [];
-    const official = tasksData.official || [];
-    allTasks = Array.from(new Set([...official, ...teamTasks, ...challenges]));
+    // `official` is a superset of the type-specific lists and each query returns
+    // fresh row objects, so dedupe by id rather than object identity.
+    const byId = new Map();
+    for (const task of [
+      ...(tasksData.official || []),
+      ...(tasksData.teamTasks || []),
+      ...(tasksData.challenges || [])
+    ]) {
+      if (task && !byId.has(task.id)) byId.set(task.id, task);
+    }
+    allTasks = [...byId.values()];
   }
 
   const userRole = currentUser ? (currentUser.public_role || currentUser.role) : 'member';
@@ -59,44 +71,51 @@ export function renderTasksView(state) {
   const activeCount = allTasks.filter(t => ['active', 'in_progress', 'pending_review', 'pending_approval', 'open'].includes((t.status || '').toLowerCase())).length;
   const completedCount = allTasks.filter(t => (t.status || '').toLowerCase() === 'completed').length;
   const draftCount = allTasks.filter(t => (t.status || '').toLowerCase() === 'draft').length;
+  const reviewCount = allTasks.filter(t =>
+    ['pending_review', 'pending_approval'].includes((t.status || '').toLowerCase())
+  ).length;
 
   return `
     <div class="space-y-8 max-w-6xl mx-auto">
 
-      <!-- Header Banner -->
-      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-white/10">
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="px-2.5 py-0.5 rounded-full text-xs font-extrabold uppercase bg-royal-slate-blue/20 text-royal-slate-blue border border-royal-slate-blue/40 accent-target">
-              Forge Mission Control
-            </span>
-          </div>
-          <h1 class="text-3xl font-black text-white uppercase tracking-tight mt-1">Task & Mission System</h1>
+          <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
+            <span class="material-symbols-outlined text-3xl accent-target">assignment</span> Tasks
+          </h2>
           <p class="text-xs text-outline mt-1 max-w-2xl">
-            Create, manage, track, and complete community tasks and challenges across the full lifecycle.
+            Create, track, and complete community missions and challenges.
           </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2 text-xs">
-          <span class="px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-white font-bold">
-            ${activeCount} Active
-          </span>
-          <span class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-            ${completedCount} Completed
-          </span>
-          ${draftCount > 0 ? `
-            <span class="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold">
-              ${draftCount} Drafts
+          <div class="flex flex-wrap items-center gap-2 mt-3 text-[11px]">
+            ${
+              isLeaderOrTeacher && reviewCount > 0
+                ? `<button id="btnReviewQueue" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold hover:bg-amber-500/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/70">
+                    <span class="material-symbols-outlined text-sm" aria-hidden="true">rate_review</span>
+                    Review ${reviewCount} submission${reviewCount === 1 ? '' : 's'}
+                  </button>`
+                : ''
+            }
+            <span class="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 text-white font-bold">
+              ${activeCount} active
             </span>
-          ` : ''}
-
-          ${isLeaderOrTeacher ? `
-            <button id="btnCreateTask" class="px-4 py-2 bg-royal-slate-blue hover:bg-royal-slate-blue/80 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center gap-1.5 ml-2">
-              <span class="material-symbols-outlined text-sm">add_task</span>
-              Create Task
-            </button>
-          ` : ''}
+            <span class="px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-bold">
+              ${completedCount} completed
+            </span>
+            ${draftCount > 0 ? `
+              <span class="px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold">
+                ${draftCount} drafts
+              </span>
+            ` : ''}
+          </div>
         </div>
+
+        ${isLeaderOrTeacher ? `
+          <button id="btnCreateTask" class="flex items-center gap-1.5 px-4 py-2.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl shadow-md transition-all shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70">
+            <span class="material-symbols-outlined text-base" aria-hidden="true">add_task</span>
+            Create Task
+          </button>
+        ` : ''}
       </div>
 
       <!-- Filter & Search Toolbar -->
@@ -150,23 +169,52 @@ export function renderTasksView(state) {
         </div>
       </div>
 
-      <!-- Tasks Grid -->
-      <div class="space-y-4">
+      <!-- Tasks grouped by type -->
+      <div class="space-y-8">
         ${filteredTasks.length === 0 ? `
           <div class="glass-card p-12 rounded-2xl text-center space-y-2">
             <span class="material-symbols-outlined text-4xl text-outline">assignment_late</span>
             <p class="text-sm font-bold text-white">No tasks match your filters</p>
             <p class="text-xs text-outline max-w-md mx-auto">Try clearing search terms or status filters to see existing community objectives.</p>
           </div>
-        ` : `
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            ${filteredTasks.map(t => renderTaskCard(t, isLeaderOrTeacher)).join('')}
-          </div>
-        `}
+        ` : renderTaskSections(filteredTasks, isLeaderOrTeacher)}
       </div>
 
     </div>
   `;
+}
+
+const TASK_SECTIONS = [
+  { type: 'TEAM_TASK', label: 'Team Tasks', icon: 'groups' },
+  { type: 'CHALLENGE', label: 'Challenges', icon: 'bolt' }
+];
+
+function renderTaskSections(tasks, isLeaderOrTeacher) {
+  const sections = TASK_SECTIONS.map((section) => ({
+    ...section,
+    items: tasks.filter((t) => (t.task_type || 'TEAM_TASK').toUpperCase() === section.type)
+  }));
+
+  const known = new Set(TASK_SECTIONS.map((s) => s.type));
+  const other = tasks.filter((t) => !known.has((t.task_type || 'TEAM_TASK').toUpperCase()));
+  if (other.length) sections.push({ label: 'Other', icon: 'category', items: other });
+
+  return sections
+    .filter((section) => section.items.length > 0)
+    .map(
+      (section) => `
+        <section class="space-y-3">
+          <h3 class="text-[11px] font-bold uppercase tracking-wider text-outline flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm" aria-hidden="true">${section.icon}</span>
+            ${section.label}
+            <span class="text-outline/60">· ${section.items.length}</span>
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            ${section.items.map((t) => renderTaskCard(t, isLeaderOrTeacher)).join('')}
+          </div>
+        </section>`
+    )
+    .join('');
 }
 
 function getDifficultyBadgeClass(difficulty) {
@@ -199,7 +247,7 @@ function getStatusBadgeClass(status) {
     case 'active':
     case 'open':
     default:
-      return 'bg-royal-slate-blue/20 text-royal-slate-blue border-royal-slate-blue/40';
+      return 'bg-royal-slate-blue/20 text-accent-text border-royal-slate-blue/40';
   }
 }
 
@@ -216,13 +264,10 @@ function renderTaskCard(t, isLeaderOrTeacher) {
         <div class="flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-wrap items-center gap-1.5">
             <span class="px-2.5 py-0.5 text-[10px] font-black rounded uppercase border ${statusClass}">
-              ${escapeHtml(status.replace('_', ' '))}
+              ${escapeHtml(labelUpper(status))}
             </span>
             <span class="px-2 py-0.5 text-[10px] font-black rounded uppercase border ${diffClass}">
-              ${escapeHtml(t.difficulty || 'MEDIUM')}
-            </span>
-            <span class="px-2 py-0.5 text-[10px] font-extrabold rounded bg-white/5 text-outline uppercase border border-white/10">
-              ${escapeHtml(t.task_type || 'TEAM_TASK')}
+              ${escapeHtml(labelUpper(t.difficulty || 'MEDIUM'))}
             </span>
           </div>
 
@@ -240,7 +285,7 @@ function renderTaskCard(t, isLeaderOrTeacher) {
 
         <!-- Task Title & Description -->
         <div>
-          <h3 class="text-lg font-bold text-white leading-snug hover:text-royal-slate-blue transition-colors cursor-pointer btn-view-details" data-id="${t.id}">
+          <h3 class="text-lg font-bold text-white leading-snug hover:text-accent-text transition-colors cursor-pointer btn-view-details" data-id="${t.id}">
             ${escapeHtml(t.title)}
           </h3>
           <p class="text-xs text-outline mt-1 line-clamp-3 leading-relaxed">
@@ -275,11 +320,11 @@ function renderTaskCard(t, isLeaderOrTeacher) {
           ` : ''}
 
           ${isLeaderOrTeacher ? `
-            <button class="btn-edit-task p-1.5 bg-white/5 hover:bg-white/15 text-outline hover:text-white rounded-xl transition-all" data-id="${t.id}" title="Edit Task">
-              <span class="material-symbols-outlined text-base">edit</span>
+            <button class="btn-edit-task p-2 bg-white/5 hover:bg-white/15 text-outline hover:text-white rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-royal-slate-blue/70" data-id="${t.id}" aria-label="Edit task: ${escapeHtml(t.title)}" title="Edit task">
+              <span class="material-symbols-outlined text-base" aria-hidden="true">edit</span>
             </button>
-            <button class="btn-delete-task p-1.5 bg-rose-500/10 hover:bg-rose-500/30 text-rose-400 rounded-xl transition-all" data-id="${t.id}" title="Delete Task">
-              <span class="material-symbols-outlined text-base">delete</span>
+            <button class="btn-delete-task p-2 bg-white/5 hover:bg-rose-500/20 text-outline hover:text-rose-400 rounded-xl transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/70" data-id="${t.id}" aria-label="Delete task: ${escapeHtml(t.title)}" title="Delete task">
+              <span class="material-symbols-outlined text-base" aria-hidden="true">delete</span>
             </button>
           ` : ''}
         </div>
@@ -288,15 +333,6 @@ function renderTaskCard(t, isLeaderOrTeacher) {
   `;
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
 
 export function attachTasksEvents(state, refreshData) {
   const currentUserId = state.currentUser ? state.currentUser.id : null;
@@ -347,6 +383,18 @@ export function attachTasksEvents(state, refreshData) {
   if (btnCreate) {
     btnCreate.addEventListener('click', () => {
       openTaskFormModal(null, refreshData);
+    });
+  }
+
+  // One click drops a teacher into just the submissions awaiting their review.
+  const btnReviewQueue = document.getElementById('btnReviewQueue');
+  if (btnReviewQueue) {
+    btnReviewQueue.addEventListener('click', () => {
+      filterState.status = 'pending_review';
+      filterState.search = '';
+      filterState.difficulty = 'ALL';
+      filterState.task_type = 'ALL';
+      renderAndReattach(state, refreshData);
     });
   }
 
@@ -402,54 +450,165 @@ export function attachTasksEvents(state, refreshData) {
   });
 
   // Submit Proof handler
-  document.querySelectorAll('.btn-submit-task').forEach(btn => {
+  // Inline proof submission: the common case is one link or one sentence, so
+  // expand the card in place. "Add file / details" escalates to the full modal.
+  document.querySelectorAll('.btn-submit-task').forEach((btn) => {
     btn.addEventListener('click', (e) => {
       const taskId = e.currentTarget.getAttribute('data-id');
-      openModal({
-        title: 'Submit Task Deliverable Proof',
-        contentHtml: `
-          <div class="space-y-4 text-xs">
-            <div>
-              <label class="block font-bold text-white uppercase tracking-wider mb-1">Deliverable Notes & Links</label>
-              <textarea id="modalProofNotes" rows="3" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:border-royal-slate-blue focus:outline-none" placeholder="Enter pull request link, documentation URL, or summary notes..."></textarea>
-            </div>
-            <div>
-              <label class="block font-bold text-white uppercase tracking-wider mb-1">Upload Proof File (Optional)</label>
-              <input type="file" id="modalProofFile" class="w-full text-xs text-white" />
-            </div>
-          </div>
-        `,
-        onConfirm: async (overlay) => {
-          const proof_notes = overlay.querySelector('#modalProofNotes').value.trim();
-          const fileInput = overlay.querySelector('#modalProofFile');
-          const formData = new FormData();
-          if (currentUserId) formData.append('submitted_by', currentUserId);
-          formData.append('proof_notes', proof_notes);
-          if (fileInput.files[0]) {
-            formData.append('proof_file', fileInput.files[0]);
-          }
+      const card = e.currentTarget.closest('.glass-card');
+      if (!card) return openProofModal(taskId, currentUserId, refreshData);
 
-          await submitTaskProof(taskId, formData);
-          refreshData();
-          return true;
-        }
+      const existing = card.querySelector('.inline-proof');
+      if (existing) {
+        existing.remove();
+        return;
+      }
+
+      const panel = document.createElement('div');
+      panel.className = 'inline-proof pt-3 mt-3 border-t border-white/5 space-y-2';
+      panel.innerHTML = `
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-outline" for="inlineProof_${taskId}">
+          Proof of completion
+        </label>
+        <textarea id="inlineProof_${taskId}" rows="2" placeholder="Paste a link or describe what you delivered…"
+          class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60"></textarea>
+        <div class="flex items-center gap-2">
+          <button type="button" class="inline-proof-send px-3 py-1.5 bg-royal-slate-blue hover:opacity-90 text-white font-bold text-xs rounded-xl transition-all">Submit</button>
+          <button type="button" class="inline-proof-cancel px-3 py-1.5 text-xs text-outline hover:text-white transition-colors">Cancel</button>
+          <button type="button" class="inline-proof-more ml-auto text-[11px] font-semibold text-accent-text hover:underline">Add file / details</button>
+        </div>`;
+      card.appendChild(panel);
+
+      const textarea = panel.querySelector('textarea');
+      textarea.focus();
+      const draftKey = `proof:${taskId}`;
+      textarea.value = readDraft(draftKey) || '';
+      textarea.addEventListener('input', () => saveDraft(draftKey, textarea.value));
+
+      panel.querySelector('.inline-proof-cancel').addEventListener('click', () => panel.remove());
+      panel.querySelector('.inline-proof-more').addEventListener('click', () => {
+        panel.remove();
+        openProofModal(taskId, currentUserId, refreshData, textarea.value);
       });
+
+      panel.querySelector('.inline-proof-send').addEventListener('click', async () => {
+        const notes = textarea.value.trim();
+        if (!notes) {
+          textarea.focus();
+          return;
+        }
+        const formData = new FormData();
+        if (currentUserId) formData.append('submitted_by', currentUserId);
+        formData.append('proof_notes', notes);
+        try {
+          await submitTaskProof(taskId, formData);
+          clearDraft(draftKey);
+          panel.remove();
+          showToast({ title: 'Proof submitted', message: 'Sent for review', type: 'success' });
+          refreshData();
+        } catch (_) {}
+      });
+    });
+  });
+
+  document.querySelectorAll('.btn-submit-task-modal').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      openProofModal(e.currentTarget.getAttribute('data-id'), currentUserId, refreshData);
     });
   });
 }
 
+function openProofModal(taskId, currentUserId, refreshData, prefill = '') {
+  openModal({
+    title: 'Submit Task Deliverable Proof',
+    contentHtml: `
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-bold text-white uppercase tracking-wider mb-1">Deliverable Notes & Links</label>
+          <textarea id="modalProofNotes" rows="3" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-sm text-white focus:border-royal-slate-blue focus:outline-none" placeholder="Enter pull request link, documentation URL, or summary notes...">${escapeHtml(prefill)}</textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-white uppercase tracking-wider mb-1">Upload Proof File (Optional)</label>
+          <input type="file" id="modalProofFile" class="w-full text-xs text-white" />
+        </div>
+      </div>
+    `,
+    onConfirm: async (overlay) => {
+      const proof_notes = overlay.querySelector('#modalProofNotes').value.trim();
+      const fileInput = overlay.querySelector('#modalProofFile');
+      const formData = new FormData();
+      if (currentUserId) formData.append('submitted_by', currentUserId);
+      formData.append('proof_notes', proof_notes);
+      if (fileInput.files[0]) {
+        formData.append('proof_file', fileInput.files[0]);
+      }
+
+      await submitTaskProof(taskId, formData);
+      clearDraft(`proof:${taskId}`);
+      showToast({ title: 'Proof submitted', message: 'Sent for review', type: 'success' });
+      refreshData();
+      return true;
+    }
+  });
+}
+
 function renderAndReattach(state, refreshData) {
-  const container = document.getElementById('viewContent');
-  if (container) {
-    container.innerHTML = renderTasksView(state);
-    attachTasksEvents(state, refreshData);
+  // The router renders views into #appView; re-render in place and restore the
+  // caret so typing in the search box isn't interrupted on every keystroke.
+  const container = document.getElementById('appView');
+  if (!container) return;
+
+  const active = document.activeElement;
+  const focusedId = active && active.id ? active.id : null;
+  const caret = active && typeof active.selectionStart === 'number' ? active.selectionStart : null;
+
+  container.innerHTML = renderTasksView(state);
+  attachTasksEvents(state, refreshData);
+
+  if (focusedId) {
+    const restored = document.getElementById(focusedId);
+    if (restored) {
+      restored.focus();
+      if (caret !== null && typeof restored.setSelectionRange === 'function') {
+        restored.setSelectionRange(caret, caret);
+      }
+    }
   }
 }
 
 // Open Task Form Modal (Create or Edit)
+const TASK_PREFS_KEY = 'forge_task_prefs';
+// Suggested reward per difficulty — leaders can always override.
+const DIFFICULTY_POINTS = { EASY: 20, MEDIUM: 40, HARD: 60, EXPERT: 100 };
+const DIFFICULTY_XP = { EASY: 50, MEDIUM: 100, HARD: 150, EXPERT: 250 };
+
+function readTaskPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(TASK_PREFS_KEY)) || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveTaskPrefs(prefs) {
+  try {
+    localStorage.setItem(TASK_PREFS_KEY, JSON.stringify(prefs));
+  } catch (_) {}
+}
+
 function openTaskFormModal(taskToEdit, refreshData) {
   const isEdit = !!taskToEdit;
   const titleText = isEdit ? `Edit Task: ${escapeHtml(taskToEdit.title)}` : 'Create New Task & Mission';
+
+  // New tasks start from the creator's last-used shape instead of a cold form.
+  const prefs = isEdit ? {} : readTaskPrefs();
+  const initial = (field, fallback) => {
+    if (taskToEdit && taskToEdit[field] !== undefined && taskToEdit[field] !== null) {
+      return taskToEdit[field];
+    }
+    return prefs[field] !== undefined ? prefs[field] : fallback;
+  };
+  const initialDifficulty = initial('difficulty', 'MEDIUM');
 
   const contentHtml = `
     <div class="space-y-4 text-xs max-h-[70vh] overflow-y-auto pr-1">
@@ -463,17 +622,17 @@ function openTaskFormModal(taskToEdit, refreshData) {
         <div>
           <label class="block font-bold text-white mb-1">Difficulty</label>
           <select id="formDifficulty" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white focus:border-royal-slate-blue focus:outline-none">
-            <option value="EASY" ${(taskToEdit ? taskToEdit.difficulty : '') === 'EASY' ? 'selected' : ''}>Easy</option>
-            <option value="MEDIUM" ${(taskToEdit ? taskToEdit.difficulty : 'MEDIUM') === 'MEDIUM' ? 'selected' : ''}>Medium</option>
-            <option value="HARD" ${(taskToEdit ? taskToEdit.difficulty : '') === 'HARD' ? 'selected' : ''}>Hard</option>
-            <option value="EXPERT" ${(taskToEdit ? taskToEdit.difficulty : '') === 'EXPERT' ? 'selected' : ''}>Expert</option>
+            <option value="EASY" ${initialDifficulty === 'EASY' ? 'selected' : ''}>Easy</option>
+            <option value="MEDIUM" ${initialDifficulty === 'MEDIUM' ? 'selected' : ''}>Medium</option>
+            <option value="HARD" ${initialDifficulty === 'HARD' ? 'selected' : ''}>Hard</option>
+            <option value="EXPERT" ${initialDifficulty === 'EXPERT' ? 'selected' : ''}>Expert</option>
           </select>
         </div>
         <div>
           <label class="block font-bold text-white mb-1">Task Type</label>
           <select id="formTaskType" class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white focus:border-royal-slate-blue focus:outline-none">
-            <option value="TEAM_TASK" ${(taskToEdit ? taskToEdit.task_type : 'TEAM_TASK') === 'TEAM_TASK' ? 'selected' : ''}>Team Task</option>
-            <option value="CHALLENGE" ${(taskToEdit ? taskToEdit.task_type : '') === 'CHALLENGE' ? 'selected' : ''}>Challenge</option>
+            <option value="TEAM_TASK" ${initial('task_type', 'TEAM_TASK') === 'TEAM_TASK' ? 'selected' : ''}>Team Task</option>
+            <option value="CHALLENGE" ${initial('task_type', 'TEAM_TASK') === 'CHALLENGE' ? 'selected' : ''}>Challenge</option>
           </select>
         </div>
         <div>
@@ -492,12 +651,12 @@ function openTaskFormModal(taskToEdit, refreshData) {
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label class="block font-bold text-white mb-1">Points Reward</label>
-          <input type="number" id="formTotalPoints" value="${taskToEdit ? (taskToEdit.total_points || 50) : 50}"
+          <input type="number" id="formTotalPoints" value="${taskToEdit ? (taskToEdit.total_points || 50) : DIFFICULTY_POINTS[initialDifficulty] || 40}"
             class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white focus:border-royal-slate-blue focus:outline-none" />
         </div>
         <div>
           <label class="block font-bold text-white mb-1">XP Reward</label>
-          <input type="number" id="formXpReward" value="${taskToEdit ? (taskToEdit.xp_reward || 0) : 100}"
+          <input type="number" id="formXpReward" value="${taskToEdit ? (taskToEdit.xp_reward || 0) : DIFFICULTY_XP[initialDifficulty] || 100}"
             class="w-full bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-white focus:border-royal-slate-blue focus:outline-none" />
         </div>
         <div>
@@ -546,7 +705,11 @@ function openTaskFormModal(taskToEdit, refreshData) {
       const title = overlay.querySelector('#formTitle').value.trim();
       const description = overlay.querySelector('#formDescription').value.trim();
       if (!title || !description) {
-        alert('Title and description are required.');
+        showToast({
+          title: 'Missing required fields',
+          message: 'A title and description are needed before saving.',
+          type: 'error'
+        });
         return false;
       }
 
@@ -570,7 +733,19 @@ function openTaskFormModal(taskToEdit, refreshData) {
           await updateTask(taskToEdit.id, payload);
         } else {
           await createTask(payload);
+          // Remember this shape so the next task starts from it.
+          saveTaskPrefs({
+            difficulty: payload.difficulty,
+            task_type: payload.task_type,
+            status: payload.status
+          });
+          clearDraft('task-composer');
         }
+        showToast({
+          title: isEdit ? 'Task updated' : 'Task created',
+          message: payload.title,
+          type: 'success'
+        });
         refreshData();
         return true;
       } catch (err) {
@@ -579,6 +754,33 @@ function openTaskFormModal(taskToEdit, refreshData) {
       }
     }
   });
+
+  // Suggest a reward that matches the chosen difficulty, but never clobber a
+  // value the user has deliberately typed.
+  const overlay = document.getElementById('forgeModalOverlay');
+  if (overlay && !isEdit) {
+    const difficultyEl = overlay.querySelector('#formDifficulty');
+    const pointsEl = overlay.querySelector('#formTotalPoints');
+    const xpEl = overlay.querySelector('#formXpReward');
+    let pointsTouched = false;
+
+    pointsEl?.addEventListener('input', () => {
+      pointsTouched = true;
+    });
+
+    difficultyEl?.addEventListener('change', () => {
+      if (pointsTouched) return;
+      const level = difficultyEl.value;
+      if (pointsEl) pointsEl.value = DIFFICULTY_POINTS[level] ?? pointsEl.value;
+      if (xpEl) xpEl.value = DIFFICULTY_XP[level] ?? xpEl.value;
+    });
+
+    bindDraft('task-composer', {
+      title: overlay.querySelector('#formTitle'),
+      description: overlay.querySelector('#formDescription'),
+      instructions: overlay.querySelector('#formInstructions')
+    });
+  }
 }
 
 // Open Detailed Task View Modal
@@ -600,7 +802,7 @@ function openTaskDetailModal(task, state, refreshData) {
           const isUrl = res.startsWith('http://') || res.startsWith('https://') || res.startsWith('/');
           if (isUrl) {
             return `
-              <li class="flex items-center gap-1.5 text-royal-slate-blue hover:underline">
+              <li class="flex items-center gap-1.5 text-accent-text hover:underline">
                 <span class="material-symbols-outlined text-sm">link</span>
                 <a href="${escapeHtml(res)}" target="_blank" rel="noopener noreferrer" class="break-all font-semibold">${escapeHtml(res)}</a>
               </li>

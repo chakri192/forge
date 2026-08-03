@@ -22,7 +22,7 @@ describe('RBAC Middleware & Endpoint Security', () => {
     insert.run('u_test_leader', 'Test Leader', 'test_leader', 'leader@forge.local', passHash, 'leader', 'Leader');
     insert.run('u_test_teacher', 'Test Teacher', 'test_teacher', 'teacher@forge.local', passHash, 'teacher', 'Instructor');
     insert.run('u_test_admin', 'Test Admin', 'test_admin', 'admin@forge.local', passHash, 'admin', 'Administrator');
-    insert.run('u_dev', 'Aaron Dev', 'aaron_dev', 'aaron@forge.local', passHash, 'DEV_STEALTH', 'Superadmin');
+    insert.run('u_dev', 'V Chakradhar', 'chakradhar_dev', 'chakradhar@forge.local', passHash, 'DEV_STEALTH', 'Superadmin');
   });
 
   it('should authenticate users and obtain tokens for each role', async () => {
@@ -38,7 +38,7 @@ describe('RBAC Middleware & Endpoint Security', () => {
     const loginAdmin = await supertest(app).post('/api/auth/login').send({ identifier: 'test_admin', password: 'pass123' });
     adminToken = loginAdmin.body.token;
 
-    const loginStealth = await supertest(app).post('/api/auth/login').send({ identifier: 'aaron_dev', password: 'pass123' });
+    const loginStealth = await supertest(app).post('/api/auth/login').send({ identifier: 'chakradhar_dev', password: 'pass123' });
     stealthToken = loginStealth.body.token;
 
     assert.ok(memberToken);

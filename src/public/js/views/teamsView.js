@@ -15,7 +15,7 @@ export function renderTeamsView(state) {
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-white/10">
         <div>
           <h1 class="text-2xl font-black text-white flex items-center gap-2 tracking-tight uppercase">
-            <span class="material-symbols-outlined text-royal-slate-blue text-3xl">groups</span>
+            <span class="material-symbols-outlined text-accent-text text-3xl">groups</span>
             Community Squads & Captains
           </h1>
           <p class="text-xs text-outline mt-1">
@@ -63,7 +63,7 @@ function renderTeamCard(t, currentUser, isLeaderOrTeacher) {
         <div class="flex justify-between items-start">
           <div>
             <h2 class="text-xl font-bold text-white flex items-center gap-2">
-              <span class="material-symbols-outlined text-royal-slate-blue">shield</span>
+              <span class="material-symbols-outlined text-accent-text">shield</span>
               ${t.name}
             </h2>
             <p class="text-xs text-outline mt-0.5">
@@ -77,7 +77,7 @@ function renderTeamCard(t, currentUser, isLeaderOrTeacher) {
 
         ${t.task_title ? `
           <div class="p-2.5 rounded bg-white/5 border border-white/5 text-xs text-outline flex items-center gap-2">
-            <span class="material-symbols-outlined text-sm text-royal-slate-blue">assignment</span>
+            <span class="material-symbols-outlined text-sm text-accent-text">assignment</span>
             <span>Task: <strong class="text-white">${t.task_title}</strong></span>
           </div>
         ` : ''}
@@ -94,10 +94,10 @@ function renderTeamCard(t, currentUser, isLeaderOrTeacher) {
           ${t.members?.map(m => `
             <div class="flex justify-between items-center text-xs p-3 rounded-lg bg-white/5 border border-white/5 hover:border-white/15 transition-all">
               <div class="flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm text-royal-slate-blue">person</span>
+                <span class="material-symbols-outlined text-sm text-accent-text">person</span>
                 <span class="font-semibold text-white">${m.name}</span>
                 ${m.tag ? `<span class="text-[10px] text-outline">(${m.tag})</span>` : ''}
-                ${m.id === t.captain_id ? '<span class="text-[10px] bg-royal-slate-blue/30 text-royal-slate-blue px-1.5 py-0.2 rounded font-bold">CPT</span>' : ''}
+                ${m.id === t.captain_id ? '<span class="text-[10px] bg-royal-slate-blue/30 text-accent-text px-1.5 py-0.2 rounded font-bold">CPT</span>' : ''}
               </div>
 
               <div class="flex items-center gap-2">

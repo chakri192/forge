@@ -37,7 +37,7 @@ export function seedBaselineData(targetDb = db) {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
-  insertUser.run('u_dev', 'Aaron Dev', 'aaron_dev', 'aaron@forge.local', '+1000000000', hashedPass, 'DEV_STEALTH', 'System Ops');
+  insertUser.run('u_dev', 'V Chakradhar', 'chakradhar_dev', 'chakradhar@forge.local', '+1000000000', hashedPass, 'DEV_STEALTH', 'System Ops');
   insertUser.run('u_teacher', 'Prof. Vance', 'teacher_vance', 'vance@forge.local', '+1000000003', hashedPass, 'teacher', 'Instructor');
   insertUser.run('u_leader1', 'Sarah Leader', 'sarah_lead', 'sarah@forge.local', '+1000000001', hashedPass, 'leader', 'Leader');
   insertUser.run('u_member1', 'Alex Member', 'alex_member', 'alex@forge.local', '+1000000004', hashedPass, 'member', 'Member');

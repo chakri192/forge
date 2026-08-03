@@ -68,7 +68,7 @@ export async function runTier1Tests() {
   });
 
   await runTest(ctx, 'T1_F2_04: Hidden Developer login maps public_role to OPERATIVE', async () => {
-    const res = await post('/api/auth/login', { identifier: 'aaron_dev', password: 'pass123' });
+    const res = await post('/api/auth/login', { identifier: 'chakradhar_dev', password: 'pass123' });
     ctx.assertEqual(res.status, 200, 'Login status 200');
     ctx.assertEqual(res.json.user.role, 'DEV_STEALTH', 'Internal role DEV_STEALTH');
     ctx.assert(res.json.user.public_role === 'OPERATIVE' || res.json.user.public_role === 'member', 'Public role must be mapped to OPERATIVE or member');
