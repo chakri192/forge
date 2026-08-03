@@ -18,9 +18,9 @@ const SECTIONS = [
   { tab: 'marketplace', label: 'Task Marketplace', icon: 'storefront' },
   { tab: 'calendar', label: 'Calendar', icon: 'calendar_month' },
   { tab: 'profile', label: 'My Progress', icon: 'military_tech' },
-  { tab: 'quizzes', label: 'Quizzes & Puzzles', icon: 'quiz' },
   { tab: 'journal', label: 'Reflection Journal', icon: 'menu_book' },
   { tab: 'analytics', label: 'Cohort Analytics', icon: 'insights' },
+  { tab: 'games', label: 'Mini Games', icon: 'stadia_controller' },
   { tab: 'leaderboard', label: 'Leaderboard', icon: 'leaderboard' },
   { tab: 'appearance', label: 'Appearance & Themes', icon: 'palette' },
   { tab: 'settings', label: 'Account Settings', icon: 'settings' }

@@ -503,13 +503,7 @@ export async function fetchAnalytics() {
 
 // --- Quizzes & puzzles ---
 
-export async function fetchQuizzes(kind) {
-  return requestApi(`/quizzes${kind ? `?kind=${kind}` : ''}`);
-}
 
-export async function fetchQuiz(id) {
-  return requestApi(`/quizzes/${id}`);
-}
 
 export async function fetchDailyPuzzle() {
   return requestApi('/quizzes/daily');
@@ -523,9 +517,6 @@ export async function submitQuiz(id, answers, durationSeconds) {
   });
 }
 
-export async function fetchQuizLeaderboard() {
-  return requestApi('/quizzes/leaderboard');
-}
 
 // --- Review workflow ---
 
@@ -613,4 +604,16 @@ export async function searchGifs(q, limit = 16) {
 
 export async function fetchLeaderboard(metric = 'points', limit = 25) {
   return requestApi(`/leaderboard?metric=${encodeURIComponent(metric)}&limit=${limit}`);
+}
+
+export async function fetchGames() {
+  return requestApi('/games');
+}
+
+export async function submitGameScore(game, score, detail = null) {
+  return requestApi(`/games/${encodeURIComponent(game)}/scores`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(detail ? { score, detail } : { score })
+  });
 }
