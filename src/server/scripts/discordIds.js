@@ -39,10 +39,18 @@ client.once('clientReady', async () => {
     console.log(`DISCORD_GUILD_ID=${guild.id}`);
 
     const categories = channels.filter((c) => c.type === ChannelType.GuildCategory);
+    const names = categories.map((c) => c.name.toLowerCase());
     if (categories.length) {
       console.log('\n# Categories');
       for (const c of categories.sort((a, b) => a.rawPosition - b.rawPosition)) {
         console.log(`${envName('DISCORD_CATEGORY_', c.name)}=${c.id}`);
+      }
+    }
+    // The bridge creates channels inside these two, so they must be
+    // categories. A text channel of the same name will not do.
+    for (const required of ['teams', 'direct-messages']) {
+      if (!names.some((n) => n.replace(/\s+/g, '-') === required)) {
+        console.log(`# MISSING CATEGORY "${required.toUpperCase()}" — create it as a category, not a channel`);
       }
     }
 
