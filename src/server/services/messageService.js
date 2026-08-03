@@ -3,6 +3,8 @@ import { MessageModel } from '../models/Message.js';
 import { hasRole } from '../middleware/rbac.js';
 import { ActivityService } from './activity.js';
 import { publish, publishAll } from './sse.js';
+import { ReactionModel, isAllowedEmoji } from '../models/Reaction.js';
+import { VoteModel } from '../models/Vote.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin'];
 const CHANNEL_TYPES = ['text', 'announcement', 'team'];
@@ -58,7 +60,67 @@ export const MessageService = {
   getChannelMessages(user, channelId, { limit } = {}) {
     const channel = ChannelModel.getById(channelId);
     assertChannelAccess(channel, user);
-    return { channel, messages: MessageModel.getByChannel(channelId, { limit }) };
+
+    const messages = MessageModel.getByChannel(channelId, { limit });
+    const ids = messages.map((m) => m.id);
+    // Batched so a busy channel stays one query per concern, not one per row.
+    const reactions = ReactionModel.forMessages(ids, user.id);
+    const scores = VoteModel.scoresFor('MESSAGE', ids);
+    const myVotes = VoteModel.userVotesFor(user.id, 'MESSAGE', ids);
+
+    return {
+      channel,
+      messages: messages.map((m) => ({
+        ...m,
+        reactions: reactions[m.id] || [],
+        score: scores[m.id] || 0,
+        my_vote: myVotes[m.id] || 0
+      }))
+    };
+  },
+
+  /** Toggle an emoji reaction and broadcast the new tally to the channel. */
+  react(user, messageId, emoji) {
+    if (!isAllowedEmoji(emoji)) {
+      throw { status: 400, message: 'That emoji is not available' };
+    }
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+
+    ReactionModel.toggle({ messageId, userId: user.id, emoji });
+    const reactions = ReactionModel.forMessage(messageId, user.id);
+
+    // The broadcast carries no viewer-specific `mine` flag; each client
+    // recomputes its own state from its existing view.
+    broadcastToChannel(channel, {
+      type: 'reaction',
+      channelId: message.channel_id,
+      messageId,
+      reactions: reactions.map(({ emoji: e, count }) => ({ emoji: e, count }))
+    });
+
+    return { messageId, reactions };
+  },
+
+  /** Up/down vote a message, reusing the shared polymorphic votes table. */
+  vote(user, messageId, value) {
+    if (![1, -1].includes(value)) throw { status: 400, message: 'value must be 1 or -1' };
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+
+    const result = VoteModel.cast({
+      userId: user.id, targetType: 'MESSAGE', targetId: messageId, value
+    });
+    broadcastToChannel(channel, {
+      type: 'vote', targetType: 'MESSAGE', targetId: messageId, messageId, score: result.score
+    });
+    return result;
   },
 
   postMessage(user, channelId, content) {

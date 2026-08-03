@@ -5,7 +5,7 @@ import { initDrawerNav, applyNavRoleVisibility } from './components/drawer.js';
 import { updateUserBadges } from './components/userBadges.js';
 import { initNotificationBell, refreshUnreadCount } from './components/notificationBell.js';
 import { connectStream, disconnectStream, onStreamEvent } from './services/stream.js';
-import { initTheme } from './services/theme.js';
+import { initThemes } from './services/themes.js';
 import { initConnectionStatus } from './components/connectionStatus.js';
 import { initCommandPalette } from './components/commandPalette.js';
 import { initKeyboardShortcuts } from './services/keyboard.js';
@@ -34,6 +34,7 @@ export { renderJournalView } from './views/journalView.js';
 export { renderAnalyticsView } from './views/analyticsView.js';
 export { renderQuizzesView } from './views/quizzesView.js';
 export { renderReviewView } from './views/reviewView.js';
+export { renderAppearanceView } from './views/appearanceView.js';
 
 const router = new Router('appView');
 
@@ -42,7 +43,7 @@ const router = new Router('appView');
  * circuits before any auth, nav, or stream setup runs.
  */
 async function bootPublicProfile(slug) {
-  initTheme();
+  initThemes();
   document.querySelector('.sidebar')?.remove();
   document.querySelector('.topbar')?.remove();
   document.querySelector('.backdrop')?.remove();
@@ -60,7 +61,7 @@ function bootApp() {
     return;
   }
 
-  initTheme();
+  initThemes();
   initDrawerNav();
   initNotificationBell();
   initConnectionStatus();

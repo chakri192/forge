@@ -99,7 +99,7 @@ body {
 .nav-tab:hover, .nav-tab.active {
   opacity: 1;
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
 }
 
 /* Cards & Layout Grid */
@@ -168,7 +168,7 @@ body {
 
 .btn-primary {
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
 }
 
 .btn-secondary {
@@ -499,7 +499,7 @@ body {
 
 .forge-tab-button.active {
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
   opacity: 1;
   box-shadow: 0 4px 12px rgba(35, 116, 171, 0.3);
 }

@@ -21,6 +21,16 @@ npm run dev
 The app runs at `http://localhost:3000`. The seed creates demo accounts, tasks,
 squads, quizzes, and puzzles.
 
+### Configuration
+
+All settings are optional in development and read from the environment.
+
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | HTTP port. Defaults to `3000`. |
+| `JWT_SECRET` | Signing key for session tokens. Required in production, where a value shorter than 32 characters aborts startup. |
+| `TENOR_API_KEY` | Enables GIF search in the message composer. Without it the composer still accepts pasted GIF links; only search is disabled. |
+
 ```bash
 npm test
 ```
@@ -47,6 +57,14 @@ agenda. Team events stay visible only to that team.
 with optimistic send, edit and delete, per-channel unread counts, and drafts
 that survive a reload.
 
+Messages carry emoji reactions from a fixed server-side allowlist, up and down
+votes, and inline images and GIFs. Reaction and vote counts stream to everyone
+in the channel over the same event stream. Embedded media is restricted to a
+short list of known image hosts over HTTPS and loaded with `referrerpolicy`
+set to `no-referrer`, since an embed reveals every viewer's IP address to
+whoever serves it. A link the allowlist does not cover renders as a plain link
+rather than an image.
+
 **Announcements** carry priority levels, role-targeted audiences, and expiry
 dates, with live notification fan-out to everyone in the audience.
 
@@ -55,6 +73,12 @@ answers, moderation controls, and hot, new, and top ranking.
 
 **Marketplace** lets members propose the work they want to exist. The community
 votes, leaders promote the winners into real tasks, and the proposer earns XP.
+
+**Themes** ship five built-in presets and a three-colour custom accent picker.
+Any chosen colour is measured against the active background before it is
+applied: the text variant is lightened or darkened until it clears WCAG AA, and
+the button fill is nudged separately so its label stays readable. A colour the
+user picks is never rendered as unreadable text.
 
 ### Growth
 

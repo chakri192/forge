@@ -1,7 +1,9 @@
 import express from 'express';
+import { z } from 'zod';
 import { requireAuth, requireLeaderOrTeacher } from '../middleware/auth.js';
 import { validate, messageSchemas } from '../middleware/validation.js';
 import { MessageService } from '../services/messageService.js';
+import { ALLOWED_EMOJI } from '../models/Reaction.js';
 
 const router = express.Router();
 
@@ -72,6 +74,32 @@ router.delete('/messages/:id', requireAuth, validate({}), (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});
+
+router.post(
+  '/messages/:id/reactions',
+  requireAuth,
+  validate({ body: z.object({ emoji: z.string().min(1).max(8) }) }),
+  (req, res, next) => {
+    try {
+      res.json(MessageService.react(req.user, req.params.id, req.body.emoji));
+    } catch (err) { next(err); }
+  }
+);
+
+router.post(
+  '/messages/:id/vote',
+  requireAuth,
+  validate({ body: z.object({ value: z.union([z.literal(1), z.literal(-1)]) }) }),
+  (req, res, next) => {
+    try {
+      res.json(MessageService.vote(req.user, req.params.id, req.body.value));
+    } catch (err) { next(err); }
+  }
+);
+
+router.get('/reactions/available', requireAuth, validate({}), (_req, res) => {
+  res.json({ emoji: ALLOWED_EMOJI });
 });
 
 export default router;
