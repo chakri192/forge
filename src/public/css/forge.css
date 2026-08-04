@@ -719,52 +719,7 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   object-fit: contain;
 }
 
-.emoji-picker {
-  position: fixed;
-  z-index: 1200;
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: .15rem;
-  padding: .4rem;
-  border-radius: var(--r-lg, 12px);
-  border: 1px solid var(--line, rgba(255,255,255,.14));
-  background: var(--bg-elevated, #16171d);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
-}
-.emoji-picker__item {
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: none;
-  border-radius: var(--r-md, 8px);
-  font-size: 1.05rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.emoji-picker__item:hover,
-.emoji-picker__item:focus-visible {
-  background: var(--surface-2, rgba(255,255,255,.09));
-  outline: none;
-}
 
-.gif-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: .4rem;
-  max-height: 260px;
-  overflow-y: auto;
-}
-.gif-grid__item {
-  padding: 0;
-  border: 2px solid transparent;
-  border-radius: var(--r-md, 8px);
-  overflow: hidden;
-  background: var(--surface-1, rgba(255,255,255,.04));
-  cursor: pointer;
-  line-height: 0;
-}
-.gif-grid__item img { width: 100%; height: 84px; object-fit: cover; display: block; }
-.gif-grid__item.is-selected { border-color: var(--accent, #2f7fc4); }
 
 .composer-tool {
   display: inline-flex;
@@ -1994,3 +1949,155 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   font-weight: var(--w-medium);
   color: var(--text-faint);
 }
+
+/* ============================================================
+   Emoji picker — search, groups, recents
+   ============================================================ */
+
+.epick {
+  position: fixed;
+  z-index: 1200;
+  /* Wide enough that all six group tabs fit without a scroll nub. */
+  width: 344px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+  /* Dark grounds swallow drop shadows, so a ring does the lifting instead. */
+  box-shadow: var(--shadow-3), 0 0 0 1px rgba(0, 0, 0, .35);
+  overflow: hidden;
+}
+
+.epick__head { padding: var(--sp-2); border-bottom: 1px solid var(--rule); }
+
+.epick__search {
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--t-meta);
+}
+.epick__search:focus-visible { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.epick__search::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+.epick__tabs {
+  display: flex;
+  gap: 2px;
+  padding: var(--sp-1) var(--sp-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--rule);
+}
+.epick__tabs::-webkit-scrollbar { display: none; }
+
+.epick__tab {
+  flex: none;
+  padding: 3px var(--sp-2);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--ink-muted);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.epick__tab:hover { color: var(--ink); background: var(--paper-sunken); }
+/* The accent carries the selection through the wash; the label stays at full
+   contrast, because accent-on-wash only reaches 3.4:1 on the dark ground. */
+.epick__tab.is-active { background: var(--accent-soft); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+
+.epick__grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  padding: var(--sp-2);
+  /* Fixed, not fluid: a panel that resized under the cursor as search results
+     narrowed would jitter, and would need repositioning on every keystroke. */
+  height: 124px;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.epick__item {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: none;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.epick__item:hover { background: var(--paper-sunken); }
+/* A cursor, not focus — the search field keeps the caret while arrows move. */
+.epick__item.is-cursor { background: var(--accent-soft); border-color: var(--accent-line); }
+
+.epick__empty,
+.epick__hint { margin: 0; font-size: var(--t-micro); color: var(--ink-faint); }
+.epick__empty { grid-column: 1 / -1; padding: var(--sp-6) var(--sp-2); text-align: center; }
+
+.epick__foot {
+  padding: var(--sp-1) var(--sp-3) var(--sp-2);
+  border-top: 1px solid var(--rule);
+  min-height: 22px;
+}
+
+/* ============================================================
+   GIF picker
+   ============================================================ */
+
+.gifp { display: flex; flex-direction: column; gap: var(--sp-4); }
+
+.gifp__chips { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.gifp__chip {
+  padding: 2px var(--sp-3);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-full);
+  background: var(--paper);
+  color: var(--ink-muted);
+  font-size: var(--t-micro);
+  cursor: pointer;
+}
+.gifp__chip:hover { border-color: var(--accent-line); background: var(--accent-soft); color: var(--accent); }
+
+.gifp__results {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--sp-2);
+  min-height: 120px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.gifp__tile {
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--paper-sunken);
+  cursor: pointer;
+  line-height: 0;
+}
+.gifp__tile img { width: 100%; height: 88px; object-fit: cover; display: block; }
+.gifp__tile.is-selected { border-color: var(--accent); }
+.gifp__tile:focus-visible { outline: none; border-color: var(--accent); }
+
+.gifp__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  align-self: center;
+  text-align: center;
+  font-size: var(--t-meta);
+  color: var(--ink-faint);
+}
+
+.gifp__link summary { cursor: pointer; font-size: var(--t-meta); color: var(--ink-muted); }
+.gifp__link[open] summary { margin-bottom: var(--sp-2); }
+.gifp__link .input { margin-bottom: var(--sp-2); }

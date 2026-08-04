@@ -27,7 +27,7 @@ router.get('/search', requireAuth, publicRateLimiter, async (req, res) => {
     return res.json({
       results: [],
       configured: false,
-      message: 'GIF search is not configured. Paste a GIF link into the composer instead.'
+      message: 'GIF search is not set up. Paste a GIF link below instead.'
     });
   }
 

@@ -20,7 +20,8 @@ import { renderSkeleton } from '../components/spinner.js';
 import { pushHash, currentParam } from '../router/hashRouter.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
 import { renderMessageBody, mediaHtml, isEmbeddableMedia } from '../utils/richText.js';
-import { ALLOWED_EMOJI, GIF_SUGGESTIONS } from '../utils/emoji.js';
+import { GIF_CATEGORIES, recentGifs, rememberGif } from '../utils/emoji.js';
+import { openEmojiPicker } from '../components/emojiPicker.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'];
 const SEEN_KEY = 'forge_channel_seen';
@@ -449,53 +450,6 @@ export function attachMessagesEvents(state) {
     }
   }
 
-  /** A single floating picker instance, anchored to whichever button opened it. */
-  function openEmojiPicker(anchor, onPick) {
-    document.getElementById('emojiPicker')?.remove();
-    const pop = document.createElement('div');
-    pop.id = 'emojiPicker';
-    pop.className = 'emoji-picker';
-    pop.setAttribute('role', 'dialog');
-    pop.setAttribute('aria-label', 'Pick a reaction');
-    pop.innerHTML = ALLOWED_EMOJI.map(
-      (e) => `<button type="button" class="emoji-picker__item" data-emoji="${escapeHtml(e)}" aria-label="React with ${escapeHtml(e)}">${escapeHtml(e)}</button>`
-    ).join('');
-    document.body.appendChild(pop);
-
-    const box = anchor.getBoundingClientRect();
-    // Flip above the anchor when there is not enough room below.
-    const height = pop.offsetHeight || 160;
-    const below = window.innerHeight - box.bottom;
-    pop.style.top = `${below > height + 12 ? box.bottom + 6 : Math.max(8, box.top - height - 6)}px`;
-    pop.style.left = `${Math.max(8, Math.min(box.left, window.innerWidth - pop.offsetWidth - 8))}px`;
-
-    const close = () => {
-      pop.remove();
-      document.removeEventListener('click', onOutside, true);
-      document.removeEventListener('keydown', onKey, true);
-    };
-    const onOutside = (e) => {
-      if (!pop.contains(e.target)) close();
-    };
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        close();
-        anchor.focus();
-      }
-    };
-
-    pop.querySelectorAll('.emoji-picker__item').forEach((b) => {
-      b.addEventListener('click', () => {
-        onPick(b.dataset.emoji);
-        close();
-      });
-    });
-    document.addEventListener('click', onOutside, true);
-    document.addEventListener('keydown', onKey, true);
-    pop.querySelector('.emoji-picker__item')?.focus();
-  }
-
   composerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const content = composerInput.value.trim();
@@ -586,68 +540,92 @@ export function attachMessagesEvents(state) {
    * reaches the browser; when search is not configured the same dialog still
    * accepts a pasted link, which is the common case for a self-hosted install.
    */
+  /**
+   * GIF picker. Opens on recents, then categories, so it is never an empty
+   * box. Search proxies through our server so no third-party key reaches the
+   * browser; without one configured the dialog says so and still takes a link.
+   */
   function openGifPicker() {
+    let chosen = null;
+
     openModal({
       title: 'Send a GIF',
-      confirmLabel: 'Insert',
+      confirmLabel: 'Send',
       contentHtml: `
-        <div class="col">
+        <div class="gifp">
           <div class="row row--tight">
-            <input class="input" id="gifQuery" placeholder="Search GIFs…" maxlength="60" autocomplete="off" />
+            <input class="input" id="gifQuery" placeholder="Search GIFs…" maxlength="60"
+              autocomplete="off" aria-label="Search GIFs" />
             <button type="button" class="btn" id="gifSearchBtn">Search</button>
           </div>
-          <div class="row row--wrap" id="gifSuggestions" style="margin-top:var(--sp-2)">
-            ${GIF_SUGGESTIONS.map((s) => `<button type="button" class="chip" data-gif-suggest="${escapeHtml(s)}">${escapeHtml(s)}</button>`).join('')}
+          <div class="gifp__chips" id="gifChips">
+            ${GIF_CATEGORIES.map(
+              (c) => `<button type="button" class="chip gifp__chip" data-gif-suggest="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+            ).join('')}
           </div>
-          <div id="gifResults" class="gif-grid" style="margin-top:var(--sp-3)"></div>
-          <div class="field" style="margin-top:var(--sp-3)">
-            <label class="field__label" for="gifUrl">Or paste a GIF link</label>
-            <input class="input mono" id="gifUrl" placeholder="https://media.tenor.com/…/example.gif" autocomplete="off" />
-            <span class="field__hint">
-              Embedded GIFs load from the host that serves them, so that host can see
-              the IP of everyone who views this channel.
-            </span>
-          </div>
+          <div class="gifp__results" id="gifResults"></div>
+          <details class="gifp__link">
+            <summary>Paste a link instead</summary>
+            <input class="input mono" id="gifUrl" autocomplete="off"
+              placeholder="https://media.tenor.com/…/example.gif" />
+            <p class="field__hint">
+              An embedded GIF loads from whoever hosts it, so that host sees the
+              IP of everyone who views this channel.
+            </p>
+          </details>
         </div>`,
       onOpen: (overlay) => {
         const results = overlay.querySelector('#gifResults');
         const queryEl = overlay.querySelector('#gifQuery');
         const urlEl = overlay.querySelector('#gifUrl');
 
-        const select = (url) => {
-          urlEl.value = url;
-          results.querySelectorAll('.gif-grid__item').forEach((el) =>
-            el.classList.toggle('is-selected', el.dataset.gifUrl === url)
-          );
+        const select = (gif, tile) => {
+          chosen = gif;
+          urlEl.value = gif.url;
+          results.querySelectorAll('.gifp__tile').forEach((el) => el.classList.remove('is-selected'));
+          tile?.classList.add('is-selected');
+        };
+
+        const paint = (gifs, emptyNote) => {
+          if (!gifs.length) {
+            results.innerHTML = `<p class="gifp__note">${escapeHtml(emptyNote)}</p>`;
+            return;
+          }
+          results.innerHTML = gifs
+            .map(
+              (g) => `
+              <button type="button" class="gifp__tile" data-url="${escapeHtml(g.url)}"
+                aria-label="${escapeHtml(g.description || 'GIF')}">
+                <img src="${escapeHtml(g.preview)}" alt="${escapeHtml(g.description || 'GIF')}"
+                  loading="lazy" referrerpolicy="no-referrer" />
+              </button>`
+            )
+            .join('');
+          results.querySelectorAll('.gifp__tile').forEach((tile) => {
+            const gif = gifs.find((g) => g.url === tile.dataset.url);
+            tile.addEventListener('click', () => select(gif, tile));
+            tile.addEventListener('dblclick', () => {
+              select(gif, tile);
+              overlay.querySelector('#modalConfirmBtn').click();
+            });
+          });
         };
 
         const runSearch = async (term) => {
           if (!term) return;
-          results.innerHTML = '<p class="text-faint" style="font-size:.8125rem">Searching…</p>';
+          queryEl.value = term;
+          results.innerHTML = '<p class="gifp__note">Searching…</p>';
           try {
             const data = await searchGifs(term);
             if (!data.configured) {
-              results.innerHTML = `<p class="text-faint" style="font-size:.8125rem">${escapeHtml(data.message)}</p>`;
+              results.innerHTML = `<p class="gifp__note">${escapeHtml(data.message)}</p>`;
+              overlay.querySelector('.gifp__link').open = true;
               return;
             }
-            if (!data.results.length) {
-              results.innerHTML = '<p class="text-faint" style="font-size:.8125rem">Nothing matched that.</p>';
-              return;
-            }
-            results.innerHTML = data.results
-              .map(
-                (g) => `
-                  <button type="button" class="gif-grid__item" data-gif-url="${escapeHtml(g.url)}">
-                    <img src="${escapeHtml(g.preview)}" alt="${escapeHtml(g.description)}"
-                      loading="lazy" referrerpolicy="no-referrer" />
-                  </button>`
-              )
-              .join('');
-            results.querySelectorAll('.gif-grid__item').forEach((el) => {
-              el.addEventListener('click', () => select(el.dataset.gifUrl));
-            });
+            paint(data.results, `Nothing matched “${term}”.`);
           } catch (_) {
-            results.innerHTML = '<p class="text-faint" style="font-size:.8125rem">GIF search is unavailable.</p>';
+            results.innerHTML = '<p class="gifp__note">GIF search is unavailable.</p>';
+            overlay.querySelector('.gifp__link').open = true;
           }
         };
 
@@ -658,24 +636,30 @@ export function attachMessagesEvents(state) {
             runSearch(queryEl.value.trim());
           }
         });
-        overlay.querySelectorAll('[data-gif-suggest]').forEach((chip) => {
-          chip.addEventListener('click', () => {
-            queryEl.value = chip.dataset.gifSuggest;
-            runSearch(chip.dataset.gifSuggest);
-          });
-        });
+        overlay.querySelectorAll('[data-gif-suggest]').forEach((chip) =>
+          chip.addEventListener('click', () => runSearch(chip.dataset.gifSuggest))
+        );
+
+        // Open on what you used last; it is the likeliest next choice.
+        const recents = recentGifs();
+        if (recents.length) paint(recents, '');
+        else results.innerHTML = '<p class="gifp__note">Pick a category above, or search.</p>';
       },
       onConfirm: (overlay) => {
-        const url = overlay.querySelector('#gifUrl').value.trim();
-        if (!url) return false;
+        const url = (chosen?.url || overlay.querySelector('#gifUrl').value).trim();
+        if (!url) {
+          showToast({ title: 'Pick a GIF first', type: 'error' });
+          return false;
+        }
         if (!isEmbeddableMedia(url)) {
           showToast({
-            title: 'Link not embeddable',
-            message: 'Use a direct .gif/.png/.jpg link from a supported host — it will send as a plain link otherwise.',
+            title: 'That link will not embed',
+            message: 'Use a direct .gif/.png/.jpg link from a supported host.',
             type: 'error'
           });
           return false;
         }
+        if (chosen) rememberGif(chosen);
         composerInput.value = `${composerInput.value.trim()} ${url}`.trim();
         composerForm.requestSubmit();
         return true;
