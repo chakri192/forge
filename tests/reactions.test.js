@@ -149,3 +149,28 @@ describe('Message reactions and votes', () => {
     }
   });
 });
+
+describe('Emoji catalogue', () => {
+  it('offers exactly what the server will store', async () => {
+    const { ALLOWED_EMOJI: server } = await import('../src/server/models/Reaction.js');
+    const { ALLOWED_EMOJI: client, EMOJI } = await import('../src/public/js/utils/emoji.js');
+
+    assert.deepEqual(
+      client,
+      server,
+      'the picker catalogue drifted from the server allowlist — reactions would be rejected'
+    );
+    assert.equal(new Set(client).size, client.length, 'the catalogue has duplicates');
+    for (const entry of EMOJI) {
+      assert.ok(entry.group, `${entry.emoji} has no group`);
+      assert.ok(entry.keywords?.length, `${entry.emoji} has no search keywords`);
+    }
+  });
+
+  it('finds emoji by keyword, not just by glyph', async () => {
+    const { searchEmoji } = await import('../src/public/js/utils/emoji.js');
+    assert.ok(searchEmoji('ship').some((e) => e.emoji === '🚀'), 'ship should find the rocket');
+    assert.ok(searchEmoji('deadline').some((e) => e.emoji === '⏰'), 'deadline should find the clock');
+    assert.equal(searchEmoji('zzzzz').length, 0, 'a nonsense term matches nothing');
+  });
+});
