@@ -10,13 +10,12 @@ import { initConnectionStatus } from './components/connectionStatus.js';
 import { initCommandPalette } from './components/commandPalette.js';
 import { initKeyboardShortcuts } from './services/keyboard.js';
 import { clearSession, rememberView, lastView, resetSessionExpiry } from './services/session.js';
-import { initRouting, syncHash } from './router/hashRouter.js';
+import { initRouting, syncHash, pushHash, parseHash } from './router/hashRouter.js';
 import { Router } from './router/router.js';
 
 // Explicit view imports re-exported for static asset inspection and router dispatch
 export { renderDashboard } from './views/dashboardView.js';
 export { renderTasksView } from './views/tasksView.js';
-export { renderChallengesView } from './views/challengesView.js';
 export { renderTeamsView } from './views/teamsView.js';
 export { renderHallOfFameView } from './views/hallOfFameView.js';
 export { renderLoginView } from './views/loginView.js';
@@ -78,9 +77,11 @@ function bootApp() {
   initUserSession();
 
   document.addEventListener('forge:navigate', (e) => {
-    if (e.detail && e.detail.tab) {
-      store.setState({ activeTab: e.detail.tab });
-    }
+    if (!e.detail?.tab) return;
+    // A param lets one tab be reached in a particular state — Tasks filtered to
+    // challenges, say — instead of needing a tab of its own.
+    if (e.detail.param) pushHash(e.detail.tab, e.detail.param);
+    store.setState({ activeTab: e.detail.tab });
   });
 
   // Views are re-rendered on every state change, so anything inside #appView
@@ -95,6 +96,8 @@ function bootApp() {
       const tab = target.getAttribute('data-tab');
       if (!tab) return;
       e.preventDefault();
+      const param = target.getAttribute('data-param');
+      if (param) pushHash(tab, param);
       store.setState({ activeTab: tab });
     });
   }
@@ -107,7 +110,11 @@ function bootApp() {
     if (state.activeTab !== lastRenderedTab) {
       lastRenderedTab = state.activeTab;
       rememberView(state.activeTab);
-      syncHash(state.activeTab);
+      // Keep the param when it belongs to the tab we are landing on — an alias
+      // like #/challenges resolves to tasks *with* a param, and dropping it
+      // would lose the filter on the next reload.
+      const parsed = parseHash();
+      syncHash(state.activeTab, parsed?.tab === state.activeTab ? parsed.param : null);
     }
   });
 

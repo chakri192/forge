@@ -2416,3 +2416,49 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 @media (prefers-reduced-motion: reduce) {
   .countin__num { animation: none; }
 }
+
+/* ============================================================
+   Contribution heatmap
+   ============================================================ */
+
+.heat__scroll { overflow-x: auto; padding-bottom: var(--sp-1); }
+
+.heat__grid {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+  gap: 3px;
+  width: max-content;
+}
+
+.heat__cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  /* An empty day still needs an edge: without one the grid reads as a blank
+     panel rather than as ninety days with nothing in them. */
+  background: var(--paper-sunken);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+.heat__cell[data-level='1'] { background: var(--accent-soft);  box-shadow: inset 0 0 0 1px var(--accent-line); }
+.heat__cell[data-level='2'] { background: color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: none; }
+.heat__cell[data-level='3'] { background: color-mix(in srgb, var(--accent) 72%, transparent); box-shadow: none; }
+.heat__cell[data-level='4'] { background: var(--accent); box-shadow: none; }
+
+.heat__summary {
+  margin-left: auto;
+  font-size: var(--t-micro);
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+
+.heat__legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: var(--sp-3);
+  font-size: var(--t-micro);
+  color: var(--ink-faint);
+}
+.heat__legend > span:first-child { margin-right: var(--sp-1); }
+.heat__legend > span:last-child { margin-left: var(--sp-1); }
