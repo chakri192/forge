@@ -9,13 +9,13 @@ import { fileURLToPath } from 'url';
 
 import { initSchema } from './db/database.js';
 import { authenticateUser } from './middleware/auth.js';
-import { uploadsDir } from './middleware/upload.js';
 import { errorHandler, jsonSyntaxErrorHandler, spaFallback } from './middleware/errorHandler.js';
 import { mutationRateLimiter } from './middleware/rateLimit.js';
 import { requestLogger, logger } from './utils/logger.js';
 import healthRoutes from './routes/healthRoutes.js';
 import gifRoutes from './routes/gifRoutes.js';
 import leaderboardRoutes from './routes/leaderboardRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 import gameRoutes from './routes/gameRoutes.js';
 import storeRoutes from './routes/storeRoutes.js';
 import duelRoutes from './routes/duelRoutes.js';
@@ -66,7 +66,9 @@ app.use(publicProfileRouter);
 
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
-app.use('/uploads', express.static(uploadsDir));
+// NOTE: uploads are deliberately NOT served statically here. Anything mounted
+// above authenticateUser is world-readable, and submitted coursework is not.
+// See uploadRoutes, mounted under /api once a session has been established.
 
 // Authenticate user for all incoming requests
 app.use(authenticateUser);
@@ -94,6 +96,7 @@ app.use('/api', reviewRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', searchRoutes);
 app.use('/api', leaderboardRoutes);
+app.use('/api', uploadRoutes);
 app.use('/api', gameRoutes);
 app.use('/api', storeRoutes);
 app.use('/api', duelRoutes);

@@ -652,3 +652,34 @@ export async function resolveDuel(id, winnerId) {
     body: JSON.stringify({ winnerId })
   });
 }
+
+/**
+ * Opens an attachment in a new tab.
+ *
+ * Uploads are no longer served statically, so a plain <a href> would arrive
+ * without the bearer token and be refused. Fetch it with credentials, hand the
+ * browser a blob, and revoke the object URL once it has been consumed. The
+ * token never touches the URL, which is the reason not to use a signed link.
+ */
+export async function openAttachment(storedPath) {
+  const name = String(storedPath || '').split('/').pop();
+  if (!name) throw new Error('No attachment.');
+
+  const response = await fetch(`${BASE_URL}/uploads/${encodeURIComponent(name)}`, {
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    throw new Error(response.status === 404 ? 'Attachment not found.' : 'Could not open the attachment.');
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const opened = window.open(url, '_blank', 'noopener');
+  if (!opened) {
+    // Popup blocked: fall back to a download, which does not need a new tab.
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}

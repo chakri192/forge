@@ -113,7 +113,7 @@ export function attachReviewEvents(state) {
               ? `<div class="panel" style="margin-top:var(--sp-4)">
                   <span class="eyebrow" style="margin-bottom:var(--sp-2)">Submitted work</span>
                   <p style="white-space:pre-wrap;word-break:break-word">${escapeHtml(submission.proof_notes)}</p>
-                  ${submission.proof_url ? `<p style="margin-top:var(--sp-2)"><a href="${escapeHtml(submission.proof_url)}" target="_blank" rel="noopener noreferrer">Open attachment</a></p>` : ''}
+                  ${submission.proof_url ? `<p style="margin-top:var(--sp-2)"><button type="button" class="linklike" data-attachment="${escapeHtml(submission.proof_url)}">Open attachment</button></p>` : ''}
                 </div>`
               : ''
           }
