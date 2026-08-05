@@ -46,6 +46,23 @@ function markChannelSeen(channelId, at = new Date().toISOString()) {
   } catch (_) {}
 }
 
+/**
+ * One line of channel-list preview. A message that is only a media link would
+ * otherwise render as 64 characters of Giphy tracking URL, which says nothing
+ * about the conversation — name the medium instead.
+ */
+function previewText(body) {
+  const text = String(body || '').trim();
+  const stripped = text
+    .split(/\s+/)
+    .filter((word) => !isEmbeddableMedia(word))
+    .join(' ')
+    .trim();
+
+  if (stripped) return stripped.slice(0, 64);
+  return text ? 'GIF' : '';
+}
+
 function isChannelUnread(channel, seen) {
   if (!channel.last_message_at) return false;
   const lastSeen = seen[channel.id];
@@ -173,7 +190,7 @@ export function attachMessagesEvents(state) {
             </span>
             ${
               c.last_message
-                ? `<span class="block text-[11px] ${unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(c.last_message.slice(0, 64))}</span>`
+                ? `<span class="block text-[11px] ${unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(previewText(c.last_message))}</span>`
                 : `<span class="block text-[11px] text-outline/60 italic mt-1 pl-6">No messages yet</span>`
             }
           </button>`;
