@@ -877,9 +877,10 @@ function openTaskDetailModal(task, state, refreshData) {
             </div>
             ${sub.proof_notes ? `<p class="text-white/80">${escapeHtml(sub.proof_notes)}</p>` : ''}
             ${sub.proof_url ? `
-              <a href="${escapeHtml(sub.proof_url)}" target="_blank" class="inline-flex items-center gap-1 text-emerald-400 hover:underline font-bold text-[11px]">
+              <button type="button" data-attachment="${escapeHtml(sub.proof_url)}"
+                class="inline-flex items-center gap-1 text-emerald-400 hover:underline font-bold text-[11px]">
                 <span class="material-symbols-outlined text-xs">download</span> View Deliverable File
-              </a>
+              </button>
             ` : ''}
           </div>
         `).join('')}

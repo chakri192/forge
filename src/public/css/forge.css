@@ -2462,3 +2462,16 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 }
 .heat__legend > span:first-child { margin-right: var(--sp-1); }
 .heat__legend > span:last-child { margin-left: var(--sp-1); }
+
+/* A button that has to read as a link — used where an action was previously an
+   <a> but now needs JS (authenticated attachment fetches). */
+.linklike {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.linklike:hover { text-decoration: underline; text-underline-offset: 3px; }

@@ -1,6 +1,6 @@
 // Main ES Module Entry Point
 import { store } from './state/store.js';
-import { fetchCurrentUser, fetchTasks, fetchTeams, fetchHallOfFame } from './services/api.js';
+import { fetchCurrentUser, fetchTasks, fetchTeams, fetchHallOfFame, openAttachment } from './services/api.js';
 import { initDrawerNav, applyNavRoleVisibility } from './components/drawer.js';
 import { updateUserBadges } from './components/userBadges.js';
 import { initNotificationBell, refreshUnreadCount } from './components/notificationBell.js';
@@ -91,6 +91,18 @@ function bootApp() {
   const appView = document.getElementById('appView');
   if (appView) {
     appView.addEventListener('click', (e) => {
+      // Attachments are fetched with the bearer token rather than linked, so
+      // one delegated handler covers every view that shows one.
+      const attachment = e.target.closest('[data-attachment]');
+      if (attachment && appView.contains(attachment)) {
+        e.preventDefault();
+        openAttachment(attachment.dataset.attachment).catch(async (err) => {
+          const { showToast } = await import('./components/toast.js');
+          showToast({ title: 'Could not open it', message: err.message, type: 'error' });
+        });
+        return;
+      }
+
       const target = e.target.closest('[data-tab]');
       if (!target || !appView.contains(target)) return;
       const tab = target.getAttribute('data-tab');
