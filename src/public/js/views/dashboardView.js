@@ -88,7 +88,7 @@ function workHtml(items) {
 function rowHtml(task) {
   const isChallenge = task.task_type === 'CHALLENGE';
   return `
-    <li class="row-item" data-tab="${isChallenge ? 'challenges' : 'tasks'}" tabindex="0" role="link">
+    <li class="row-item" data-tab="tasks" ${isChallenge ? 'data-param="challenges"' : ''} tabindex="0" role="link">
       <span class="row-item__main">
         <span class="row-item__title">${escapeHtml(task.title)}</span>
         <span class="row-item__meta">
@@ -132,11 +132,12 @@ function standingsHtml(leaders, currentUser) {
 }
 
 export function attachDashboardEvents() {
-  const go = (tab) => document.dispatchEvent(new CustomEvent('forge:navigate', { detail: { tab } }));
+  const go = (tab, param = null) =>
+    document.dispatchEvent(new CustomEvent('forge:navigate', { detail: { tab, param } }));
 
   attachToolbar(document.querySelector('.screen__header'), {
     tasks: () => go('tasks'),
-    challenges: () => go('challenges'),
+    challenges: () => go('tasks', 'challenges'),
     leaderboard: () => go('leaderboard')
   });
 

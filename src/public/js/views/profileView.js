@@ -83,33 +83,58 @@ function statTile(icon, value, label, colour) {
     </div>`;
 }
 
-/** GitHub-style heatmap of the last 90 days, rendered as plain divs. */
+/**
+ * Heatmap of the last 90 days.
+ *
+ * Styled from theme tokens rather than utility classes: the previous version
+ * used `bg-white/5` for an empty day, which composites to exactly the card
+ * colour, and `bg-ice-blue` for the busiest tier, which is not a background
+ * utility the build emits at all — so it rendered fully transparent. Every
+ * cell was invisible, data or not.
+ */
 function contributionsHtml(contributions) {
   const byDay = Object.fromEntries(contributions.map((c) => [c.day, c.total]));
   const cells = [];
   const today = new Date();
+  let active = 0;
+  let total = 0;
+
   for (let i = 89; i >= 0; i -= 1) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    const key = date.toISOString().slice(0, 10);
+    // Local fields, not toISOString(): east of UTC that shifts a day's work
+    // into the neighbouring cell.
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     const value = byDay[key] || 0;
-    const intensity =
-      value === 0 ? 'bg-white/5' :
-      value < 25 ? 'bg-royal-slate-blue/30' :
-      value < 75 ? 'bg-royal-slate-blue/55' :
-      value < 150 ? 'bg-royal-slate-blue/80' : 'bg-ice-blue';
+    if (value > 0) {
+      active += 1;
+      total += value;
+    }
+    const level = value === 0 ? 0 : value < 25 ? 1 : value < 75 ? 2 : value < 150 ? 3 : 4;
+    const label = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
     cells.push(
-      `<div class="w-3 h-3 rounded-sm ${intensity}" title="${key}: ${value} XP"></div>`
+      `<div class="heat__cell" data-level="${level}" title="${label}: ${value} XP"></div>`
     );
   }
+
   return `
     <section class="glass-card rounded-2xl p-5">
       <h3 class="text-sm font-bold mb-3 flex items-center gap-2">
         <span class="material-symbols-outlined text-base accent-target" aria-hidden="true">grid_view</span>
         Last 90 days
+        ${active ? `<span class="heat__summary">${total} XP over ${active} ${active === 1 ? 'day' : 'days'}</span>` : ''}
       </h3>
-      <div class="overflow-x-auto">
-        <div class="grid grid-rows-7 grid-flow-col gap-1 w-max">${cells.join('')}</div>
+      <div class="heat__scroll">
+        <div class="heat__grid">${cells.join('')}</div>
+      </div>
+      <div class="heat__legend">
+        ${
+          active
+            ? `<span>Less</span>
+               ${[0, 1, 2, 3, 4].map((l) => `<span class="heat__cell" data-level="${l}"></span>`).join('')}
+               <span>More</span>`
+            : '<span>No XP earned in this window yet — finishing a task will start it off.</span>'
+        }
       </div>
     </section>`;
 }

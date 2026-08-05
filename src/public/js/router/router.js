@@ -1,6 +1,5 @@
 import { renderDashboard, attachDashboardEvents } from '../views/dashboardView.js';
 import { renderTasksView, attachTasksEvents } from '../views/tasksView.js';
-import { renderChallengesView, attachChallengesEvents } from '../views/challengesView.js';
 import { renderTeamsView, attachTeamsEvents } from '../views/teamsView.js';
 import { renderHallOfFameView, attachHallOfFameEvents } from '../views/hallOfFameView.js';
 import { renderLoginView, attachLoginEvents } from '../views/loginView.js';
@@ -35,7 +34,6 @@ const routes = {
   review: { render: renderReviewView, attach: attachReviewEvents },
   appearance: { render: renderAppearanceView, attach: attachAppearanceEvents },
   tasks: { render: renderTasksView, attach: attachTasksEvents },
-  challenges: { render: renderChallengesView, attach: attachChallengesEvents },
   teams: { render: renderTeamsView, attach: attachTeamsEvents },
   halloffame: { render: renderHallOfFameView, attach: attachHallOfFameEvents },
   leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },

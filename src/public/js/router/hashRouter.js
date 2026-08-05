@@ -5,7 +5,6 @@ import { store } from '../state/store.js';
 const VALID_TABS = new Set([
   'dashboard',
   'tasks',
-  'challenges',
   'teams',
   'halloffame',
   'messages',
@@ -32,10 +31,16 @@ const VALID_TABS = new Set([
 // through hashchange and re-render the view.
 let selfWrite = false;
 
+// Challenges used to be their own tab before becoming a section of Tasks.
+// Old links and bookmarks still exist, so they resolve to the filtered board
+// rather than dying at an unknown route.
+const TAB_ALIASES = { challenges: { tab: 'tasks', param: 'challenges' } };
+
 export function parseHash(hash = location.hash) {
   const clean = String(hash || '').replace(/^#\/?/, '');
   if (!clean) return null;
   const [tab, param] = clean.split('/');
+  if (TAB_ALIASES[tab]) return { ...TAB_ALIASES[tab] };
   if (!VALID_TABS.has(tab)) return null;
   return { tab, param: param || null };
 }
