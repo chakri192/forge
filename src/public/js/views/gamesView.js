@@ -46,7 +46,7 @@ export function attachGamesEvents(state) {
           </div>
           <span class="game__best" data-best>
             <span class="game__best-label">Your best</span>
-            <strong>${game.best}<small>${escapeHtml(game.unit)}</small></strong>
+            <strong>${bestHtml(game.best, game.unit)}</strong>
           </span>
         </header>
         <div class="game__stage" data-stage>
@@ -65,7 +65,7 @@ export function attachGamesEvents(state) {
       <li class="game__top-row">
         <span class="game__top-rank">${index + 1}</span>
         <span class="game__top-name">${escapeHtml(entry.name)}</span>
-        <span class="game__top-score">${entry.score}<small>${escapeHtml(unit)}</small></span>
+        <span class="game__top-score">${entry.score}<small>${escapeHtml(unitFor(entry.score, unit))}</small></span>
       </li>`;
   }
 
@@ -74,29 +74,65 @@ export function attachGamesEvents(state) {
     const stage = card.querySelector('[data-stage]');
 
     const finish = async (score, detail) => {
+      // Null when the submit fails: the run still happened and the player
+      // should still see what they scored, just without the standing.
+      let result = null;
       try {
-        const res = await submitGameScore(game.id, score, detail);
-        card.querySelector('[data-best] strong').innerHTML =
-          `${res.best}<small>${escapeHtml(game.unit)}</small>`;
-        if (res.top.length) {
+        result = await submitGameScore(game.id, score, detail);
+        card.querySelector('[data-best] strong').innerHTML = bestHtml(result.best, game.unit);
+        if (result.top.length) {
           card.querySelector('[data-top]').outerHTML =
-            `<ol class="game__top" data-top>${res.top.map((t, i) => topRow(t, i, game.unit)).join('')}</ol>`;
+            `<ol class="game__top" data-top>${result.top.map((t, i) => topRow(t, i, game.unit)).join('')}</ol>`;
         }
-        showToast({
-          title: res.improved ? 'New personal best' : `Scored ${score}`,
-          message: res.improved
-            ? `+${res.xpAwarded} XP · previous best ${res.previousBest}`
-            : `Your best is still ${res.best}.`,
-          type: res.improved ? 'success' : 'info'
-        });
+        if (result.improved) {
+          showToast({
+            title: 'New personal best',
+            message: `+${result.xpAwarded} XP · previous best ${result.previousBest}`,
+            type: 'success'
+          });
+        }
       } catch (_) {
         /* requestApi surfaces the reason */
       }
-      stage.innerHTML = `<button class="btn btn--primary" data-start>Play again</button>`;
+      stage.innerHTML = resultHtml(score, result, game.unit);
       stage.querySelector('[data-start]').addEventListener('click', () => play(game, stage, finish));
     };
 
     stage.querySelector('[data-start]').addEventListener('click', () => play(game, stage, finish));
+  }
+
+  /** Every unit the server sends is plural ("apples", "pairs"), which reads
+   *  wrong on a score of exactly one. */
+  function unitFor(score, unit) {
+    return score === 1 ? String(unit).replace(/s$/, '') : unit;
+  }
+
+  /** Zero is a real score in some games but never a real *best* — a player who
+   *  has not played has no best, and "0" reads like they tried and failed. */
+  function bestHtml(best, unit) {
+    if (!best) return '<span class="game__best-none">—</span>';
+    return `${best}<small>${escapeHtml(unitFor(best, unit))}</small>`;
+  }
+
+  /** The run's own scoreboard. A toast slides away before you have read it,
+   *  and "how did that compare" is the question you have right then. */
+  function resultHtml(score, result, unit) {
+    const best = result ? result.best : null;
+    let verdict = '';
+    if (result?.improved) {
+      verdict = `<span class="game__verdict is-best">New best · +${result.xpAwarded} XP</span>`;
+    } else if (best) {
+      const gap = best - score;
+      verdict = gap > 0
+        ? `<span class="game__verdict">${gap} ${escapeHtml(unitFor(gap, unit))} off your best of ${best}</span>`
+        : `<span class="game__verdict">Matched your best</span>`;
+    }
+    return `
+      <div class="game__result">
+        <p class="game__result-score">${score}<small>${escapeHtml(unitFor(score, unit))}</small></p>
+        ${verdict}
+        <button class="btn btn--primary" data-start>Play again</button>
+      </div>`;
   }
 
   // The view re-attaches whenever app state changes, so a stage can end up
@@ -108,12 +144,93 @@ export function attachGamesEvents(state) {
     const live = () => stage.dataset.run === token;
 
     const runners = { snake: playSnake, memory: playMemory, pop: playPop, sequence: playSequence };
-    runners[game.id](stage, finish, live);
+    // Every one of these starts a clock or a moving snake the instant it is
+    // called. Without a beat to get your hands ready, the first second of a
+    // timed run is always wasted.
+    countIn(stage, live, () => runners[game.id](stage, finish, live));
   }
 
   attachToolbar(document.querySelector('.screen__header'), { refresh: load });
 
   load();
+}
+
+/* --------------------------------------------------------------- run helpers */
+
+/**
+ * A three-beat lead-in before any run starts. Ends early on any key or click,
+ * because a player who is already ready should not have to wait for a ritual.
+ */
+function countIn(stage, live, start) {
+  stage.innerHTML = `
+    <div class="countin" data-countin>
+      <p class="countin__num" data-num>3</p>
+      <p class="countin__hint">Get ready — press any key to start now</p>
+    </div>`;
+  const numEl = stage.querySelector('[data-num]');
+  let n = 3;
+  let timer = null;
+
+  const detach = () => {
+    document.removeEventListener('keydown', go);
+    stage.removeEventListener('click', go);
+  };
+
+  function go() {
+    if (timer === null) return; // already fired
+    clearInterval(timer);
+    timer = null;
+    detach();
+    if (live()) start();
+  }
+
+  timer = setInterval(() => {
+    if (!live()) {
+      clearInterval(timer);
+      timer = null;
+      detach();
+      return;
+    }
+    n -= 1;
+    if (n <= 0) return go();
+    numEl.textContent = String(n);
+  }, 600);
+
+  // Attached a tick late: this runs from the Play button's own click handler,
+  // and that click is still bubbling — binding now would let it dismiss the
+  // count-in it just started.
+  setTimeout(() => {
+    if (timer === null) return;
+    document.addEventListener('keydown', go);
+    stage.addEventListener('click', go);
+  }, 0);
+}
+
+/**
+ * Pauses a run while the tab is hidden. Switching away should not cost you the
+ * game — the snake kept moving and the thirty-second clock kept running, so
+ * you came back to a corpse through no fault of play.
+ *
+ * @param {() => void} pause   stop timers
+ * @param {() => void} resume  restart them
+ * @param {() => boolean} live
+ * @returns {() => void} detach, to be called from the game's own cleanup
+ */
+function pauseWhenHidden(pause, resume, live) {
+  let paused = false;
+  const onVisibility = () => {
+    if (!live()) return detach();
+    if (document.hidden && !paused) {
+      paused = true;
+      pause();
+    } else if (!document.hidden && paused) {
+      paused = false;
+      resume();
+    }
+  };
+  const detach = () => document.removeEventListener('visibilitychange', onVisibility);
+  document.addEventListener('visibilitychange', onVisibility);
+  return detach;
 }
 
 /* ------------------------------------------------------------------- Snake */
@@ -215,10 +332,22 @@ function playSnake(stage, finish, live) {
     if (appleCell) appleCell.className = 'is-apple';
   }
 
+  function speed() {
+    return Math.max(80, START_SPEED - score * 6);
+  }
+
   function cleanup() {
     clearInterval(timer);
+    timer = null;
     document.removeEventListener('keydown', onKey);
+    detachPause();
   }
+
+  const detachPause = pauseWhenHidden(
+    () => { clearInterval(timer); timer = null; },
+    () => { if (!over && timer === null) timer = setInterval(tick, speed()); },
+    live
+  );
 
   function stop() {
     if (over) return;
@@ -246,7 +375,7 @@ function playSnake(stage, finish, live) {
       placeApple();
       // Speed up gently, with a floor so it stays playable.
       clearInterval(timer);
-      timer = setInterval(tick, Math.max(80, START_SPEED - score * 6));
+      timer = setInterval(tick, speed());
     } else {
       snake.pop();
     }
@@ -329,15 +458,25 @@ function playMemory(stage, finish, live) {
     }, 700);
   }
 
-  ticker = setInterval(() => {
+  const countdown = () => {
     if (!live()) return clearInterval(ticker);
     remaining -= 1;
     stage.querySelector('[data-clock]').textContent = `${remaining}s`;
     if (remaining <= 0) {
       clearInterval(ticker);
+      ticker = null;
+      detachPause();
       setTimeout(() => live() && finish(matched, `${matched} pairs in ${SECONDS}s`), 400);
     }
-  }, 1000);
+  };
+
+  const detachPause = pauseWhenHidden(
+    () => { clearInterval(ticker); ticker = null; },
+    () => { if (remaining > 0 && ticker === null) ticker = setInterval(countdown, 1000); },
+    live
+  );
+
+  ticker = setInterval(countdown, 1000);
 
   deal();
 }
@@ -400,12 +539,12 @@ function playPop(stage, finish, live) {
   function cleanup() {
     clearInterval(ticker);
     clearInterval(spawner);
+    ticker = null;
+    spawner = null;
+    detachPause();
   }
 
-  spawner = setInterval(spawn, 520);
-  spawn();
-
-  ticker = setInterval(() => {
+  const countdown = () => {
     if (!live()) return cleanup();
     remaining -= 1;
     stage.querySelector('[data-clock]').textContent = `${remaining}s`;
@@ -414,7 +553,24 @@ function playPop(stage, finish, live) {
       field.innerHTML = '';
       setTimeout(() => live() && finish(score, `${score} in ${SECONDS}s`), 400);
     }
-  }, 1000);
+  };
+
+  // Hidden tab: freeze the clock and stop spawning. Bubbles already on the
+  // field expire on their own timers, which is fine — they were about to
+  // anyway, and the score cannot move while nobody is looking.
+  const detachPause = pauseWhenHidden(
+    () => { clearInterval(ticker); clearInterval(spawner); ticker = null; spawner = null; },
+    () => {
+      if (remaining <= 0 || ticker !== null) return;
+      ticker = setInterval(countdown, 1000);
+      spawner = setInterval(spawn, 520);
+    },
+    live
+  );
+
+  spawner = setInterval(spawn, 520);
+  spawn();
+  ticker = setInterval(countdown, 1000);
 }
 
 /* --------------------------------------------------------- Colour Sequence */
