@@ -22,6 +22,7 @@ import { escapeHtml, timeAgo } from '../utils/dom.js';
 import { renderMessageBody, mediaHtml, isEmbeddableMedia } from '../utils/richText.js';
 import { GIF_CATEGORIES, recentGifs, rememberGif } from '../utils/emoji.js';
 import { openEmojiPicker } from '../components/emojiPicker.js';
+import { attachMentionAutocomplete } from '../components/mentionAutocomplete.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'];
 const SEEN_KEY = 'forge_channel_seen';
@@ -147,6 +148,7 @@ export function attachMessagesEvents(state) {
   const threadBodyEl = document.getElementById('threadBody');
   const composerForm = document.getElementById('composerForm');
   const composerInput = document.getElementById('composerInput');
+  if (composerInput) attachMentionAutocomplete(composerInput);
 
   let channels = [];
   const isAdmin = user.role === 'admin' || user.role === 'DEV_STEALTH';
@@ -256,7 +258,7 @@ export function attachMessagesEvents(state) {
     const canEdit = mine && !pending;
     const canDelete = (mine || isAdmin) && !pending;
     const edited = m.updated_at && m.updated_at !== m.created_at ? ' · edited' : '';
-    const { html: body, media } = renderMessageBody(m.content);
+    const { html: body, media } = renderMessageBody(m.content, user.username);
     return `
       <div class="msg-row group flex gap-3 ${mine ? 'flex-row-reverse' : ''} ${pending ? 'opacity-60' : ''}" data-message-id="${m.id}">
         <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${

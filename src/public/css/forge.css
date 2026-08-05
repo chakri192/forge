@@ -2475,3 +2475,51 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
   text-decoration: none;
 }
 .linklike:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ============================================================
+   @mentions
+   ============================================================ */
+
+.mention {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+/* Being named yourself is the whole point of the feature, so it has to be
+   distinguishable at a glance from someone else being named. */
+.mention.is-you {
+  background: var(--caution-soft);
+  color: var(--caution);
+}
+
+.mentions {
+  position: fixed;
+  z-index: 1200;
+  max-height: 232px;
+  overflow-y: auto;
+  padding: var(--sp-1);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--r-lg);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-3), 0 0 0 1px rgba(0, 0, 0, .35);
+}
+
+.mentions__item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.mentions__item:hover { background: var(--paper-sunken); }
+.mentions__item.is-cursor { background: var(--accent-soft); }
+
+.mentions__name { font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+.mentions__handle { font-size: var(--t-micro); color: var(--ink-faint); }

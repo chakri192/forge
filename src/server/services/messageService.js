@@ -7,6 +7,8 @@ import { ReactionModel, isAllowedEmoji } from '../models/Reaction.js';
 import { VoteModel } from '../models/Vote.js';
 import { MessageRelay } from './discord/messageRelay.js';
 import { DiscordMap } from '../models/DiscordMap.js';
+import { NotificationService } from './notification.js';
+import { resolveMentions } from '../utils/mentions.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin'];
 const CHANNEL_TYPES = ['text', 'announcement', 'team'];
@@ -25,6 +27,43 @@ function assertChannelAccess(channel, user) {
   }
   if (channel.is_private) {
     throw { status: 403, message: 'Forbidden: this channel is private' };
+  }
+}
+
+/**
+ * Can this user open this channel? The same rule assertChannelAccess enforces,
+ * as a question rather than a throw — a notification must never reach someone
+ * who could not have read the message that triggered it.
+ */
+function canSeeChannel(channel, userId) {
+  if (!channel) return false;
+  if (channel.is_private && channel.team_id) {
+    return ChannelModel.getTeamMemberIds(channel.team_id).includes(userId);
+  }
+  return !channel.is_private;
+}
+
+/**
+ * Tells anyone named in a message that they were named, once the message is
+ * safely stored. Never fatal: a failed notification must not undo a delivered
+ * message.
+ */
+function notifyMentions({ channel, message, author, content }) {
+  try {
+    const mentioned = resolveMentions(content, (id) => canSeeChannel(channel, id), author.id);
+    for (const user of mentioned) {
+      NotificationService.createNotification({
+        userId: user.id,
+        title: `${author.name} mentioned you`,
+        // A one-line preview, so the notification is worth reading without
+        // dragging the whole message into a second place.
+        message: content.length > 140 ? `${content.slice(0, 137)}…` : content,
+        type: 'MENTION',
+        link: `#/messages/${channel.id}`
+      });
+    }
+  } catch (_) {
+    /* a mention that fails to notify is not a reason to lose the message */
   }
 }
 
@@ -133,6 +172,7 @@ export const MessageService = {
     }
     const message = MessageModel.create({ channelId, userId: user.id, content });
     broadcastToChannel(channel, { type: 'message', action: 'created', channelId, message });
+    notifyMentions({ channel, message, author: user, content });
 
     // Mirror to Discord when this channel is mapped. Deliberately not awaited
     // and never fatal: the message is already saved and delivered to Forge

@@ -36,11 +36,23 @@ export function isEmbeddableMedia(rawUrl) {
  *
  * @returns {{ html: string, media: string[] }}
  */
-export function renderMessageBody(text) {
+/** Matches the server's rule in utils/mentions.js. Kept in step by a test. */
+const MENTION_RE = /(^|[^\w@])@([a-zA-Z0-9_]{2,32})\b/g;
+
+/**
+ * @param {string} text
+ * @param {string} [viewerUsername] highlights mentions of the reader differently
+ */
+export function renderMessageBody(text, viewerUsername = null) {
   const media = [];
   const safe = escapeHtml(text || '');
 
-  const html = safe.replace(URL_RE, (match) => {
+  const withMentions = safe.replace(MENTION_RE, (_match, before, name) => {
+    const isYou = viewerUsername && name.toLowerCase() === String(viewerUsername).toLowerCase();
+    return `${before}<span class="mention${isYou ? ' is-you' : ''}">@${name}</span>`;
+  });
+
+  const html = withMentions.replace(URL_RE, (match) => {
     // escapeHtml turned & into &amp;; undo that for the actual href.
     const href = match.replace(/&amp;/g, '&');
     if (isEmbeddableMedia(href)) {
