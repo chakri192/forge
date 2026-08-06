@@ -250,6 +250,11 @@ there is a rejection case for each protected route, not just a success case.
 Built on the open-source Forge project by
 [@aaroninplayz](https://github.com/aaroninplayz/glowing-computing-machine).
 
+| | |
+|---|---|
+| [chakri192](https://github.com/chakri192) | Author |
+| [aider](https://github.com/Aider-AI/aider) | AI pair programmer |
+
 ## License
 
 Private and proprietary.
