@@ -17,7 +17,7 @@ Tasks, review queues, XP, duels, a voting forum, and the analytics to see who is
 
 <br />
 
-<img src="docs/architecture.svg" width="840" alt="Vanilla SPA over an Express API over SQLite, with SSE for real-time — and the ledger rules the in-app economy depends on" />
+<img src="docs/forge.svg" width="840" alt="" />
 
 <sub>Members take on work, submit it for review, and earn XP toward levels and badges. Teachers get the numbers.</sub>
 
@@ -177,10 +177,6 @@ escalation.
 
 ## Architecture notes
 
-<div align="center">
-<img src="docs/architecture.svg" width="840" alt="The three layers, the SSE stream, and the ledger invariants" />
-</div>
-
 **Layering.** Routes handle HTTP and validation, services hold business logic
 and permission decisions, models own SQL. Nothing skips a layer.
 
@@ -222,7 +218,6 @@ src/
     routes/              REST endpoints
     services/            Business logic
 tests/                   Unit, integration, RBAC matrix, and E2E suites
-docs/                    The diagram in this README
 ```
 
 Roughly 21,000 lines: 24 route modules, 22 services, 25 models, 23 versioned
