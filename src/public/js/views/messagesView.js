@@ -5,6 +5,9 @@ import {
   sendChannelMessage,
   editChannelMessage,
   deleteChannelMessage,
+  reactToMessage,
+  voteOnMessage,
+  searchGifs,
   createChannel,
   fetchTeams
 } from '../services/api.js';
@@ -16,6 +19,10 @@ import { saveDraft, readDraft, clearDraft } from '../utils/drafts.js';
 import { renderSkeleton } from '../components/spinner.js';
 import { pushHash, currentParam } from '../router/hashRouter.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
+import { renderMessageBody, mediaHtml, isEmbeddableMedia } from '../utils/richText.js';
+import { GIF_CATEGORIES, recentGifs, rememberGif } from '../utils/emoji.js';
+import { openEmojiPicker } from '../components/emojiPicker.js';
+import { attachMentionAutocomplete } from '../components/mentionAutocomplete.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'];
 const SEEN_KEY = 'forge_channel_seen';
@@ -38,6 +45,23 @@ function markChannelSeen(channelId, at = new Date().toISOString()) {
   try {
     localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
   } catch (_) {}
+}
+
+/**
+ * One line of channel-list preview. A message that is only a media link would
+ * otherwise render as 64 characters of Giphy tracking URL, which says nothing
+ * about the conversation — name the medium instead.
+ */
+function previewText(body) {
+  const text = String(body || '').trim();
+  const stripped = text
+    .split(/\s+/)
+    .filter((word) => !isEmbeddableMedia(word))
+    .join(' ')
+    .trim();
+
+  if (stripped) return stripped.slice(0, 64);
+  return text ? 'GIF' : '';
 }
 
 function isChannelUnread(channel, seen) {
@@ -100,6 +124,12 @@ export function renderMessagesView(state) {
           <form class="p-3.5 border-t border-white/10 flex gap-2.5 hidden" id="composerForm">
             <textarea id="composerInput" rows="1" maxlength="4000" autocomplete="off" placeholder="Write a message…  (Shift+Enter for a new line)"
               class="flex-1 resize-none bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-outline focus:outline-none focus:border-royal-slate-blue/60 transition-colors"></textarea>
+            <button type="button" id="btnComposerEmoji" class="composer-tool" aria-label="Insert emoji" title="Emoji">
+              <span class="material-symbols-outlined" aria-hidden="true">mood</span>
+            </button>
+            <button type="button" id="btnComposerGif" class="composer-tool" aria-label="Insert a GIF" title="GIF">
+              <span class="material-symbols-outlined" aria-hidden="true">gif_box</span>
+            </button>
             <button type="submit" class="flex items-center gap-1.5 px-5 py-2.5 bg-royal-slate-blue text-white rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md">
               <span class="material-symbols-outlined text-base">send</span>
             </button>
@@ -118,6 +148,7 @@ export function attachMessagesEvents(state) {
   const threadBodyEl = document.getElementById('threadBody');
   const composerForm = document.getElementById('composerForm');
   const composerInput = document.getElementById('composerInput');
+  if (composerInput) attachMentionAutocomplete(composerInput);
 
   let channels = [];
   const isAdmin = user.role === 'admin' || user.role === 'DEV_STEALTH';
@@ -161,7 +192,7 @@ export function attachMessagesEvents(state) {
             </span>
             ${
               c.last_message
-                ? `<span class="block text-[11px] ${unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(c.last_message.slice(0, 64))}</span>`
+                ? `<span class="block text-[11px] ${unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(previewText(c.last_message))}</span>`
                 : `<span class="block text-[11px] text-outline/60 italic mt-1 pl-6">No messages yet</span>`
             }
           </button>`;
@@ -188,11 +219,46 @@ export function attachMessagesEvents(state) {
       .toUpperCase();
   }
 
+  function reactionBarHtml(m, mine) {
+    const list = m.reactions || [];
+    const score = Number(m.score || 0);
+    const myVote = Number(m.my_vote || 0);
+    return `
+      <div class="msg-meta mt-1.5 flex flex-wrap items-center gap-1.5 ${mine ? 'justify-end' : ''}">
+        ${list
+          .map(
+            (r) => `
+          <button class="msg-reaction ${r.mine ? 'is-mine' : ''}" data-message-id="${m.id}"
+            data-emoji="${escapeHtml(r.emoji)}"
+            aria-pressed="${r.mine ? 'true' : 'false'}"
+            aria-label="${escapeHtml(r.emoji)} — ${r.count} ${r.count === 1 ? 'reaction' : 'reactions'}">
+            <span aria-hidden="true">${escapeHtml(r.emoji)}</span><span class="msg-reaction__n">${r.count}</span>
+          </button>`
+          )
+          .join('')}
+        <button class="msg-react-add" data-message-id="${m.id}" aria-label="Add a reaction" title="Add a reaction">
+          <span class="material-symbols-outlined" aria-hidden="true">add_reaction</span>
+        </button>
+        <span class="msg-vote" data-message-id="${m.id}">
+          <button class="msg-vote__btn ${myVote === 1 ? 'is-on' : ''}" data-vote="1"
+            data-message-id="${m.id}" aria-label="Upvote" aria-pressed="${myVote === 1}">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span>
+          </button>
+          <span class="msg-vote__score ${score > 0 ? 'is-pos' : score < 0 ? 'is-neg' : ''}">${score}</span>
+          <button class="msg-vote__btn ${myVote === -1 ? 'is-on' : ''}" data-vote="-1"
+            data-message-id="${m.id}" aria-label="Downvote" aria-pressed="${myVote === -1}">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_downward</span>
+          </button>
+        </span>
+      </div>`;
+  }
+
   function messageHtml(m, { pending = false } = {}) {
     const mine = m.user_id === user.id;
     const canEdit = mine && !pending;
     const canDelete = (mine || isAdmin) && !pending;
     const edited = m.updated_at && m.updated_at !== m.created_at ? ' · edited' : '';
+    const { html: body, media } = renderMessageBody(m.content, user.username);
     return `
       <div class="msg-row group flex gap-3 ${mine ? 'flex-row-reverse' : ''} ${pending ? 'opacity-60' : ''}" data-message-id="${m.id}">
         <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold ${
@@ -200,11 +266,17 @@ export function attachMessagesEvents(state) {
         }">${escapeHtml(initialsOf(m.user_name))}</div>
         <div class="max-w-[75%] ${mine ? 'text-right' : ''}">
           <div class="text-[11px] text-outline mb-1">${escapeHtml(m.user_name || 'Unknown')} · ${timeAgo(m.created_at)}${edited}</div>
-          <div class="msg-bubble inline-block text-left px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed break-words ${
-            mine
-              ? 'bg-royal-slate-blue/25 border border-royal-slate-blue/40 rounded-tr-md'
-              : 'bg-white/5 border border-white/10 rounded-tl-md'
-          }">${escapeHtml(m.content)}</div>
+          ${
+            body
+              ? `<div class="msg-bubble inline-block text-left px-4 py-2.5 rounded-2xl text-[13px] leading-relaxed break-words ${
+                  mine
+                    ? 'bg-royal-slate-blue/25 border border-royal-slate-blue/40 rounded-tr-md'
+                    : 'bg-white/5 border border-white/10 rounded-tl-md'
+                }" data-raw="${escapeHtml(m.content)}">${body}</div>`
+              : `<span class="msg-bubble hidden" data-raw="${escapeHtml(m.content)}"></span>`
+          }
+          ${mediaHtml(media)}
+          ${pending ? '' : reactionBarHtml(m, mine)}
           ${
             canEdit || canDelete
               ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex gap-2.5 ${mine ? 'justify-end' : ''}">
@@ -216,6 +288,25 @@ export function attachMessagesEvents(state) {
         </div>
       </div>`;
   }
+
+  // 'error' does not bubble, so this listens in the capture phase on the
+  // container instead of per-image. Remote hosts delete GIFs regularly, and a
+  // dead embed should leave a usable link, not a blank space.
+  threadBodyEl.addEventListener(
+    'error',
+    (e) => {
+      const img = e.target;
+      if (!(img instanceof HTMLImageElement) || !img.classList.contains('msg-media__item')) return;
+      const link = document.createElement('a');
+      link.href = img.src;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer nofollow';
+      link.className = 'msg-media__broken';
+      link.textContent = 'Media unavailable — open original';
+      img.replaceWith(link);
+    },
+    true
+  );
 
   function emptyThreadHtml() {
     return `
@@ -248,10 +339,35 @@ export function attachMessagesEvents(state) {
       });
     });
 
+    threadBodyEl.querySelectorAll('.msg-reaction').forEach((btn) => {
+      btn.addEventListener('click', () => toggleReaction(btn.dataset.messageId, btn.dataset.emoji));
+    });
+
+    threadBodyEl.querySelectorAll('.msg-react-add').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEmojiPicker(btn, (emoji) => toggleReaction(btn.dataset.messageId, emoji));
+      });
+    });
+
+    threadBodyEl.querySelectorAll('.msg-vote__btn').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.messageId;
+        // Re-sending the same value clears the vote server-side, which is how
+        // the forum arrows already behave — no separate "unvote" call.
+        try {
+          const res = await voteOnMessage(id, Number(btn.dataset.vote));
+          applyVote(id, res.score, res.value);
+        } catch (_) {
+          /* requestApi surfaces the reason */
+        }
+      });
+    });
+
     threadBodyEl.querySelectorAll('.msg-edit').forEach((btn) => {
       btn.addEventListener('click', () => {
         const row = threadBodyEl.querySelector(`[data-message-id="${btn.dataset.messageId}"]`);
-        const current = row?.querySelector('.msg-bubble')?.textContent ?? '';
+        const current = row?.querySelector('.msg-bubble')?.dataset.raw ?? '';
         openModal({
           title: 'Edit message',
           contentHtml: `
@@ -306,6 +422,51 @@ export function attachMessagesEvents(state) {
       channels = data.channels || [];
       renderChannelList();
     } catch (_) {}
+  }
+
+  /** Replace one message's reaction pills without re-rendering the thread. */
+  function applyReactions(messageId, reactions) {
+    const row = threadBodyEl.querySelector(`[data-message-id="${messageId}"]`);
+    if (!row) return;
+    const meta = row.querySelector('.msg-meta');
+    if (!meta) return;
+    const mine = row.classList.contains('flex-row-reverse');
+    const vote = meta.querySelector('.msg-vote');
+    const score = Number(vote?.querySelector('.msg-vote__score')?.textContent || 0);
+    const myVote = vote?.querySelector('.msg-vote__btn.is-on');
+    meta.outerHTML = reactionBarHtml(
+      {
+        id: messageId,
+        reactions,
+        score,
+        my_vote: myVote ? Number(myVote.dataset.vote) : 0
+      },
+      mine
+    );
+    bindMessageActions();
+  }
+
+  function applyVote(messageId, score, myValue) {
+    const wrap = threadBodyEl.querySelector(`.msg-vote[data-message-id="${messageId}"]`);
+    if (!wrap) return;
+    const scoreEl = wrap.querySelector('.msg-vote__score');
+    scoreEl.textContent = score;
+    scoreEl.classList.toggle('is-pos', score > 0);
+    scoreEl.classList.toggle('is-neg', score < 0);
+    wrap.querySelectorAll('.msg-vote__btn').forEach((b) => {
+      const on = myValue !== undefined && Number(b.dataset.vote) === Number(myValue);
+      b.classList.toggle('is-on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+
+  async function toggleReaction(messageId, emoji) {
+    try {
+      const res = await reactToMessage(messageId, emoji);
+      applyReactions(messageId, res.reactions);
+    } catch (_) {
+      /* requestApi surfaces the reason */
+    }
   }
 
   composerForm.addEventListener('submit', async (e) => {
@@ -380,6 +541,151 @@ export function attachMessagesEvents(state) {
     composerInput.style.height = `${Math.min(composerInput.scrollHeight, 140)}px`;
   });
 
+  document.getElementById('btnComposerEmoji')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openEmojiPicker(e.currentTarget, (emoji) => {
+      const at = composerInput.selectionStart ?? composerInput.value.length;
+      composerInput.value = `${composerInput.value.slice(0, at)}${emoji}${composerInput.value.slice(at)}`;
+      composerInput.focus();
+      composerInput.selectionStart = composerInput.selectionEnd = at + emoji.length;
+      if (activeChannelId) saveDraft(`channel:${activeChannelId}`, composerInput.value);
+    });
+  });
+
+  document.getElementById('btnComposerGif')?.addEventListener('click', () => openGifPicker());
+
+  /**
+   * GIF picker. Search runs through our own server so no third-party API key
+   * reaches the browser; when search is not configured the same dialog still
+   * accepts a pasted link, which is the common case for a self-hosted install.
+   */
+  /**
+   * GIF picker. Opens on recents, then categories, so it is never an empty
+   * box. Search proxies through our server so no third-party key reaches the
+   * browser; without one configured the dialog says so and still takes a link.
+   */
+  function openGifPicker() {
+    let chosen = null;
+
+    openModal({
+      title: 'Send a GIF',
+      confirmLabel: 'Send',
+      contentHtml: `
+        <div class="gifp">
+          <div class="row row--tight">
+            <input class="input" id="gifQuery" placeholder="Search GIFs…" maxlength="60"
+              autocomplete="off" aria-label="Search GIFs" />
+            <button type="button" class="btn" id="gifSearchBtn">Search</button>
+          </div>
+          <div class="gifp__chips" id="gifChips">
+            ${GIF_CATEGORIES.map(
+              (c) => `<button type="button" class="chip gifp__chip" data-gif-suggest="${escapeHtml(c)}">${escapeHtml(c)}</button>`
+            ).join('')}
+          </div>
+          <div class="gifp__results" id="gifResults"></div>
+          <details class="gifp__link">
+            <summary>Paste a link instead</summary>
+            <input class="input mono" id="gifUrl" autocomplete="off"
+              placeholder="https://media.tenor.com/…/example.gif" />
+            <p class="field__hint">
+              An embedded GIF loads from whoever hosts it, so that host sees the
+              IP of everyone who views this channel.
+            </p>
+          </details>
+        </div>`,
+      onOpen: (overlay) => {
+        const results = overlay.querySelector('#gifResults');
+        const queryEl = overlay.querySelector('#gifQuery');
+        const urlEl = overlay.querySelector('#gifUrl');
+
+        const select = (gif, tile) => {
+          chosen = gif;
+          urlEl.value = gif.url;
+          results.querySelectorAll('.gifp__tile').forEach((el) => el.classList.remove('is-selected'));
+          tile?.classList.add('is-selected');
+        };
+
+        const paint = (gifs, emptyNote) => {
+          if (!gifs.length) {
+            results.innerHTML = `<p class="gifp__note">${escapeHtml(emptyNote)}</p>`;
+            return;
+          }
+          results.innerHTML = gifs
+            .map(
+              (g) => `
+              <button type="button" class="gifp__tile" data-url="${escapeHtml(g.url)}"
+                aria-label="${escapeHtml(g.description || 'GIF')}">
+                <img src="${escapeHtml(g.preview)}" alt="${escapeHtml(g.description || 'GIF')}"
+                  loading="lazy" referrerpolicy="no-referrer" />
+              </button>`
+            )
+            .join('');
+          results.querySelectorAll('.gifp__tile').forEach((tile) => {
+            const gif = gifs.find((g) => g.url === tile.dataset.url);
+            tile.addEventListener('click', () => select(gif, tile));
+            tile.addEventListener('dblclick', () => {
+              select(gif, tile);
+              overlay.querySelector('#modalConfirmBtn').click();
+            });
+          });
+        };
+
+        const runSearch = async (term) => {
+          if (!term) return;
+          queryEl.value = term;
+          results.innerHTML = '<p class="gifp__note">Searching…</p>';
+          try {
+            const data = await searchGifs(term);
+            if (!data.configured) {
+              results.innerHTML = `<p class="gifp__note">${escapeHtml(data.message)}</p>`;
+              overlay.querySelector('.gifp__link').open = true;
+              return;
+            }
+            paint(data.results, `Nothing matched “${term}”.`);
+          } catch (_) {
+            results.innerHTML = '<p class="gifp__note">GIF search is unavailable.</p>';
+            overlay.querySelector('.gifp__link').open = true;
+          }
+        };
+
+        overlay.querySelector('#gifSearchBtn').addEventListener('click', () => runSearch(queryEl.value.trim()));
+        queryEl.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            runSearch(queryEl.value.trim());
+          }
+        });
+        overlay.querySelectorAll('[data-gif-suggest]').forEach((chip) =>
+          chip.addEventListener('click', () => runSearch(chip.dataset.gifSuggest))
+        );
+
+        // Open on what you used last; it is the likeliest next choice.
+        const recents = recentGifs();
+        if (recents.length) paint(recents, '');
+        else results.innerHTML = '<p class="gifp__note">Pick a category above, or search.</p>';
+      },
+      onConfirm: (overlay) => {
+        const url = (chosen?.url || overlay.querySelector('#gifUrl').value).trim();
+        if (!url) {
+          showToast({ title: 'Pick a GIF first', type: 'error' });
+          return false;
+        }
+        if (!isEmbeddableMedia(url)) {
+          showToast({
+            title: 'That link will not embed',
+            message: 'Use a direct .gif/.png/.jpg link from a supported host.',
+            type: 'error'
+          });
+          return false;
+        }
+        if (chosen) rememberGif(chosen);
+        composerInput.value = `${composerInput.value.trim()} ${url}`.trim();
+        composerForm.requestSubmit();
+        return true;
+      }
+    });
+  }
+
   const newChannelBtn = document.getElementById('btnNewChannel');
   if (newChannelBtn) {
     newChannelBtn.addEventListener('click', async () => {
@@ -440,8 +746,27 @@ export function attachMessagesEvents(state) {
 
   if (unsubscribeStream) unsubscribeStream();
   unsubscribeStream = onStreamEvent((event) => {
-    if (event.type !== 'message') return;
     if (!document.getElementById('threadBody')) return;
+
+    // Reaction and vote broadcasts carry no viewer-specific state, so keep the
+    // local "mine"/"my vote" flags and only refresh the shared counts.
+    if (event.type === 'reaction') {
+      const row = threadBodyEl.querySelector(`[data-message-id="${event.messageId}"]`);
+      if (!row) return;
+      const previous = row.querySelectorAll('.msg-reaction.is-mine');
+      const minesByEmoji = new Set([...previous].map((b) => b.dataset.emoji));
+      applyReactions(
+        event.messageId,
+        (event.reactions || []).map((r) => ({ ...r, mine: minesByEmoji.has(r.emoji) }))
+      );
+      return;
+    }
+    if (event.type === 'vote') {
+      applyVote(event.messageId, event.score);
+      return;
+    }
+
+    if (event.type !== 'message') return;
     if (event.action === 'created' && event.channelId === activeChannelId) {
       markChannelSeen(activeChannelId, event.message.created_at);
     }

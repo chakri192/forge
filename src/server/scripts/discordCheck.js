@@ -1,0 +1,241 @@
+/**
+ * Verifies Discord setup without starting Forge.
+ *
+ * Run after filling in .env. It reports what is present, what each bot can
+ * actually see, and which permissions are missing — so a misconfigured bot is
+ * found here rather than by a message silently failing to post later.
+ *
+ *   npm run discord:check
+ */
+import 'dotenv/config';
+import { Client, GatewayIntentBits, PermissionFlagsBits, ChannelType, ApplicationFlags } from 'discord.js';
+
+const BOTS = [
+  {
+    key: 'system',
+    name: 'System Bot',
+    env: 'DISCORD_SYSTEM_BOT_TOKEN',
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers],
+    needs: ['ManageChannels', 'ManageRoles', 'ViewChannel', 'ReadMessageHistory'],
+    needsMembers: true
+  },
+  {
+    key: 'admin',
+    name: 'Admin Bot',
+    env: 'DISCORD_ADMIN_BOT_TOKEN',
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+    needs: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles', 'ManageMessages', 'ReadMessageHistory'],
+    needsMessageContent: true
+  },
+  {
+    key: 'messenger',
+    name: 'Messenger Bot',
+    env: 'DISCORD_MESSENGER_BOT_TOKEN',
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+    needs: ['ViewChannel', 'SendMessages', 'EmbedLinks', 'AttachFiles', 'ReadMessageHistory'],
+    needsMessageContent: true,
+    mustNotHave: ['ManageMessages']
+  }
+];
+
+const tick = (ok) => (ok ? '  ok  ' : ' FAIL ');
+const WARN = ' warn ';
+let problems = 0;   // blocks the bridge from working
+let warnings = 0;   // needed by a later milestone, not by this one
+
+async function checkBot(spec, guildId) {
+  const token = process.env[spec.env];
+  if (!token) {
+    console.log(`${tick(false)} ${spec.name}: ${spec.env} is not set`);
+    problems += 1;
+    return;
+  }
+
+  const client = new Client({ intents: spec.intents });
+  try {
+    await client.login(token);
+    await new Promise((resolve, reject) => {
+      client.once('clientReady', resolve);
+      setTimeout(() => reject(new Error('did not become ready within 15s')), 15000);
+    });
+
+    console.log(`${tick(true)} ${spec.name}: connected as ${client.user.tag}`);
+
+    const guild = await client.guilds.fetch(guildId).catch(() => null);
+    if (!guild) {
+      console.log(`${tick(false)} ${spec.name}: not a member of guild ${guildId} — invite it`);
+      problems += 1;
+      return;
+    }
+
+    const me = await guild.members.fetchMe();
+    const missing = spec.needs.filter((p) => !me.permissions.has(PermissionFlagsBits[p]));
+    if (missing.length) {
+      console.log(`${tick(false)} ${spec.name}: missing permissions — ${missing.join(', ')}`);
+      problems += 1;
+    } else {
+      console.log(`${tick(true)} ${spec.name}: has every permission it needs`);
+    }
+
+    // Intents are separate from permissions and are not covered by the invite
+    // URL. Without Message Content a bot still receives messageCreate, but
+    // content, embeds and attachments all arrive empty — the relay looks
+    // connected and silently delivers nothing.
+    if (spec.needsMessageContent) {
+      const appInfo = await client.application.fetch();
+      const hasContent =
+        appInfo.flags.has(ApplicationFlags.GatewayMessageContent) ||
+        appInfo.flags.has(ApplicationFlags.GatewayMessageContentLimited);
+      if (!hasContent) {
+        console.log(
+          `${tick(false)} ${spec.name}: Message Content Intent is off — ` +
+            'Developer Portal → Bot → Privileged Gateway Intents'
+        );
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${spec.name}: Message Content Intent enabled`);
+      }
+    }
+
+    if (spec.needsMembers) {
+      const appInfo = await client.application.fetch();
+      if (!appInfo.flags.has(ApplicationFlags.GatewayGuildMembers) &&
+          !appInfo.flags.has(ApplicationFlags.GatewayGuildMembersLimited)) {
+        console.log(`${tick(false)} ${spec.name}: Server Members Intent is off`);
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${spec.name}: Server Members Intent enabled`);
+      }
+    }
+
+    // The Messenger Bot must not be able to pin; that separation is the point.
+    for (const p of spec.mustNotHave || []) {
+      if (me.permissions.has(PermissionFlagsBits[p])) {
+        console.log(`${tick(false)} ${spec.name}: has ${p} but should not — members could pin`);
+        problems += 1;
+      }
+    }
+  } catch (err) {
+    console.log(`${tick(false)} ${spec.name}: ${err.message}`);
+    problems += 1;
+  } finally {
+    await client.destroy();
+  }
+}
+
+/**
+ * Every configured id must point at the kind of object it is used as.
+ *
+ * The System Bot creates channels *inside* the TEAMS and DIRECT-MESSAGES
+ * categories, so those two must be categories. Pointing them at a text channel
+ * is an easy mistake — the names read the same in the sidebar — and it would
+ * otherwise fail much later, when creating a team tries to nest a channel
+ * inside a channel.
+ */
+async function checkIdTypes(guildId) {
+  const token = process.env.DISCORD_SYSTEM_BOT_TOKEN;
+  if (!token || !guildId) return;
+
+  const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+  try {
+    await client.login(token);
+    await new Promise((resolve, reject) => {
+      client.once('clientReady', resolve);
+      setTimeout(() => reject(new Error('timeout')), 15000);
+    });
+    const guild = await client.guilds.fetch(guildId);
+    const all = await guild.channels.fetch();
+
+    const expect = [
+      ['DISCORD_CATEGORY_TEAMS', ChannelType.GuildCategory, 'a category'],
+      ['DISCORD_CATEGORY_DIRECT_MESSAGES', ChannelType.GuildCategory, 'a category'],
+      ...Object.keys(process.env)
+        .filter((k) => k.startsWith('DISCORD_CHANNEL_') && process.env[k])
+        .map((k) => [k, ChannelType.GuildText, 'a text channel'])
+    ];
+
+    for (const [key, wantType, wantLabel] of expect) {
+      const id = process.env[key];
+      if (!id) {
+        if (key.startsWith('DISCORD_CATEGORY_')) {
+          console.log(`${tick(false)} ${key} is not set — create ${wantLabel} and add its id`);
+          problems += 1;
+        }
+        continue;
+      }
+      const channel = all.get(id);
+      if (!channel) {
+        console.log(`${tick(false)} ${key}: no channel with that id in this server`);
+        problems += 1;
+      } else if (channel.type !== wantType) {
+        const actual = ChannelType[channel.type] || channel.type;
+        console.log(`${tick(false)} ${key}: "${channel.name}" is ${actual}, but must be ${wantLabel}`);
+        problems += 1;
+      } else {
+        console.log(`${tick(true)} ${key}: "${channel.name}" is ${wantLabel}`);
+      }
+    }
+
+    // 3.4 names its eight categories, so report which are absent rather than
+    // just a count — "6 of 8" does not tell you what to create.
+    const WANTED_FORUMS = [
+      'general discussion', 'academic', 'hackathons', 'resources',
+      'ideas', 'social', 'q&a', 'feedback'
+    ];
+    const forums = [...all.values()].filter((c) => c?.type === ChannelType.GuildForum);
+    const have = forums.map((c) => c.name.toLowerCase().replace(/[-_]+/g, ' ').trim());
+    const absent = WANTED_FORUMS.filter(
+      (want) => !have.some((h) => h === want || h.replace(/&/g, 'and') === want.replace(/&/g, 'and'))
+    );
+    if (absent.length) {
+      // Not blocking: nothing before 3.4 touches forums.
+      console.log(`${WARN} forums: ${forums.length}/8 — missing ${absent.join(', ')} (needed by 3.4)`);
+      warnings += 1;
+    } else {
+      console.log(`${tick(true)} forums: all 8 present`);
+    }
+
+    // 3.3 posts its cleanup summary here, so its absence bites later.
+    if (!process.env.DISCORD_CHANNEL_SYSTEM_ALERTS) {
+      console.log(`${WARN} DISCORD_CHANNEL_SYSTEM_ALERTS not set — 3.3 posts cleanup summaries there`);
+      warnings += 1;
+    }
+  } catch (err) {
+    console.log(`${tick(false)} could not inspect channels: ${err.message}`);
+    problems += 1;
+  } finally {
+    await client.destroy();
+  }
+}
+
+async function main() {
+  const guildId = process.env.DISCORD_GUILD_ID;
+  console.log('\nDiscord setup check\n');
+
+  if (!guildId) {
+    console.log(`${tick(false)} DISCORD_GUILD_ID is not set`);
+    problems += 1;
+  } else {
+    console.log(`${tick(true)} DISCORD_GUILD_ID = ${guildId}`);
+  }
+
+  for (const spec of BOTS) {
+    if (guildId) await checkBot(spec, guildId);
+  }
+
+  const channels = Object.keys(process.env).filter((k) => k.startsWith('DISCORD_CHANNEL_') && process.env[k]);
+  console.log(`${tick(channels.length > 0)} ${channels.length} static channel id(s) configured`);
+  if (!channels.length) problems += 1;
+
+  await checkIdTypes(guildId);
+
+  const warnNote = warnings ? ` ${warnings} warning(s) for later milestones.` : '';
+  console.log(
+    problems === 0
+      ? `\nReady. Start Forge and the bridge will come up.${warnNote}\n`
+      : `\n${problems} problem(s) above. Fix them and run this again.${warnNote}\n`
+  );
+  process.exit(problems === 0 ? 0 : 1);
+}
+
+main();

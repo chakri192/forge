@@ -4,6 +4,8 @@ import { onStreamEvent } from '../services/stream.js';
 import { showToast } from '../components/toast.js';
 import { openModal } from '../components/modal.js';
 import { renderSkeleton } from '../components/spinner.js';
+import { renderScreen } from '../components/screen.js';
+import { attachToolbar } from '../components/toolbar.js';
 import { escapeHtml, timeAgo } from '../utils/dom.js';
 
 const PROMOTE_ROLES = ['leader', 'teacher', 'admin', 'DEV_STEALTH', 'STUDENT_LEADER', 'TEACHER'];
@@ -21,21 +23,16 @@ export function renderMarketplaceView(state) {
   if (!state.currentUser) {
     return `<div class="glass-card p-10 rounded-2xl text-center text-sm text-outline">Sign in to browse community proposals.</div>`;
   }
-  return `
-    <div class="space-y-5 max-w-4xl">
-      <div class="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h2 class="text-2xl font-extrabold tracking-tight flex items-center gap-2.5">
-            <span class="material-symbols-outlined text-3xl accent-target">storefront</span> Task Marketplace
-          </h2>
-          <p class="text-xs text-outline mt-1">Propose what you want to build. The most-wanted ideas become real tasks.</p>
-        </div>
-        <button id="btnSuggest" class="btn btn--primary">
-          <span class="material-symbols-outlined text-base" aria-hidden="true">lightbulb</span> Suggest a Task
-        </button>
-      </div>
-      <div id="marketplaceRoot">${renderSkeleton('card', { className: 'rounded-2xl' })}</div>
-    </div>`;
+  return renderScreen({
+    title: 'Marketplace',
+    subtitle: 'Proposed work. The most-wanted ideas become tasks.',
+    toolbar: {
+      groups: [
+        { actions: [{ id: 'suggest', label: 'Propose a task', icon: 'add', variant: 'primary' }] }
+      ]
+    },
+    body: `<div id="marketplaceRoot" class="stack">${renderSkeleton('card', { className: '' })}</div>`
+  });
 }
 
 export function attachMarketplaceEvents(state) {
@@ -148,7 +145,7 @@ export function attachMarketplaceEvents(state) {
     });
   }
 
-  document.getElementById('btnSuggest').addEventListener('click', () => {
+  attachToolbar(document.querySelector('.screen__header'), { suggest: () => {
     openModal({
       title: 'Suggest a task',
       contentHtml: `
@@ -181,7 +178,7 @@ export function attachMarketplaceEvents(state) {
         }
       }
     });
-  });
+  } });
 
   if (unsubscribe) unsubscribe();
   unsubscribe = onStreamEvent((event) => {

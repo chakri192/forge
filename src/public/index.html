@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html class="dark" data-theme="dark" lang="en">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <meta name="color-scheme" content="dark" />
+  <meta name="color-scheme" content="light" />
   <title>Forge</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -20,13 +20,14 @@
         extend: {
           colors: {
             'royal-slate-blue': 'var(--accent)',
-            'accent-text': 'var(--accent-text)',
+            ink: 'var(--ink)',
+            'accent-text': 'var(--accent)',
             primary: 'var(--accent)',
-            'ice-blue': 'var(--accent-text)',
-            outline: 'var(--text-muted)',
-            'deep-obsidian': 'var(--bg)',
-            'on-surface': 'var(--text)',
-            'surface-variant': 'var(--bg-elevated)'
+            'ice-blue': 'var(--accent)',
+            outline: 'var(--ink-muted)',
+            'deep-obsidian': 'var(--paper)',
+            'on-surface': 'var(--ink)',
+            'surface-variant': 'var(--paper-sunken)'
           },
           fontFamily: { display: ['Inter', 'sans-serif'], body: ['Inter', 'sans-serif'] }
         }
@@ -114,17 +115,21 @@
             <span class="material-symbols-outlined" aria-hidden="true">military_tech</span>
             <span>My Progress</span>
           </button>
-          <button class="nav-item" data-tab="quizzes">
-            <span class="material-symbols-outlined" aria-hidden="true">quiz</span>
-            <span>Quizzes</span>
+          <button class="nav-item" data-tab="duels">
+            <span class="material-symbols-outlined" aria-hidden="true">swords</span><span>Duels</span>
+          </button>
+          <button class="nav-item" data-tab="store">
+            <span class="material-symbols-outlined" aria-hidden="true">redeem</span><span>Store</span>
+          </button>
+          <button class="nav-item" data-tab="games">
+            <span class="material-symbols-outlined" aria-hidden="true">stadia_controller</span><span>Mini Games</span>
+          </button>
+          <button class="nav-item" data-tab="leaderboard">
+            <span class="material-symbols-outlined" aria-hidden="true">leaderboard</span><span>Leaderboard</span>
           </button>
           <button class="nav-item" data-tab="halloffame">
             <span class="material-symbols-outlined" aria-hidden="true">emoji_events</span>
             <span>Hall of Fame</span>
-          </button>
-          <button class="nav-item" data-tab="journal">
-            <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
-            <span>Journal</span>
           </button>
           </div>
         </div>
@@ -154,6 +159,9 @@
         </div>
       <div class="nav-group">
         <div class="nav-group__items">
+          <button class="nav-item" data-tab="appearance">
+            <span class="material-symbols-outlined" aria-hidden="true">palette</span><span>Appearance</span>
+          </button>
           <button class="nav-item" id="drawerSettingsLink" data-tab="settings">
             <span class="material-symbols-outlined" aria-hidden="true">settings</span><span>Settings</span>
           </button>

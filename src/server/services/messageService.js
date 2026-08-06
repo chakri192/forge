@@ -3,6 +3,12 @@ import { MessageModel } from '../models/Message.js';
 import { hasRole } from '../middleware/rbac.js';
 import { ActivityService } from './activity.js';
 import { publish, publishAll } from './sse.js';
+import { ReactionModel, isAllowedEmoji } from '../models/Reaction.js';
+import { VoteModel } from '../models/Vote.js';
+import { MessageRelay } from './discord/messageRelay.js';
+import { DiscordMap } from '../models/DiscordMap.js';
+import { NotificationService } from './notification.js';
+import { resolveMentions } from '../utils/mentions.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin'];
 const CHANNEL_TYPES = ['text', 'announcement', 'team'];
@@ -21,6 +27,43 @@ function assertChannelAccess(channel, user) {
   }
   if (channel.is_private) {
     throw { status: 403, message: 'Forbidden: this channel is private' };
+  }
+}
+
+/**
+ * Can this user open this channel? The same rule assertChannelAccess enforces,
+ * as a question rather than a throw — a notification must never reach someone
+ * who could not have read the message that triggered it.
+ */
+function canSeeChannel(channel, userId) {
+  if (!channel) return false;
+  if (channel.is_private && channel.team_id) {
+    return ChannelModel.getTeamMemberIds(channel.team_id).includes(userId);
+  }
+  return !channel.is_private;
+}
+
+/**
+ * Tells anyone named in a message that they were named, once the message is
+ * safely stored. Never fatal: a failed notification must not undo a delivered
+ * message.
+ */
+function notifyMentions({ channel, message, author, content }) {
+  try {
+    const mentioned = resolveMentions(content, (id) => canSeeChannel(channel, id), author.id);
+    for (const user of mentioned) {
+      NotificationService.createNotification({
+        userId: user.id,
+        title: `${author.name} mentioned you`,
+        // A one-line preview, so the notification is worth reading without
+        // dragging the whole message into a second place.
+        message: content.length > 140 ? `${content.slice(0, 137)}…` : content,
+        type: 'MENTION',
+        link: `#/messages/${channel.id}`
+      });
+    }
+  } catch (_) {
+    /* a mention that fails to notify is not a reason to lose the message */
   }
 }
 
@@ -58,7 +101,67 @@ export const MessageService = {
   getChannelMessages(user, channelId, { limit } = {}) {
     const channel = ChannelModel.getById(channelId);
     assertChannelAccess(channel, user);
-    return { channel, messages: MessageModel.getByChannel(channelId, { limit }) };
+
+    const messages = MessageModel.getByChannel(channelId, { limit });
+    const ids = messages.map((m) => m.id);
+    // Batched so a busy channel stays one query per concern, not one per row.
+    const reactions = ReactionModel.forMessages(ids, user.id);
+    const scores = VoteModel.scoresFor('MESSAGE', ids);
+    const myVotes = VoteModel.userVotesFor(user.id, 'MESSAGE', ids);
+
+    return {
+      channel,
+      messages: messages.map((m) => ({
+        ...m,
+        reactions: reactions[m.id] || [],
+        score: scores[m.id] || 0,
+        my_vote: myVotes[m.id] || 0
+      }))
+    };
+  },
+
+  /** Toggle an emoji reaction and broadcast the new tally to the channel. */
+  react(user, messageId, emoji) {
+    if (!isAllowedEmoji(emoji)) {
+      throw { status: 400, message: 'That emoji is not available' };
+    }
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+
+    ReactionModel.toggle({ messageId, userId: user.id, emoji });
+    const reactions = ReactionModel.forMessage(messageId, user.id);
+
+    // The broadcast carries no viewer-specific `mine` flag; each client
+    // recomputes its own state from its existing view.
+    broadcastToChannel(channel, {
+      type: 'reaction',
+      channelId: message.channel_id,
+      messageId,
+      reactions: reactions.map(({ emoji: e, count }) => ({ emoji: e, count }))
+    });
+
+    return { messageId, reactions };
+  },
+
+  /** Up/down vote a message, reusing the shared polymorphic votes table. */
+  vote(user, messageId, value) {
+    if (![1, -1].includes(value)) throw { status: 400, message: 'value must be 1 or -1' };
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+
+    const result = VoteModel.cast({
+      userId: user.id, targetType: 'MESSAGE', targetId: messageId, value
+    });
+    broadcastToChannel(channel, {
+      type: 'vote', targetType: 'MESSAGE', targetId: messageId, messageId, score: result.score
+    });
+    return result;
   },
 
   postMessage(user, channelId, content) {
@@ -69,6 +172,22 @@ export const MessageService = {
     }
     const message = MessageModel.create({ channelId, userId: user.id, content });
     broadcastToChannel(channel, { type: 'message', action: 'created', channelId, message });
+    notifyMentions({ channel, message, author: user, content });
+
+    // Mirror to Discord when this channel is mapped. Deliberately not awaited
+    // and never fatal: the message is already saved and delivered to Forge
+    // clients, so a Discord outage must not fail the request or lose the post.
+    const mapped = DiscordMap.channelForReference('public', channelId)
+      || DiscordMap.channelByDiscordId(channel.discord_channel_id || '');
+    if (mapped?.discord_channel_id) {
+      MessageRelay.relay({
+        user,
+        discordChannelId: mapped.discord_channel_id,
+        content,
+        sentAt: message.created_at
+      }).catch(() => {});
+    }
+
     return message;
   },
 

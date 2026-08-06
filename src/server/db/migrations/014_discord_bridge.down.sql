@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS discord_channel_archive;
+DROP TABLE IF EXISTS discord_pinned_messages;
+DROP INDEX IF EXISTS idx_dfiles_channel;
+DROP TABLE IF EXISTS discord_files;
+DROP INDEX IF EXISTS idx_ddp_user;
+DROP TABLE IF EXISTS discord_dm_participants;
+DROP TABLE IF EXISTS discord_user_map;
+DROP INDEX IF EXISTS idx_dcm_ref;
+DROP INDEX IF EXISTS idx_dcm_type;
+DROP TABLE IF EXISTS discord_channel_map;

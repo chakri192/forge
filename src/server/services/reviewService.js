@@ -5,6 +5,7 @@ import { hasRole } from '../middleware/rbac.js';
 import { TaskService } from './taskService.js';
 import { NotificationService } from './notification.js';
 import { ActivityService } from './activity.js';
+import { ChallengeRewardService } from './challengeRewardService.js';
 
 const REVIEWER_ROLES = ['leader', 'teacher', 'admin'];
 
@@ -40,7 +41,12 @@ const recordReviewTx = db.transaction(({ submission, reviewer, scores, verdict, 
   const status = verdict === 'approve' ? 'APPROVED' : 'CHANGES_REQUESTED';
   ReviewModel.setStatus(submission.id, status, reviewer.id);
 
-  return { status, result: ReviewModel.weightedResult(submission.id) };
+  // Challenge rewards ride inside this transaction: an approval that credits
+  // points but rolls back the status would pay for work that is still open.
+  const reward =
+    status === 'APPROVED' ? ChallengeRewardService.payOut(submission) : null;
+
+  return { status, result: ReviewModel.weightedResult(submission.id), reward };
 });
 
 export const ReviewService = {

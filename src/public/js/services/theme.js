@@ -3,11 +3,11 @@
 const THEME_KEY = 'forge_theme_preference';
 
 export function getTheme() {
-  return localStorage.getItem(THEME_KEY) || 'dark';
+  return localStorage.getItem(THEME_KEY) || 'light';
 }
 
 export function setTheme(theme) {
-  const currentTheme = theme === 'light' ? 'light' : 'dark';
+  const currentTheme = theme === 'dark' ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', currentTheme);
   localStorage.setItem(THEME_KEY, currentTheme);
   return currentTheme;

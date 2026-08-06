@@ -31,14 +31,6 @@ describe('Full-text search', () => {
       INSERT OR REPLACE INTO announcements (id, title, content, author_id, priority, target_role)
       VALUES ('ann_teachers_s', 'Kubernetes grading rubric', 'Teachers only', 'u_s_teacher', 'NORMAL', 'teacher')
     `).run();
-    db.prepare(`
-      INSERT OR REPLACE INTO quizzes (id, title, description, category, kind, difficulty, xp_reward, pass_percent, is_published)
-      VALUES ('qz_search_pub', 'Kubernetes basics', 'Pods and services', 'devops', 'QUIZ', 'MEDIUM', 50, 70, 1)
-    `).run();
-    db.prepare(`
-      INSERT OR REPLACE INTO quizzes (id, title, description, category, kind, difficulty, xp_reward, pass_percent, is_published)
-      VALUES ('qz_search_draft', 'Kubernetes internals draft', 'Not ready', 'devops', 'QUIZ', 'HARD', 50, 70, 0)
-    `).run();
 
     const login = async (id) => {
       const res = await supertest(app).post('/api/auth/login').send({ identifier: id, password: 'pass123' });
@@ -62,7 +54,6 @@ describe('Full-text search', () => {
     const kinds = new Set(res.body.results.map((r) => r.kind));
     assert.ok(kinds.has('task'), 'should match a task');
     assert.ok(kinds.has('announcement'), 'should match an announcement');
-    assert.ok(kinds.has('quiz'), 'should match a quiz');
   });
 
   it('matches on body text, not just titles', async () => {
@@ -93,18 +84,6 @@ describe('Full-text search', () => {
       .get('/api/search?q=kubernetes')
       .set('Authorization', `Bearer ${teacherToken}`);
     assert.ok(asTeacher.body.results.some((r) => r.id === 'ann_teachers_s'));
-  });
-
-  it('hides unpublished quizzes from players but shows them to authors', async () => {
-    const asMember = await supertest(app)
-      .get('/api/search?q=internals')
-      .set('Authorization', `Bearer ${memberToken}`);
-    assert.equal(asMember.body.results.some((r) => r.id === 'qz_search_draft'), false);
-
-    const asTeacher = await supertest(app)
-      .get('/api/search?q=internals')
-      .set('Authorization', `Bearer ${teacherToken}`);
-    assert.ok(asTeacher.body.results.some((r) => r.id === 'qz_search_draft'));
   });
 
   it('survives FTS5 syntax characters instead of erroring', async () => {

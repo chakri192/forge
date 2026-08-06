@@ -1,6 +1,5 @@
 import { renderDashboard, attachDashboardEvents } from '../views/dashboardView.js';
 import { renderTasksView, attachTasksEvents } from '../views/tasksView.js';
-import { renderChallengesView, attachChallengesEvents } from '../views/challengesView.js';
 import { renderTeamsView, attachTeamsEvents } from '../views/teamsView.js';
 import { renderHallOfFameView, attachHallOfFameEvents } from '../views/hallOfFameView.js';
 import { renderLoginView, attachLoginEvents } from '../views/loginView.js';
@@ -14,10 +13,13 @@ import { renderProfileView, attachProfileEvents } from '../views/profileView.js'
 import { renderForumView, attachForumEvents } from '../views/forumView.js';
 import { renderMarketplaceView, attachMarketplaceEvents } from '../views/marketplaceView.js';
 import { renderCalendarView, attachCalendarEvents } from '../views/calendarView.js';
-import { renderJournalView, attachJournalEvents } from '../views/journalView.js';
 import { renderAnalyticsView, attachAnalyticsEvents } from '../views/analyticsView.js';
-import { renderQuizzesView, attachQuizzesEvents } from '../views/quizzesView.js';
 import { renderReviewView, attachReviewEvents } from '../views/reviewView.js';
+import { renderAppearanceView, attachAppearanceEvents } from '../views/appearanceView.js';
+import { renderLeaderboardView, attachLeaderboardEvents } from '../views/leaderboardView.js';
+import { renderGamesView, attachGamesEvents } from '../views/gamesView.js';
+import { renderStoreView, attachStoreEvents } from '../views/storeView.js';
+import { renderDuelsView, attachDuelsEvents } from '../views/duelsView.js';
 import { updateActiveNavHighlight } from '../components/drawer.js';
 
 const routes = {
@@ -28,14 +30,16 @@ const routes = {
   forum: { render: renderForumView, attach: attachForumEvents },
   marketplace: { render: renderMarketplaceView, attach: attachMarketplaceEvents },
   calendar: { render: renderCalendarView, attach: attachCalendarEvents },
-  journal: { render: renderJournalView, attach: attachJournalEvents },
   analytics: { render: renderAnalyticsView, attach: attachAnalyticsEvents },
-  quizzes: { render: renderQuizzesView, attach: attachQuizzesEvents },
   review: { render: renderReviewView, attach: attachReviewEvents },
+  appearance: { render: renderAppearanceView, attach: attachAppearanceEvents },
   tasks: { render: renderTasksView, attach: attachTasksEvents },
-  challenges: { render: renderChallengesView, attach: attachChallengesEvents },
   teams: { render: renderTeamsView, attach: attachTeamsEvents },
   halloffame: { render: renderHallOfFameView, attach: attachHallOfFameEvents },
+  leaderboard: { render: renderLeaderboardView, attach: attachLeaderboardEvents },
+  games: { render: renderGamesView, attach: attachGamesEvents },
+  store: { render: renderStoreView, attach: attachStoreEvents },
+  duels: { render: renderDuelsView, attach: attachDuelsEvents },
   login: { render: renderLoginView, attach: attachLoginEvents },
   signup: { render: renderSignUpView, attach: attachSignUpEvents },
   settings: { render: renderSettingsView, attach: attachSettingsEvents },

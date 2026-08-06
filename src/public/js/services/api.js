@@ -479,21 +479,8 @@ export async function deleteCalendarEvent(id) {
 
 // --- Journal ---
 
-export async function fetchJournal() {
-  return requestApi('/journal');
-}
 
-export async function createJournalEntry(data) {
-  return requestApi('/journal', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
-  });
-}
 
-export async function deleteJournalEntry(id) {
-  return requestApi(`/journal/${id}`, { method: 'DELETE' });
-}
 
 // --- Analytics ---
 
@@ -503,13 +490,7 @@ export async function fetchAnalytics() {
 
 // --- Quizzes & puzzles ---
 
-export async function fetchQuizzes(kind) {
-  return requestApi(`/quizzes${kind ? `?kind=${kind}` : ''}`);
-}
 
-export async function fetchQuiz(id) {
-  return requestApi(`/quizzes/${id}`);
-}
 
 export async function fetchDailyPuzzle() {
   return requestApi('/quizzes/daily');
@@ -523,9 +504,6 @@ export async function submitQuiz(id, answers, durationSeconds) {
   });
 }
 
-export async function fetchQuizLeaderboard() {
-  return requestApi('/quizzes/leaderboard');
-}
 
 // --- Review workflow ---
 
@@ -583,4 +561,125 @@ export async function updateProfileSettings(settings) {
 
 export async function search(query) {
   return requestApi(`/search?q=${encodeURIComponent(query)}`);
+}
+
+// --- Reactions & message votes ---
+
+export async function reactToMessage(messageId, emoji) {
+  return requestApi(`/messages/${messageId}/reactions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ emoji })
+  });
+}
+
+export async function voteOnMessage(messageId, value) {
+  return requestApi(`/messages/${messageId}/vote`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ value })
+  });
+}
+
+export async function fetchAvailableEmoji() {
+  return requestApi('/reactions/available');
+}
+
+export async function searchGifs(q, limit = 16) {
+  return requestApi(`/gifs/search?q=${encodeURIComponent(q)}&limit=${limit}`);
+}
+
+export async function fetchLeaderboard(metric = 'points', limit = 25) {
+  return requestApi(`/leaderboard?metric=${encodeURIComponent(metric)}&limit=${limit}`);
+}
+
+export async function fetchGames() {
+  return requestApi('/games');
+}
+
+export async function submitGameScore(game, score, detail = null) {
+  return requestApi(`/games/${encodeURIComponent(game)}/scores`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(detail ? { score, detail } : { score })
+  });
+}
+
+export async function fetchStore() {
+  return requestApi('/store');
+}
+
+export async function fetchWallet() {
+  return requestApi('/wallet');
+}
+
+export async function buyCosmetic(id) {
+  return requestApi(`/store/${encodeURIComponent(id)}/buy`, { method: 'POST' });
+}
+
+export async function equipCosmetic(id, equipped) {
+  return requestApi(`/store/${encodeURIComponent(id)}/equip`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ equipped })
+  });
+}
+
+export async function fetchDuels() {
+  return requestApi('/duels');
+}
+
+export async function createDuel(body) {
+  return requestApi('/duels', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+export async function respondToDuel(id, action, body = {}) {
+  return requestApi(`/duels/${encodeURIComponent(id)}/${action}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+}
+
+export async function resolveDuel(id, winnerId) {
+  return requestApi(`/duels/${encodeURIComponent(id)}/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ winnerId })
+  });
+}
+
+/**
+ * Opens an attachment in a new tab.
+ *
+ * Uploads are no longer served statically, so a plain <a href> would arrive
+ * without the bearer token and be refused. Fetch it with credentials, hand the
+ * browser a blob, and revoke the object URL once it has been consumed. The
+ * token never touches the URL, which is the reason not to use a signed link.
+ */
+export async function openAttachment(storedPath) {
+  const name = String(storedPath || '').split('/').pop();
+  if (!name) throw new Error('No attachment.');
+
+  const response = await fetch(`${BASE_URL}/uploads/${encodeURIComponent(name)}`, {
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    throw new Error(response.status === 404 ? 'Attachment not found.' : 'Could not open the attachment.');
+  }
+
+  const url = URL.createObjectURL(await response.blob());
+  const opened = window.open(url, '_blank', 'noopener');
+  if (!opened) {
+    // Popup blocked: fall back to a download, which does not need a new tab.
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = name;
+    link.click();
+  }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }

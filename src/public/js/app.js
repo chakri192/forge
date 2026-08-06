@@ -1,22 +1,21 @@
 // Main ES Module Entry Point
 import { store } from './state/store.js';
-import { fetchCurrentUser, fetchTasks, fetchTeams, fetchHallOfFame } from './services/api.js';
+import { fetchCurrentUser, fetchTasks, fetchTeams, fetchHallOfFame, openAttachment } from './services/api.js';
 import { initDrawerNav, applyNavRoleVisibility } from './components/drawer.js';
 import { updateUserBadges } from './components/userBadges.js';
 import { initNotificationBell, refreshUnreadCount } from './components/notificationBell.js';
 import { connectStream, disconnectStream, onStreamEvent } from './services/stream.js';
-import { initTheme } from './services/theme.js';
+import { initThemes } from './services/themes.js';
 import { initConnectionStatus } from './components/connectionStatus.js';
 import { initCommandPalette } from './components/commandPalette.js';
 import { initKeyboardShortcuts } from './services/keyboard.js';
 import { clearSession, rememberView, lastView, resetSessionExpiry } from './services/session.js';
-import { initRouting, syncHash } from './router/hashRouter.js';
+import { initRouting, syncHash, pushHash, parseHash } from './router/hashRouter.js';
 import { Router } from './router/router.js';
 
 // Explicit view imports re-exported for static asset inspection and router dispatch
 export { renderDashboard } from './views/dashboardView.js';
 export { renderTasksView } from './views/tasksView.js';
-export { renderChallengesView } from './views/challengesView.js';
 export { renderTeamsView } from './views/teamsView.js';
 export { renderHallOfFameView } from './views/hallOfFameView.js';
 export { renderLoginView } from './views/loginView.js';
@@ -30,10 +29,13 @@ export { renderProfileView } from './views/profileView.js';
 export { renderForumView } from './views/forumView.js';
 export { renderMarketplaceView } from './views/marketplaceView.js';
 export { renderCalendarView } from './views/calendarView.js';
-export { renderJournalView } from './views/journalView.js';
 export { renderAnalyticsView } from './views/analyticsView.js';
-export { renderQuizzesView } from './views/quizzesView.js';
 export { renderReviewView } from './views/reviewView.js';
+export { renderAppearanceView } from './views/appearanceView.js';
+export { renderLeaderboardView } from './views/leaderboardView.js';
+export { renderGamesView } from './views/gamesView.js';
+export { renderStoreView } from './views/storeView.js';
+export { renderDuelsView } from './views/duelsView.js';
 
 const router = new Router('appView');
 
@@ -42,7 +44,7 @@ const router = new Router('appView');
  * circuits before any auth, nav, or stream setup runs.
  */
 async function bootPublicProfile(slug) {
-  initTheme();
+  initThemes();
   document.querySelector('.sidebar')?.remove();
   document.querySelector('.topbar')?.remove();
   document.querySelector('.backdrop')?.remove();
@@ -60,7 +62,7 @@ function bootApp() {
     return;
   }
 
-  initTheme();
+  initThemes();
   initDrawerNav();
   initNotificationBell();
   initConnectionStatus();
@@ -75,10 +77,42 @@ function bootApp() {
   initUserSession();
 
   document.addEventListener('forge:navigate', (e) => {
-    if (e.detail && e.detail.tab) {
-      store.setState({ activeTab: e.detail.tab });
-    }
+    if (!e.detail?.tab) return;
+    // A param lets one tab be reached in a particular state — Tasks filtered to
+    // challenges, say — instead of needing a tab of its own.
+    if (e.detail.param) pushHash(e.detail.tab, e.detail.param);
+    store.setState({ activeTab: e.detail.tab });
   });
+
+  // Views are re-rendered on every state change, so anything inside #appView
+  // has to be delegated rather than bound per element. Without this, every
+  // in-page link that navigates by data-tab — the dashboard's "View all",
+  // each task's "Details", and the login/signup cross-links — did nothing.
+  const appView = document.getElementById('appView');
+  if (appView) {
+    appView.addEventListener('click', (e) => {
+      // Attachments are fetched with the bearer token rather than linked, so
+      // one delegated handler covers every view that shows one.
+      const attachment = e.target.closest('[data-attachment]');
+      if (attachment && appView.contains(attachment)) {
+        e.preventDefault();
+        openAttachment(attachment.dataset.attachment).catch(async (err) => {
+          const { showToast } = await import('./components/toast.js');
+          showToast({ title: 'Could not open it', message: err.message, type: 'error' });
+        });
+        return;
+      }
+
+      const target = e.target.closest('[data-tab]');
+      if (!target || !appView.contains(target)) return;
+      const tab = target.getAttribute('data-tab');
+      if (!tab) return;
+      e.preventDefault();
+      const param = target.getAttribute('data-param');
+      if (param) pushHash(tab, param);
+      store.setState({ activeTab: tab });
+    });
+  }
 
   let lastRenderedTab = null;
   store.subscribe((state) => {
@@ -88,7 +122,11 @@ function bootApp() {
     if (state.activeTab !== lastRenderedTab) {
       lastRenderedTab = state.activeTab;
       rememberView(state.activeTab);
-      syncHash(state.activeTab);
+      // Keep the param when it belongs to the tab we are landing on — an alias
+      // like #/challenges resolves to tasks *with* a param, and dropping it
+      // would lose the filter on the next reload.
+      const parsed = parseHash();
+      syncHash(state.activeTab, parsed?.tab === state.activeTab ? parsed.param : null);
     }
   });
 

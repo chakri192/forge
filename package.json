@@ -10,21 +10,26 @@
     "seed": "node src/server/db/seed.js",
     "test": "node --test",
     "test:watch": "node --test --watch",
-    "migrate:rollback": "node src/server/db/rollback.js"
+    "migrate:rollback": "node src/server/db/rollback.js",
+    "discord:check": "node src/server/scripts/discordCheck.js",
+    "discord:ids": "node src/server/scripts/discordIds.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.2",
     "cors": "^2.8.5",
+    "discord.js": "^14.27.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^8.6.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.3",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "jsdom": "^30.0.1",
+    "socket.io-client": "^4.8.3",
     "supertest": "^7.0.0"
   },
   "allowScripts": {

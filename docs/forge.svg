@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="280" viewBox="0 0 880 280">
+  <defs>
+    <radialGradient id="heat">
+      <stop offset="0%" stop-color="#fff0b8" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#ffab2e" stop-opacity="0.55"/>
+      <stop offset="65%" stop-color="#c2410c" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#0a0806" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3a3a42"/>
+      <stop offset="34%" stop-color="#8a5a2a"/>
+      <stop offset="58%" stop-color="#ff9c1f"/>
+      <stop offset="76%" stop-color="#ffe9a3"/>
+      <stop offset="100%" stop-color="#fffbe8"/>
+    </linearGradient>
+    <radialGradient id="sp"><stop offset="0%" stop-color="#fff4cf"/><stop offset="100%" stop-color="#ff9c1f" stop-opacity="0"/></radialGradient>
+    <filter id="g1"><feGaussianBlur stdDeviation="8"/></filter>
+    <clipPath id="f"><rect width="880" height="280" rx="10"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#f)">
+    <rect width="880" height="280" fill="#08070a"/>
+    <ellipse cx="600" cy="168" rx="330" ry="150" fill="url(#heat)"/>
+
+    <!-- anvil -->
+    <path d="M330 214 L560 214 L548 232 L342 232 Z" fill="#1a1a20"/>
+    <path d="M372 232 L518 232 L506 258 L384 258 Z" fill="#141419"/>
+    <rect x="330" y="206" width="230" height="9" rx="3" fill="#26262e"/>
+
+    <!-- the worked bar, cold at one end, white-hot at the other -->
+    <rect x="176" y="192" width="470" height="15" rx="6" fill="url(#bar)"/>
+    <rect x="470" y="188" width="176" height="23" rx="9" fill="#ff9c1f" opacity="0.28" filter="url(#g1)"/>
+
+    <!-- strike point -->
+    <circle cx="600" cy="199" r="46" fill="url(#sp)" opacity="0.7"/>
+
+    <!-- sparks thrown off the strike -->
+    <g>
+      <circle cx="646" cy="164" r="3.2" fill="url(#sp)"/>
+      <circle cx="690" cy="132" r="2.4" fill="url(#sp)"/>
+      <circle cx="668" cy="98"  r="2.0" fill="url(#sp)"/>
+      <circle cx="726" cy="176" r="2.6" fill="url(#sp)"/>
+      <circle cx="756" cy="120" r="1.8" fill="url(#sp)"/>
+      <circle cx="620" cy="112" r="1.7" fill="url(#sp)"/>
+      <circle cx="710" cy="66"  r="1.5" fill="url(#sp)"/>
+      <circle cx="792" cy="158" r="1.6" fill="url(#sp)"/>
+      <circle cx="576" cy="140" r="2.1" fill="url(#sp)"/>
+      <circle cx="544" cy="102" r="1.4" fill="url(#sp)"/>
+      <circle cx="820" cy="96"  r="1.2" fill="url(#sp)"/>
+    </g>
+    <g stroke="#ffcf72" stroke-opacity="0.5" stroke-width="1.1" fill="none">
+      <path d="M612 186 L664 142"/><path d="M616 190 L700 158"/><path d="M608 184 L640 118"/>
+    </g>
+
+    <!-- floor glow -->
+    <path d="M0 258 C 180 250, 320 264, 470 256 C 620 248, 740 264, 880 254 L880 280 L0 280 Z" fill="#0c0a09"/>
+  </g>
+  <rect x="0.5" y="0.5" width="879" height="279" rx="10" fill="none" stroke="#22242b"/>
+</svg>

@@ -29,3 +29,14 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Local editor/agent session config
+.claude/
+
+# SQLite runtime files. The WAL and shm are live state that belongs to
+# whichever process has the database open. Tracking them while forge.db
+# itself is ignored lets a checkout restore an old WAL over a newer
+# database, which corrupts it.
+forge.db
+forge.db-shm
+forge.db-wal

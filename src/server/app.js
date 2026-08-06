@@ -1,16 +1,24 @@
+// Must be first: side-effect import, so .env is populated before any module
+// below reads process.env at evaluation time.
+import 'dotenv/config';
+
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
 
 import { initSchema } from './db/database.js';
 import { authenticateUser } from './middleware/auth.js';
-import { uploadsDir } from './middleware/upload.js';
 import { errorHandler, jsonSyntaxErrorHandler, spaFallback } from './middleware/errorHandler.js';
 import { mutationRateLimiter } from './middleware/rateLimit.js';
 import { requestLogger, logger } from './utils/logger.js';
 import healthRoutes from './routes/healthRoutes.js';
+import gifRoutes from './routes/gifRoutes.js';
+import leaderboardRoutes from './routes/leaderboardRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import gameRoutes from './routes/gameRoutes.js';
+import storeRoutes from './routes/storeRoutes.js';
+import duelRoutes from './routes/duelRoutes.js';
 
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
@@ -26,15 +34,11 @@ import streamRoutes from './routes/streamRoutes.js';
 import progressionRoutes from './routes/progressionRoutes.js';
 import forumRoutes from './routes/forumRoutes.js';
 import cohortRoutes from './routes/cohortRoutes.js';
-import quizRoutes from './routes/quizRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import profileRoutes, { publicProfileRouter } from './routes/profileRoutes.js';
 import searchRoutes from './routes/searchRoutes.js';
-import { seedQuizzes } from './db/seedQuizzes.js';
 import { seedProgression } from './db/seedProgression.js';
 import { TaskModel } from './models/Task.js';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,7 +50,6 @@ initSchema();
 // every boot so new definitions appear without a manual migration step.
 try {
   seedProgression();
-  seedQuizzes();
 } catch (err) {
   logger.error('Reference-data seed failed', { error: err.message });
 }
@@ -63,7 +66,9 @@ app.use(publicProfileRouter);
 
 const publicDir = path.join(__dirname, '../public');
 app.use(express.static(publicDir));
-app.use('/uploads', express.static(uploadsDir));
+// NOTE: uploads are deliberately NOT served statically here. Anything mounted
+// above authenticateUser is world-readable, and submitted coursework is not.
+// See uploadRoutes, mounted under /api once a session has been established.
 
 // Authenticate user for all incoming requests
 app.use(authenticateUser);
@@ -87,10 +92,15 @@ app.use('/api', streamRoutes);
 app.use('/api', progressionRoutes);
 app.use('/api', forumRoutes);
 app.use('/api', cohortRoutes);
-app.use('/api', quizRoutes);
 app.use('/api', reviewRoutes);
 app.use('/api', profileRoutes);
 app.use('/api', searchRoutes);
+app.use('/api', leaderboardRoutes);
+app.use('/api', uploadRoutes);
+app.use('/api', gameRoutes);
+app.use('/api', storeRoutes);
+app.use('/api', duelRoutes);
+app.use('/api/gifs', gifRoutes);
 
 // Auto-seed initial demo tasks/teams if database is empty (disabled during test runs)
 const isTestEnvironment = process.env.NODE_ENV === 'test' || process.argv.some(arg => arg.includes('test'));

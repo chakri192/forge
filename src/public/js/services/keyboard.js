@@ -6,7 +6,6 @@ import { openPalette, isPaletteOpen, closePalette } from '../components/commandP
 const GOTO_MAP = {
   d: 'dashboard',
   t: 'tasks',
-  q: 'quizzes',
   e: 'teams',
   h: 'halloffame',
   m: 'messages',
@@ -15,7 +14,6 @@ const GOTO_MAP = {
   k: 'marketplace',
   l: 'calendar',
   p: 'profile',
-  j: 'journal',
   s: 'settings'
 };
 

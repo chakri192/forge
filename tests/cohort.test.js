@@ -6,7 +6,7 @@ import { app } from '../src/server/app.js';
 import { db, initSchema } from '../src/server/db/database.js';
 import { AnalyticsService } from '../src/server/services/analyticsService.js';
 
-describe('Calendar, journal, and analytics', () => {
+describe('Calendar and analytics', () => {
   let memberToken, otherToken, teacherToken;
   let eventId, entryId;
   const memberId = 'u_cohort_member';
@@ -147,58 +147,6 @@ describe('Calendar, journal, and analytics', () => {
         .send({ title: 'Sprint demo (updated)' });
       assert.equal(ok.status, 200);
       assert.equal(ok.body.event.title, 'Sprint demo (updated)');
-    });
-  });
-
-  describe('journal (private)', () => {
-    it('creates an entry', async () => {
-      const res = await supertest(app)
-        .post('/api/journal')
-        .set('Authorization', `Bearer ${memberToken}`)
-        .send({ title: 'Week 1 retro', content: 'Flexbox finally clicked.', mood: 'good', tags: 'css,learning' });
-      assert.equal(res.status, 201);
-      assert.match(res.body.entry.id, /^jrn_/);
-      entryId = res.body.entry.id;
-    });
-
-    it('never exposes another user\'s entries', async () => {
-      const list = await supertest(app).get('/api/journal').set('Authorization', `Bearer ${otherToken}`);
-      assert.equal(list.status, 200);
-      assert.equal(list.body.entries.some((e) => e.id === entryId), false);
-
-      // Reads as 404, not 403 — the entry's existence is itself private.
-      const read = await supertest(app)
-        .patch(`/api/journal/${entryId}`)
-        .set('Authorization', `Bearer ${otherToken}`)
-        .send({ content: 'peeking' });
-      assert.equal(read.status, 404);
-
-      const del = await supertest(app)
-        .delete(`/api/journal/${entryId}`)
-        .set('Authorization', `Bearer ${otherToken}`);
-      assert.equal(del.status, 404);
-    });
-
-    it('lets the owner edit and delete', async () => {
-      const edit = await supertest(app)
-        .patch(`/api/journal/${entryId}`)
-        .set('Authorization', `Bearer ${memberToken}`)
-        .send({ content: 'Flexbox clicked, grid still fuzzy.' });
-      assert.equal(edit.status, 200);
-      assert.match(edit.body.entry.content, /grid still fuzzy/);
-
-      const del = await supertest(app)
-        .delete(`/api/journal/${entryId}`)
-        .set('Authorization', `Bearer ${memberToken}`);
-      assert.equal(del.status, 200);
-    });
-
-    it('validates entry payloads', async () => {
-      const res = await supertest(app)
-        .post('/api/journal')
-        .set('Authorization', `Bearer ${memberToken}`)
-        .send({ title: '', content: '' });
-      assert.equal(res.status, 400);
     });
   });
 

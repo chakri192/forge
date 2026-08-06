@@ -99,7 +99,7 @@ body {
 .nav-tab:hover, .nav-tab.active {
   opacity: 1;
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
 }
 
 /* Cards & Layout Grid */
@@ -168,7 +168,7 @@ body {
 
 .btn-primary {
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
 }
 
 .btn-secondary {
@@ -499,7 +499,7 @@ body {
 
 .forge-tab-button.active {
   background: var(--accent-2);
-  color: #ffffff;
+  color: var(--accent-on, #ffffff);
   opacity: 1;
   box-shadow: 0 4px 12px rgba(35, 116, 171, 0.3);
 }
@@ -835,10 +835,16 @@ body {
   }
 }
 
-/* Logo assets are dark-on-transparent; force them legible on the dark shell */
+/* Logo assets are dark-on-transparent artwork. Knock them out to white on a
+   dark shell, but leave them dark on a light theme — inverting unconditionally
+   painted the mark white on white and made it disappear. */
 img[src*="/assets/logo/"]:not([data-decorative]) {
   filter: brightness(0) invert(1);
   opacity: 0.92;
+}
+:root[data-theme='light'] img[src*="/assets/logo/"]:not([data-decorative]) {
+  filter: brightness(0);
+  opacity: 0.88;
 }
 
 /* Decorative watermark stays a faint background texture */

@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { db, initSchema } from './database.js';
+import { ensureCodeFor } from '../services/discord/forgeCode.js';
 
 export function seedDatabase() {
   console.log('🌱 Initializing Forge database schema & testing seed...');
@@ -114,6 +115,10 @@ export function seedDatabase() {
   // --- Seed Announcements ---
   const insertAnnouncement = db.prepare('INSERT INTO announcements (id, title, content, author_id, priority) VALUES (?, ?, ?, ?, ?)');
   insertAnnouncement.run('anc_1', 'Schema Expansion v2 Live', 'All specification database tables are now active.', 'u_teacher', 'HIGH');
+
+  // Every user carries a forge code on relayed messages, so issue them now
+  // rather than lazily on someone's first message.
+  for (const user of db.prepare('SELECT id, role FROM users').all()) ensureCodeFor(user);
 
   console.log('✅ Forge expanded 27-table database seed completed successfully!');
 }

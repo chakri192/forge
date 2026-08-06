@@ -16,6 +16,8 @@ import {
   filterTasks
 } from '../services/api.js';
 import { escapeHtml } from '../utils/dom.js';
+import { currentParam, syncHash } from '../router/hashRouter.js';
+import { store } from '../state/store.js';
 
 let filterState = {
   search: '',
@@ -24,7 +26,36 @@ let filterState = {
   task_type: 'ALL'
 };
 
+/**
+ * Challenges were once a tab of their own; they are a task type now, so
+ * `#/tasks/challenges` opens this board already filtered to them.
+ *
+ * Acts only when the route param actually changes. This view re-renders on
+ * every state change, so applying unconditionally would either pin the board
+ * to challenges forever or stomp a filter the user just picked by hand.
+ */
+let lastRouteParam;
+function applyRouteFilter() {
+  const param = currentParam();
+  if (param === lastRouteParam) return;
+  lastRouteParam = param;
+  filterState.task_type = param === 'challenges' ? 'CHALLENGE' : 'ALL';
+}
+
+/**
+ * Writes a hand-picked type filter back into the URL, so the route and the
+ * board can never disagree. Without this, choosing "All" while on
+ * /tasks/challenges leaves the param saying otherwise, and the next click on
+ * Challenges is a no-op because nothing appears to have changed.
+ */
+function syncTypeToRoute() {
+  const param = filterState.task_type === 'CHALLENGE' ? 'challenges' : null;
+  lastRouteParam = param;
+  syncHash('tasks', param);
+}
+
 export function renderTasksView(state) {
+  applyRouteFilter();
   const { tasksData, currentUser } = state;
   let allTasks = [];
 
@@ -337,6 +368,18 @@ function renderTaskCard(t, isLeaderOrTeacher) {
 export function attachTasksEvents(state, refreshData) {
   const currentUserId = state.currentUser ? state.currentUser.id : null;
 
+  // Moving between #/tasks and #/tasks/challenges keeps the same tab, so the
+  // router reports it as a param change rather than a navigation and nothing
+  // re-renders on its own.
+  if (!attachTasksEvents._routeBound) {
+    attachTasksEvents._routeBound = true;
+    document.addEventListener('forge:route-param', (e) => {
+      if (e.detail?.tab !== 'tasks') return;
+      if (currentParam() === lastRouteParam) return;
+      renderAndReattach(store.getState(), refreshData);
+    });
+  }
+
   // Filter change handlers
   const searchInput = document.getElementById('taskSearchInput');
   if (searchInput) {
@@ -366,6 +409,7 @@ export function attachTasksEvents(state, refreshData) {
   if (typeSelect) {
     typeSelect.addEventListener('change', (e) => {
       filterState.task_type = e.target.value;
+      syncTypeToRoute();
       renderAndReattach(state, refreshData);
     });
   }
@@ -374,6 +418,7 @@ export function attachTasksEvents(state, refreshData) {
   if (btnReset) {
     btnReset.addEventListener('click', () => {
       filterState = { search: '', status: 'ALL', difficulty: 'ALL', task_type: 'ALL' };
+      syncTypeToRoute();
       renderAndReattach(state, refreshData);
     });
   }
@@ -832,9 +877,10 @@ function openTaskDetailModal(task, state, refreshData) {
             </div>
             ${sub.proof_notes ? `<p class="text-white/80">${escapeHtml(sub.proof_notes)}</p>` : ''}
             ${sub.proof_url ? `
-              <a href="${escapeHtml(sub.proof_url)}" target="_blank" class="inline-flex items-center gap-1 text-emerald-400 hover:underline font-bold text-[11px]">
+              <button type="button" data-attachment="${escapeHtml(sub.proof_url)}"
+                class="inline-flex items-center gap-1 text-emerald-400 hover:underline font-bold text-[11px]">
                 <span class="material-symbols-outlined text-xs">download</span> View Deliverable File
-              </a>
+              </button>
             ` : ''}
           </div>
         `).join('')}
