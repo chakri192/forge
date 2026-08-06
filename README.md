@@ -1,12 +1,29 @@
+<div align="center">
+
 # Forge
 
-A community platform for private learning cohorts. Members take on tasks and
-challenges, submit work for review, earn XP toward levels and badges, discuss in
-a voting forum, play mini games, and track their progress — while teachers get the
-analytics to see who is falling behind.
+**An operating system for a private learning cohort.**
 
-Built without a frontend framework: an Express API over SQLite, and a vanilla
-ES-module single-page app.
+Tasks, review queues, XP, duels, a voting forum, and the analytics to see who is falling behind — with no frontend framework anywhere in it.
+
+<p>
+  <img alt="Node" src="https://img.shields.io/badge/Node-ESM-1c1c1e?style=flat-square&logo=nodedotjs&logoColor=339933" />
+  <img alt="Express" src="https://img.shields.io/badge/Express-4-1c1c1e?style=flat-square&logo=express&logoColor=white" />
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-better--sqlite3-1c1c1e?style=flat-square&logo=sqlite&logoColor=003B57" />
+  <img alt="Frontend" src="https://img.shields.io/badge/frontend-vanilla%20ES%20modules-1c1c1e?style=flat-square" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-351%20passing-1c1c1e?style=flat-square" />
+  <img alt="Size" src="https://img.shields.io/badge/~21k-lines-1c1c1e?style=flat-square" />
+</p>
+
+<br />
+
+<img src="docs/architecture.svg" width="840" alt="Vanilla SPA over an Express API over SQLite, with SSE for real-time — and the ledger rules the in-app economy depends on" />
+
+<sub>Members take on work, submit it for review, and earn XP toward levels and badges. Teachers get the numbers.</sub>
+
+</div>
+
+<br />
 
 ---
 
@@ -160,6 +177,10 @@ escalation.
 
 ## Architecture notes
 
+<div align="center">
+<img src="docs/architecture.svg" width="840" alt="The three layers, the SSE stream, and the ledger invariants" />
+</div>
+
 **Layering.** Routes handle HTTP and validation, services hold business logic
 and permission decisions, models own SQL. Nothing skips a layer.
 
@@ -201,19 +222,31 @@ src/
     routes/              REST endpoints
     services/            Business logic
 tests/                   Unit, integration, RBAC matrix, and E2E suites
+docs/                    The diagram in this README
 ```
+
+Roughly 21,000 lines: 24 route modules, 22 services, 25 models, 23 versioned
+migrations, and 23 view modules on the client.
+
+> The original, much smaller version of this idea is [`forge`](../forge) —
+> Express over a JSON file, three dependencies, ~2,500 lines. Worth reading
+> first if you want the shape before the surface area.
 
 ---
 
 ## Testing
 
-224 tests run under Node's built-in test runner. `npm test` discovers every
-`*.test.js` recursively.
+351 tests across 54 suites, on Node's built-in runner. `npm test` discovers
+every `*.test.js` recursively and finishes in about six seconds.
 
-Coverage focuses on the parts most likely to break quietly: progression
-transaction rollback and retry, streak behaviour across month and year
-boundaries, mini-game score validation and XP awards, the
-boundary, and RBAC rejections on every protected route.
+Coverage concentrates on the parts most likely to break quietly rather than
+loudly: progression transaction rollback and retry, streak behaviour across
+month and year boundaries, mini-game score validation and XP awards, ledger
+balances under concurrent spends, and RBAC rejections on every protected route.
+
+That last one is deliberate. A permission check nothing asserts against is a
+permission check that can stop working without a single test going red — so
+there is a rejection case for each protected route, not just a success case.
 
 ---
 
