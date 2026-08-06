@@ -107,10 +107,9 @@ transaction covering XP, streak, and badges together.
 history rather than counting forward, so an achievement added today is
 immediately earned by anyone who already qualified.
 
-**Two currencies.** XP is progression — a ledger that is only spent when
-it is put on the line in a duel, and the only thing the leaderboard ranks on. Points are a wallet:
-earned by completing challenges an admin has hosted, spent in the cosmetics
-store. The balance is always derived from signed ledger rows rather than kept
+**Two currencies.** XP represents progression: a ledger spent only when staked
+in a duel, and the sole basis for leaderboard ranking. Points function as a
+wallet, earned by completing hosted challenges and spent in the cosmetics store. The balance is always derived from signed ledger rows rather than kept
 as a column, so a crash can never leave a purchase without its debit, and the
 balance check and the debit share one transaction so two requests racing
 cannot both overdraw.
@@ -122,8 +121,8 @@ commits, refunded in full if the challenge is declined, and the whole pot goes
 to whoever a leader or above declares the winner. Nothing is minted or burned:
 two stakes go in and two stakes come out.
 
-Dev-assigned challenges are a separate thing — an admin hosts a challenge with
-its own XP and point rewards, and whoever completes it is paid.
+Administrator-assigned challenges are separate: an administrator hosts a
+challenge carrying its own XP and point rewards, paid on completion.
 
 **The store** sells avatar rings, titles, and profile banners. Cosmetics store
 a colour and nothing else, validated as a hex on the way in and again before
