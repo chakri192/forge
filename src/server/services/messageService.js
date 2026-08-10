@@ -9,6 +9,7 @@ import { MessageRelay } from './discord/messageRelay.js';
 import { DiscordMap } from '../models/DiscordMap.js';
 import { NotificationService } from './notification.js';
 import { resolveMentions } from '../utils/mentions.js';
+import { ConversationService } from './conversationService.js';
 
 const MANAGE_ROLES = ['leader', 'teacher', 'admin'];
 const CHANNEL_TYPES = ['text', 'announcement', 'team'];
@@ -26,6 +27,9 @@ function assertChannelAccess(channel, user) {
     return;
   }
   if (channel.is_private) {
+    // A conversation channel is private and team-less; being a participant is
+    // what grants access.
+    if (ConversationService.canAccessChannel(channel.id, user.id)) return;
     throw { status: 403, message: 'Forbidden: this channel is private' };
   }
 }
@@ -40,7 +44,8 @@ function canSeeChannel(channel, userId) {
   if (channel.is_private && channel.team_id) {
     return ChannelModel.getTeamMemberIds(channel.team_id).includes(userId);
   }
-  return !channel.is_private;
+  if (channel.is_private) return ConversationService.canAccessChannel(channel.id, userId);
+  return true;
 }
 
 /**
@@ -69,10 +74,15 @@ function notifyMentions({ channel, message, author, content }) {
 
 function broadcastToChannel(channel, event) {
   if (channel.is_private && channel.team_id) {
-    publish(ChannelModel.getTeamMemberIds(channel.team_id), event);
-  } else {
-    publishAll(event);
+    return publish(ChannelModel.getTeamMemberIds(channel.team_id), event);
   }
+  if (channel.is_private) {
+    // A private channel with no team is a conversation. Falling through to
+    // publishAll here would push every direct message to the whole cohort.
+    const audience = ConversationService.audience(channel.id);
+    return publish(audience || [], event);
+  }
+  publishAll(event);
 }
 
 export const MessageService = {
@@ -173,6 +183,8 @@ export const MessageService = {
     const message = MessageModel.create({ channelId, userId: user.id, content });
     broadcastToChannel(channel, { type: 'message', action: 'created', channelId, message });
     notifyMentions({ channel, message, author: user, content });
+    // Keeps a conversation at the top of its list and drives unread state.
+    ConversationService.noteMessage(channelId, message.created_at);
 
     // Mirror to Discord when this channel is mapped. Deliberately not awaited
     // and never fatal: the message is already saved and delivered to Forge

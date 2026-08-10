@@ -2564,3 +2564,22 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 }
 .season-row__state.is-active { background: var(--positive-soft); color: var(--positive); }
 .season-row__state.is-archived { background: var(--paper-sunken); color: var(--ink-faint); }
+
+/* Member picker for starting a conversation. */
+.convo-picker {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+}
+.convo-picker__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  cursor: pointer;
+}
+.convo-picker__row:hover { background: var(--paper-sunken); }
+.convo-picker__row input { margin: 0; align-self: center; }
+.convo-picker__name { font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
+.convo-picker__handle { font-size: var(--t-micro); color: var(--ink-faint); }

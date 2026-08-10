@@ -705,3 +705,29 @@ export async function createSeason(payload) {
 export async function archiveSeason(seasonId) {
   return requestApi(`/seasons/${encodeURIComponent(seasonId)}/archive`, { method: 'POST' });
 }
+
+/* --- conversations (direct messages and groups) --------------------------- */
+
+export async function fetchConversations() {
+  return requestApi('/conversations');
+}
+
+export async function openDirectConversation(userId) {
+  return requestApi('/conversations/direct', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  });
+}
+
+export async function createGroupConversation(payload) {
+  return requestApi('/conversations/group', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function leaveConversation(conversationId) {
+  return requestApi(`/conversations/${encodeURIComponent(conversationId)}/leave`, { method: 'POST' });
+}

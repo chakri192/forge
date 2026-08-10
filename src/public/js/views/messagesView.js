@@ -9,7 +9,11 @@ import {
   voteOnMessage,
   searchGifs,
   createChannel,
-  fetchTeams
+  fetchTeams,
+  fetchConversations,
+  openDirectConversation,
+  createGroupConversation,
+  fetchAllUsers
 } from '../services/api.js';
 import { onStreamEvent } from '../services/stream.js';
 import { showToast } from '../components/toast.js';
@@ -151,10 +155,150 @@ export function attachMessagesEvents(state) {
   if (composerInput) attachMentionAutocomplete(composerInput);
 
   let channels = [];
+  let conversations = [];
+  let visibilityNote = '';
   const isAdmin = user.role === 'admin' || user.role === 'DEV_STEALTH';
 
   const channelIcon = (c) =>
     c.type === 'announcement' ? 'campaign' : c.is_private ? 'lock' : 'tag';
+
+
+  /* --- direct messages and groups --------------------------------------- */
+
+  function renderConversations() {
+    const rows = conversations
+      .map((c) => {
+        const active = c.channel_id === activeChannelId;
+        return `
+          <button data-channel-id="${c.channel_id}" data-conversation="${escapeHtml(c.id)}"
+            class="channel-item w-full text-left px-3.5 py-2.5 rounded-xl transition-all ${
+              active
+                ? 'bg-royal-slate-blue/20 border border-royal-slate-blue/40 text-white'
+                : 'text-outline hover:text-white hover:bg-white/5 border border-transparent'
+            }">
+            <span class="flex items-center gap-2 text-[13px] ${c.unread ? 'font-bold text-white' : 'font-semibold'}">
+              <span class="material-symbols-outlined text-base ${active ? 'accent-target' : ''}">
+                ${c.kind === 'group' ? 'group' : 'alternate_email'}
+              </span>
+              <span class="truncate">${escapeHtml(c.title)}</span>
+              ${c.unread ? '<span class="ml-auto w-2 h-2 rounded-full bg-royal-slate-blue shrink-0" aria-label="Unread"></span>' : ''}
+            </span>
+          </button>`;
+      })
+      .join('');
+
+    return `
+      <div class="pt-3 mt-2 border-t border-white/10">
+        <div class="flex items-center justify-between px-2 pb-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-outline">Direct</span>
+          <button id="btnNewConversation" class="text-outline hover:text-white" aria-label="Start a conversation" title="Start a conversation">
+            <span class="material-symbols-outlined text-base">add</span>
+          </button>
+        </div>
+        ${rows || '<p class="px-3.5 py-2 text-[11px] text-outline/70 italic">No conversations yet.</p>'}
+        ${
+          visibilityNote
+            ? `<p class="px-3 pt-2 text-[10px] leading-snug text-outline/70">
+                 <span class="material-symbols-outlined text-[11px] align-middle" aria-hidden="true">visibility</span>
+                 ${escapeHtml(visibilityNote)}
+               </p>`
+            : ''
+        }
+      </div>`;
+  }
+
+  function bindConversationList() {
+    channelListEl.querySelector('#btnNewConversation')?.addEventListener('click', openNewConversation);
+  }
+
+  async function loadConversations() {
+    try {
+      const res = await fetchConversations();
+      conversations = res.conversations || [];
+      visibilityNote = res.visibilityNote || '';
+    } catch (_) {
+      conversations = [];
+    }
+  }
+
+  /**
+   * One dialog for both kinds: pick one person and it is a direct message,
+   * pick several and it is a group. Asking "dm or group?" up front is a
+   * question about our data model, not about what the user wants.
+   */
+  async function openNewConversation() {
+    let roster = [];
+    try {
+      const users = await fetchAllUsers();
+      roster = (Array.isArray(users) ? users : users.users || []).filter((u) => u.id !== user.id);
+    } catch (_) {
+      showToast({ title: 'Could not load the member list', type: 'error' });
+      return;
+    }
+
+    openModal({
+      title: 'New conversation',
+      confirmLabel: 'Start',
+      contentHtml: `
+        <div class="stack">
+          <p class="field__hint" style="margin:0">
+            Pick one person for a direct message, or several for a group.
+          </p>
+          <div class="convo-picker">
+            ${roster
+              .map(
+                (u) => `
+              <label class="convo-picker__row">
+                <input type="checkbox" value="${escapeHtml(u.id)}" />
+                <span class="convo-picker__name">${escapeHtml(u.name)}</span>
+                <span class="convo-picker__handle">@${escapeHtml(u.username)}</span>
+              </label>`
+              )
+              .join('')}
+          </div>
+          <div id="groupTitleField" style="display:none">
+            <label class="field__label" style="margin-bottom:.375rem;display:block">Group name</label>
+            <input id="groupTitle" class="input" maxlength="80" placeholder="e.g. Project Vega" />
+          </div>
+          <p class="field__hint" style="margin:0">${escapeHtml(visibilityNote)}</p>
+        </div>`,
+      onOpen: (overlay) => {
+        const sync = () => {
+          const picked = overlay.querySelectorAll('.convo-picker input:checked').length;
+          overlay.querySelector('#groupTitleField').style.display = picked > 1 ? '' : 'none';
+        };
+        overlay.querySelectorAll('.convo-picker input').forEach((box) =>
+          box.addEventListener('change', sync)
+        );
+      },
+      onConfirm: async (overlay) => {
+        const picked = [...overlay.querySelectorAll('.convo-picker input:checked')].map((b) => b.value);
+        if (!picked.length) {
+          showToast({ title: 'Pick someone first', type: 'error' });
+          return false;
+        }
+        try {
+          let result;
+          if (picked.length === 1) {
+            result = await openDirectConversation(picked[0]);
+          } else {
+            const title = overlay.querySelector('#groupTitle').value.trim();
+            if (!title) {
+              showToast({ title: 'Name the group', message: 'A group needs a name so people know what it is.', type: 'error' });
+              return false;
+            }
+            result = await createGroupConversation({ title, memberIds: picked });
+          }
+          await loadConversations();
+          renderChannelList();
+          openChannel(result.conversation.channel_id);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }
+    });
+  }
 
   function renderChannelList() {
     if (!channels.length) {
@@ -167,6 +311,8 @@ export function attachMessagesEvents(state) {
     }
     const seen = readSeenMap();
     let unreadTotal = 0;
+
+    const conversationHtml = renderConversations();
 
     channelListEl.innerHTML = channels
       .map((c) => {
@@ -197,7 +343,9 @@ export function attachMessagesEvents(state) {
             }
           </button>`;
       })
-      .join('');
+      .join('') + conversationHtml;
+
+    bindConversationList();
 
     // Surface the total on the sidebar nav item so unread activity is visible
     // from anywhere in the app.
@@ -395,11 +543,26 @@ export function attachMessagesEvents(state) {
     renderChannelList();
     try {
       const { channel, messages } = await fetchChannelMessages(channelId);
+      // A conversation's channel carries a generated name nobody should ever
+      // read; the people in it are what the thread is called.
+      const conversation = conversations.find((c) => c.channel_id === channelId);
       threadHeaderEl.innerHTML = `
-        <span class="material-symbols-outlined text-lg accent-target">${channelIcon(channel)}</span>
-        <span class="text-sm font-bold">${escapeHtml(channel.name)}</span>
-        <span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-outline ml-1.5">${channel.type}</span>
-        ${channel.is_private ? '<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400">Private</span>' : ''}`;
+        <span class="material-symbols-outlined text-lg accent-target">${
+          conversation ? (conversation.kind === 'group' ? 'group' : 'alternate_email') : channelIcon(channel)
+        }</span>
+        <span class="text-sm font-bold">${escapeHtml(conversation ? conversation.title : channel.name)}</span>
+        ${
+          conversation
+            ? `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-outline ml-1.5">${
+                conversation.kind === 'group' ? `${conversation.participants.length} people` : 'Direct'
+              }</span>
+               <span class="text-[10px] text-outline ml-auto" title="${escapeHtml(visibilityNote)}">
+                 <span class="material-symbols-outlined text-[13px] align-middle" aria-hidden="true">visibility</span>
+                 Visible to Discord admins
+               </span>`
+            : `<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-outline ml-1.5">${channel.type}</span>
+               ${channel.is_private ? '<span class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400">Private</span>' : ''}`
+        }`;
       threadBodyEl.innerHTML = messages.length ? messages.map(messageHtml).join('') : emptyThreadHtml();
       bindMessageActions();
       composerForm.classList.remove('hidden');
@@ -418,7 +581,9 @@ export function attachMessagesEvents(state) {
 
   async function refreshChannels() {
     try {
-      const data = await fetchChannels();
+      // Both lists live in the same sidebar, so they refresh together —
+      // otherwise a new direct message only appears on the next full reload.
+      const [data] = await Promise.all([fetchChannels(), loadConversations()]);
       channels = data.channels || [];
       renderChannelList();
     } catch (_) {}
