@@ -21,9 +21,17 @@ export const METRICS = {
   streak: {
     label: 'Current streak',
     description: 'Consecutive days active right now.',
-    unit: 'days'
+    unit: 'days',
+    // A streak is a fact about right now, not a sum over a period. It cannot
+    // be windowed, so it reads the same whatever season is running.
+    seasonal: false
   }
 };
+
+/** The metrics a season can meaningfully scope. */
+export const SEASONAL_METRICS = Object.entries(METRICS)
+  .filter(([, meta]) => meta.seasonal !== false)
+  .map(([key]) => key);
 
 export const DEFAULT_METRIC = 'xp';
 
@@ -40,7 +48,14 @@ export const LeaderboardModel = {
    * @param {boolean} opts.includeHidden  include DEV_STEALTH accounts
    * @returns {Array} every eligible user, scored and ranked
    */
-  standings({ metric = DEFAULT_METRIC, includeHidden = false } = {}) {
+  /**
+   * @param {object} opts
+   * @param {string} opts.metric
+   * @param {boolean} opts.includeHidden  include DEV_STEALTH accounts
+   * @param {{starts_at: string, ends_at: string}|null} opts.season
+   *        when set, only activity inside the window counts
+   */
+  standings({ metric = DEFAULT_METRIC, includeHidden = false, season = null } = {}) {
     const key = METRICS[metric] ? metric : DEFAULT_METRIC;
 
     const users = db
@@ -51,7 +66,7 @@ export const LeaderboardModel = {
       )
       .all();
 
-    const scores = this[`${key}ByUser`]();
+    const scores = this[`${key}ByUser`](season);
 
     const ranked = users
       .map((u) => ({
@@ -78,33 +93,46 @@ export const LeaderboardModel = {
     });
   },
 
-  xpByUser() {
-    return mapBy(
-      db
-        .prepare(
-          `SELECT user_id, COALESCE(SUM(amount), 0) AS total FROM xp_history GROUP BY user_id`
-        )
-        .all(),
-      'user_id',
-      'total'
-    );
+  xpByUser(season = null) {
+    const rows = season
+      ? db
+          .prepare(
+            `SELECT user_id, COALESCE(SUM(amount), 0) AS total FROM xp_history
+             WHERE created_at >= ? AND created_at < ?
+             GROUP BY user_id`
+          )
+          .all(season.starts_at, season.ends_at)
+      : db
+          .prepare(
+            `SELECT user_id, COALESCE(SUM(amount), 0) AS total FROM xp_history GROUP BY user_id`
+          )
+          .all();
+    return mapBy(rows, 'user_id', 'total');
   },
 
-  tasksByUser() {
-    return mapBy(
-      db
-        .prepare(
-          `SELECT submitted_by AS user_id, COUNT(*) AS total
-           FROM task_submissions
-           WHERE UPPER(status) IN ('APPROVED', 'ACCEPTED', 'COMPLETED')
-           GROUP BY submitted_by`
-        )
-        .all(),
-      'user_id',
-      'total'
-    );
+  tasksByUser(season = null) {
+    const rows = season
+      ? db
+          .prepare(
+            `SELECT submitted_by AS user_id, COUNT(*) AS total
+             FROM task_submissions
+             WHERE UPPER(status) IN ('APPROVED', 'ACCEPTED', 'COMPLETED')
+               AND created_at >= ? AND created_at < ?
+             GROUP BY submitted_by`
+          )
+          .all(season.starts_at, season.ends_at)
+      : db
+          .prepare(
+            `SELECT submitted_by AS user_id, COUNT(*) AS total
+             FROM task_submissions
+             WHERE UPPER(status) IN ('APPROVED', 'ACCEPTED', 'COMPLETED')
+             GROUP BY submitted_by`
+          )
+          .all();
+    return mapBy(rows, 'user_id', 'total');
   },
 
+  /** Ignores the season on purpose — see METRICS.streak. */
   streakByUser() {
     return mapBy(
       db.prepare(`SELECT user_id, COALESCE(current_streak, 0) AS total FROM streaks`).all(),

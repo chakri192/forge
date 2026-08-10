@@ -2523,3 +2523,44 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 
 .mentions__name { font-size: var(--t-meta); font-weight: 600; color: var(--ink); }
 .mentions__handle { font-size: var(--t-micro); color: var(--ink-faint); }
+
+/* ============================================================
+   Seasons
+   ============================================================ */
+
+.lb-season {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-2);
+  font-size: var(--t-micro);
+}
+.lb-season__name {
+  padding: 2px var(--sp-3);
+  border-radius: var(--r-full);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+.lb-season__left { color: var(--ink-faint); }
+
+.season-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--rule);
+}
+.season-row:last-child { border-bottom: 0; }
+.season-row__main { flex: 1; min-width: 0; }
+.season-row__name { margin: 0; font-size: var(--t-meta); font-weight: 700; }
+.season-row__dates { font-size: var(--t-micro); color: var(--ink-faint); }
+.season-row__winner { font-size: var(--t-micro); color: var(--ink-muted); }
+.season-row__state {
+  padding: 1px var(--sp-2);
+  border-radius: var(--r-full);
+  font-size: var(--t-micro);
+  font-weight: 700;
+}
+.season-row__state.is-active { background: var(--positive-soft); color: var(--positive); }
+.season-row__state.is-archived { background: var(--paper-sunken); color: var(--ink-faint); }

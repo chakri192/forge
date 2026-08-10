@@ -1,4 +1,5 @@
 import { LeaderboardModel, METRICS, DEFAULT_METRIC } from '../models/Leaderboard.js';
+import { SeasonModel } from '../models/Season.js';
 import { ROLES } from '../config/constants.js';
 
 const TOP_N = 25;
@@ -14,10 +15,16 @@ export const LeaderboardService = {
   get(user, { metric = DEFAULT_METRIC, limit = TOP_N } = {}) {
     const key = METRICS[metric] ? metric : DEFAULT_METRIC;
 
+    // Scoped to the open season when there is one. Without a season the board
+    // is all-time, which is the behaviour before seasons existed and the right
+    // fallback for a cohort that has not started one.
+    const season = SeasonModel.active();
+
     // A stealth account sees itself; nobody else does.
     const standings = LeaderboardModel.standings({
       metric: key,
-      includeHidden: user?.role === ROLES.DEV_STEALTH
+      includeHidden: user?.role === ROLES.DEV_STEALTH,
+      season
     });
 
     const top = standings.slice(0, limit);
@@ -26,6 +33,11 @@ export const LeaderboardService = {
     return {
       metric: key,
       metrics: Object.entries(METRICS).map(([id, m]) => ({ id, ...m })),
+      // The client says what the board covers, so nobody has to guess whether
+      // a small number means a quiet month or a fresh season.
+      season: season
+        ? { id: season.id, name: season.name, startsAt: season.starts_at, endsAt: season.ends_at }
+        : null,
       total: standings.length,
       leaders: top,
       // Only set when the viewer is off the visible page, so the client does

@@ -683,3 +683,25 @@ export async function openAttachment(storedPath) {
   }
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
+
+/* --- seasons -------------------------------------------------------------- */
+
+export async function fetchSeasons() {
+  return requestApi('/seasons');
+}
+
+export async function fetchSeasonStandings(seasonId, metric = 'xp') {
+  return requestApi(`/seasons/${encodeURIComponent(seasonId)}/standings?metric=${encodeURIComponent(metric)}`);
+}
+
+export async function createSeason(payload) {
+  return requestApi('/seasons', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function archiveSeason(seasonId) {
+  return requestApi(`/seasons/${encodeURIComponent(seasonId)}/archive`, { method: 'POST' });
+}
