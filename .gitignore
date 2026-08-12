@@ -40,3 +40,10 @@ Thumbs.db
 forge.db
 forge.db-shm
 forge.db-wal
+
+# Database backups taken before a repair
+forge.db.backup-*
+
+# File-sync duplicates ("name 2.js"). One of these was a rollback migration
+# that ran forward and dropped six tables — they never belong in the repo.
+* [0-9].*
