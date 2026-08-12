@@ -47,3 +47,7 @@ forge.db.backup-*
 # File-sync duplicates ("name 2.js"). One of these was a rollback migration
 # that ran forward and dropped six tables — they never belong in the repo.
 * [0-9].*
+
+# Submitted coursework. Never committed — it is user data, and the whole point
+# of gating /uploads behind auth is that it does not travel.
+uploads/
