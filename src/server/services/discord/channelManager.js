@@ -1,5 +1,7 @@
 import { ChannelType, PermissionFlagsBits } from 'discord.js';
 import { systemBot } from './systemBot.js';
+import { adminBot } from './adminBot.js';
+import { messengerBot } from './messengerBot.js';
 import { DiscordMap } from '../../models/DiscordMap.js';
 import { guildId, isReady, staticChannels } from './config.js';
 import { db } from '../../db/database.js';
@@ -44,6 +46,14 @@ export const ChannelManager = {
     return { mapped: entries.length, linked };
   },
 
+  /** The two bots that post on a user's behalf, when they are connected. */
+  posterBotIds() {
+    return [adminBot, messengerBot]
+      .filter((bot) => bot.isReady())
+      .map((bot) => bot.raw()?.user?.id)
+      .filter(Boolean);
+  },
+
   async createPrivateChannel({ name, parentId = null, memberBotIds = [], type = 'private_dm', referenceId = null }) {
     if (!isReady() || !systemBot.isReady()) {
       return { created: false, reason: 'discord_unavailable' };
@@ -51,14 +61,39 @@ export const ChannelManager = {
     const client = systemBot.raw();
     try {
       const guild = await client.guilds.fetch(guildId());
+
       // Deny @everyone first; the bots that must post are added explicitly.
-      const overwrites = [
-        { id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+      //
+      // The System Bot has to be in its own list. Without it, the channel it
+      // just created is invisible to it — every later manage or delete comes
+      // back 403, which silently breaks the archive sweep meant to clean these
+      // up.
+      //
+      // Each id is resolved to a guild member first. discord.js rejects an
+      // overwrite for an id it cannot resolve from cache, and refusing the
+      // whole create is worse than a channel one bot cannot see.
+      const wanted = [
+        { id: client.user.id, allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ManageChannels,
+          PermissionFlagsBits.ReadMessageHistory
+        ] },
         ...memberBotIds.map((botId) => ({
           id: botId,
           allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages]
         }))
       ];
+
+      const overwrites = [{ id: guild.roles.everyone.id, deny: [PermissionFlagsBits.ViewChannel] }];
+      for (const entry of wanted) {
+        try {
+          await guild.members.fetch(entry.id);
+          overwrites.push(entry);
+        } catch (_) {
+          logger.warn('discord_overwrite_target_unresolved', { id: entry.id, channel: name });
+        }
+      }
       const channel = await guild.channels.create({
         name,
         type: ChannelType.GuildText,

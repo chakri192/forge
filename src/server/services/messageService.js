@@ -177,6 +177,9 @@ export const MessageService = {
   postMessage(user, channelId, content) {
     const channel = ChannelModel.getById(channelId);
     assertChannelAccess(channel, user);
+    if (channel.is_archived) {
+      throw { status: 409, message: 'This workspace is archived — the conversation is kept, but it is read-only now' };
+    }
     if (channel.type === 'announcement' && !hasRole(user, MANAGE_ROLES)) {
       throw { status: 403, message: 'Only leaders, teachers, or admins can post in announcement channels' };
     }

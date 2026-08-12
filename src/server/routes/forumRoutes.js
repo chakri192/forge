@@ -9,11 +9,23 @@ import { hasRole } from '../middleware/rbac.js';
 
 const router = express.Router();
 
+// The fixed categories and tags, so the client renders filters from one source.
+router.get('/forum/taxonomy', requireAuth, (req, res, next) => {
+  try {
+    res.json(ForumService.taxonomy());
+  } catch (err) {
+    next(err);
+  }
+});
+
 const threadSchema = {
   body: z.object({
     title: z.string().trim().min(3, 'Title must be at least 3 characters').max(160),
     category: z.string().trim().max(40).optional(),
-    content: z.string().trim().max(8000).optional()
+    content: z.string().trim().max(8000).optional(),
+    // Declared here or zod strips it — the service validates the values
+    // themselves against the fixed vocabulary.
+    tags: z.array(z.string().max(40)).max(10).optional()
   })
 };
 

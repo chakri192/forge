@@ -2,6 +2,7 @@ import { systemBot } from './systemBot.js';
 import { adminBot } from './adminBot.js';
 import { messengerBot } from './messengerBot.js';
 import { ChannelManager } from './channelManager.js';
+import { startCleanupScheduler, stopCleanupScheduler } from './cleanupScheduler.js';
 import { DiscordMap } from '../../models/DiscordMap.js';
 import { parseMessageEmbed } from './embed.js';
 import { pushToChannel } from './chatSocket.js';
@@ -39,9 +40,14 @@ export async function startDiscordBridge() {
     });
   }
 
+  // Archiving is Forge-side bookkeeping and runs whether or not Discord came
+  // up, so it starts regardless of the connection result.
+  startCleanupScheduler();
+
   return { started: results.some(Boolean) };
 }
 
 export async function stopDiscordBridge() {
+  stopCleanupScheduler();
   await Promise.all(Object.values(bots).map((bot) => bot.disconnect()));
 }

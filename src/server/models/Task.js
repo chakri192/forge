@@ -182,7 +182,16 @@ export const TaskModel = {
   },
 
   updateStatus(id, status) {
-    db.prepare('UPDATE tasks SET status = ? WHERE id = ?').run(status, id);
+    // Stamp when work actually finished, and clear it if a task is reopened —
+    // the workspace sweep measures its grace period from this, so a stale
+    // timestamp would archive a channel a live team is still using.
+    const finished = ['COMPLETED', 'ARCHIVED'].includes(String(status).toUpperCase());
+    db.prepare(
+      `UPDATE tasks
+       SET status = ?,
+           completed_at = CASE WHEN ? THEN COALESCE(completed_at, CURRENT_TIMESTAMP) ELSE NULL END
+       WHERE id = ?`
+    ).run(status, finished ? 1 : 0, id);
     return this.getById(id);
   },
 

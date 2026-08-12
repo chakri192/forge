@@ -1,6 +1,7 @@
 import { TeamModel } from '../models/Team.js';
 import { sanitizeUser } from '../utils/sanitize.js';
 import { ActivityService } from './activity.js';
+import { TeamWorkspace } from './teamWorkspace.js';
 
 export const TeamService = {
   getTeams() {
@@ -17,6 +18,10 @@ export const TeamService = {
     }
     const teamId = `t_${Date.now()}`;
     TeamModel.create({ id: teamId, name, captain_id, member_ids, task_id });
+
+    // A team without somewhere to talk is a list of names. Created here so it
+    // exists the moment the team does, rather than on first visit.
+    TeamWorkspace.create({ teamId, teamName: name, taskId: task_id || null });
 
     const user = currentUser || (created_by ? { id: created_by, name: 'User' } : null);
     ActivityService.logTeamChange(user, 'TEAM_CREATE', { id: teamId, name });

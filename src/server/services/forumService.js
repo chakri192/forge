@@ -1,8 +1,15 @@
 import { ForumModel, SuggestionModel } from '../models/Forum.js';
+import { db } from '../db/database.js';
 import { VoteModel, VOTE_TARGETS } from '../models/Vote.js';
 import { TaskModel } from '../models/Task.js';
 import { hasRole } from '../middleware/rbac.js';
 import { ActivityService } from './activity.js';
+import {
+  FORUM_CATEGORIES,
+  FORUM_TAGS,
+  normaliseCategory,
+  sanitiseTags
+} from '../config/forum.js';
 import { ProgressionService } from './progressionService.js';
 import { NotificationService } from './notification.js';
 import { publishAll } from './sse.js';
@@ -75,8 +82,17 @@ export const ForumService = {
     };
   },
 
-  createThread(user, { title, category, content }) {
-    const thread = ForumModel.createThread({ title, category, authorId: user.id });
+  /** The fixed category and tag vocabulary, for a client building the filters. */
+  taxonomy() {
+    return { categories: FORUM_CATEGORIES, tags: FORUM_TAGS };
+  },
+
+  createThread(user, { title, category, content, tags }) {
+    // Category is closed set now; anything unrecognised lands in General
+    // rather than creating a category of one that nobody can browse to.
+    const resolved = normaliseCategory(category);
+    const thread = ForumModel.createThread({ title, category: resolved, authorId: user.id });
+    this.setTags(thread.id, sanitiseTags(tags, canModerate(user)));
     if (content) {
       ForumModel.createPost({ threadId: thread.id, authorId: user.id, content });
     }
@@ -98,9 +114,21 @@ export const ForumService = {
     return this.getThread(user, thread.id, { countView: false });
   },
 
+  setTags(threadId, tags) {
+    db.prepare(`UPDATE forum_threads SET tags = ? WHERE id = ?`).run(JSON.stringify(tags), threadId);
+  },
+
   updateThread(user, threadId, fields) {
     const thread = ForumModel.getThread(threadId);
     if (!thread) throw { status: 404, message: 'Thread not found' };
+    if (fields.category !== undefined) fields.category = normaliseCategory(fields.category);
+    if (fields.tags !== undefined) {
+      if (!canEdit(user, thread.author_id) && !canModerate(user)) {
+        throw { status: 403, message: 'Only the author or a moderator can retag a thread' };
+      }
+      this.setTags(threadId, sanitiseTags(fields.tags, canModerate(user)));
+      delete fields.tags;
+    }
     // Pin and lock are moderation powers; title/category belong to the author.
     if ((fields.isPinned !== undefined || fields.isLocked !== undefined) && !canModerate(user)) {
       throw { status: 403, message: 'Only leaders, teachers, or admins can pin or lock threads' };
