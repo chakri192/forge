@@ -13,7 +13,12 @@ import {
   fetchConversations,
   openDirectConversation,
   createGroupConversation,
-  fetchAllUsers
+  fetchAllUsers,
+  fetchChannelPins,
+  pinMessage,
+  unpinMessage,
+  searchChannel,
+  uploadToChannel
 } from '../services/api.js';
 import { onStreamEvent } from '../services/stream.js';
 import { showToast } from '../components/toast.js';
@@ -134,6 +139,10 @@ export function renderMessagesView(state) {
             <button type="button" id="btnComposerGif" class="composer-tool" aria-label="Insert a GIF" title="GIF">
               <span class="material-symbols-outlined" aria-hidden="true">gif_box</span>
             </button>
+            <button type="button" id="btnComposerAttach" class="composer-tool" aria-label="Attach a file" title="Attach a file">
+              <span class="material-symbols-outlined" aria-hidden="true">attach_file</span>
+            </button>
+            <input type="file" id="composerFile" class="sr-only" aria-hidden="true" tabindex="-1" />
             <button type="submit" class="flex items-center gap-1.5 px-5 py-2.5 bg-royal-slate-blue text-white rounded-xl font-bold text-xs hover:opacity-90 transition-all shadow-md">
               <span class="material-symbols-outlined text-base">send</span>
             </button>
@@ -181,8 +190,17 @@ export function attachMessagesEvents(state) {
                 ${c.kind === 'group' ? 'group' : 'alternate_email'}
               </span>
               <span class="truncate">${escapeHtml(c.title)}</span>
-              ${c.unread ? '<span class="ml-auto w-2 h-2 rounded-full bg-royal-slate-blue shrink-0" aria-label="Unread"></span>' : ''}
+              ${
+                c.unread
+                  ? `<span class="convo-unread" aria-label="${c.unread} unread">${c.unread > 99 ? '99+' : c.unread}</span>`
+                  : ''
+              }
             </span>
+            ${
+              c.preview
+                ? `<span class="block text-[11px] ${c.unread ? 'text-white/70' : 'text-outline'} truncate mt-1 pl-6">${escapeHtml(c.preview.text)}</span>`
+                : ''
+            }
           </button>`;
       })
       .join('');
@@ -401,6 +419,11 @@ export function attachMessagesEvents(state) {
       </div>`;
   }
 
+  // Pinning is a moderation power; the control is simply absent for members
+  // rather than shown and then refused.
+  const canPin = MANAGE_ROLES.includes(user.role);
+  let pinnedIds = new Set();
+
   function messageHtml(m, { pending = false } = {}) {
     const mine = m.user_id === user.id;
     const canEdit = mine && !pending;
@@ -430,6 +453,11 @@ export function attachMessagesEvents(state) {
               ? `<div class="opacity-0 group-hover:opacity-100 transition-opacity mt-1 flex gap-2.5 ${mine ? 'justify-end' : ''}">
                   ${canEdit ? `<button class="msg-edit text-[11px] font-semibold text-outline hover:text-white" data-message-id="${m.id}">Edit</button>` : ''}
                   ${canDelete ? `<button class="msg-delete text-[11px] font-semibold text-red-400/80 hover:text-red-300" data-message-id="${m.id}">Delete</button>` : ''}
+                  ${
+                    canPin && !pending
+                      ? `<button class="msg-pin text-[11px] font-semibold text-outline hover:text-white" data-message-id="${m.id}" data-pinned="${pinnedIds.has(m.id)}">${pinnedIds.has(m.id) ? 'Unpin' : 'Pin'}</button>`
+                      : ''
+                  }
                 </div>`
               : ''
           }
@@ -464,6 +492,45 @@ export function attachMessagesEvents(state) {
       </div>`;
   }
 
+  /** A strip of what is pinned, above the conversation. */
+  function renderPinBar(pins) {
+    document.getElementById('pinBar')?.remove();
+    if (!pins?.length) return;
+    threadBodyEl.insertAdjacentHTML(
+      'beforebegin',
+      `<div id="pinBar" class="pinbar">
+         <span class="material-symbols-outlined" aria-hidden="true">push_pin</span>
+         <div class="pinbar__items">
+           ${pins
+             .map(
+               (p) => `<button class="pinbar__item" data-jump="${escapeHtml(p.id)}" title="Pinned by ${escapeHtml(p.pinned_by_name || 'a leader')}">
+                 ${escapeHtml(previewText(p.content) || 'Attachment')}
+               </button>`
+             )
+             .join('')}
+         </div>
+       </div>`
+    );
+    document.querySelectorAll('[data-jump]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        const target = threadBodyEl.querySelector(`[data-message-id="${btn.dataset.jump}"]`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target?.classList.add('is-flash');
+        setTimeout(() => target?.classList.remove('is-flash'), 1200);
+      })
+    );
+  }
+
+  async function loadPins(channelId) {
+    try {
+      const res = await fetchChannelPins(channelId);
+      pinnedIds = new Set(res.pins.map((p) => p.id));
+      renderPinBar(res.pins);
+    } catch (_) {
+      pinnedIds = new Set();
+    }
+  }
+
   function bindMessageActions() {
     threadBodyEl.querySelectorAll('.msg-delete').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -489,6 +556,23 @@ export function attachMessagesEvents(state) {
 
     threadBodyEl.querySelectorAll('.msg-reaction').forEach((btn) => {
       btn.addEventListener('click', () => toggleReaction(btn.dataset.messageId, btn.dataset.emoji));
+    });
+
+    threadBodyEl.querySelectorAll('.msg-pin').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.messageId;
+        try {
+          const res = btn.dataset.pinned === 'true' ? await unpinMessage(id) : await pinMessage(id);
+          pinnedIds = new Set(res.pins.map((p) => p.id));
+          renderPinBar(res.pins);
+          // Only the affected button changes; re-rendering the thread would
+          // throw away scroll position for a two-word label.
+          btn.dataset.pinned = String(pinnedIds.has(id));
+          btn.textContent = pinnedIds.has(id) ? 'Unpin' : 'Pin';
+        } catch (_) {
+          /* requestApi surfaces the reason */
+        }
+      });
     });
 
     threadBodyEl.querySelectorAll('.msg-react-add').forEach((btn) => {
@@ -570,6 +654,7 @@ export function attachMessagesEvents(state) {
       composerInput.focus();
       threadBodyEl.scrollTop = threadBodyEl.scrollHeight;
       if (messages.length) markChannelSeen(channelId, messages[messages.length - 1].created_at);
+      loadPins(channelId);
     } catch (_) {
       threadBodyEl.innerHTML = `
         <div class="h-full flex flex-col items-center justify-center gap-2 text-center py-10">
@@ -718,6 +803,25 @@ export function attachMessagesEvents(state) {
   });
 
   document.getElementById('btnComposerGif')?.addEventListener('click', () => openGifPicker());
+
+  // Attachments are saved on this server rather than linked from Discord's CDN,
+  // whose URLs expire — a conversation would otherwise rot into broken images.
+  const fileInput = document.getElementById('composerFile');
+  document.getElementById('btnComposerAttach')?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async () => {
+    const file = fileInput.files?.[0];
+    if (!file || !activeChannelId) return;
+    const caption = composerInput.value.trim();
+    fileInput.value = '';
+    try {
+      await uploadToChannel(activeChannelId, file, caption);
+      composerInput.value = '';
+      clearDraft(`channel:${activeChannelId}`);
+      openChannel(activeChannelId);
+    } catch (err) {
+      showToast({ title: 'Upload failed', message: err.message, type: 'error' });
+    }
+  });
 
   /**
    * GIF picker. Search runs through our own server so no third-party API key

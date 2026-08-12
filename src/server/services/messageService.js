@@ -1,4 +1,6 @@
 import { ChannelModel } from '../models/Channel.js';
+import { db } from '../db/database.js';
+import { genId } from '../utils/genId.js';
 import { MessageModel } from '../models/Message.js';
 import { hasRole } from '../middleware/rbac.js';
 import { ActivityService } from './activity.js';
@@ -204,6 +206,84 @@ export const MessageService = {
     }
 
     return message;
+  },
+
+  /**
+   * Pin a message. Leaders, teachers and admins only — the spec routes pins
+   * through the Admin Bot, which is the one holding ManageMessages, and a
+   * member has no way to pin on either side.
+   */
+  pin(user, messageId) {
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+    if (!hasRole(user, MANAGE_ROLES)) {
+      throw { status: 403, message: 'Only leaders, teachers and admins can pin a message' };
+    }
+
+    db.prepare(
+      `INSERT OR IGNORE INTO message_pins (id, message_id, channel_id, pinned_by)
+       VALUES (?, ?, ?, ?)`
+    ).run(genId('pin'), messageId, message.channel_id, user.id);
+
+    broadcastToChannel(channel, { type: 'message', action: 'pinned', channelId: channel.id, messageId });
+    return this.pins(user, channel.id);
+  },
+
+  unpin(user, messageId) {
+    const message = MessageModel.getById(messageId);
+    if (!message) throw { status: 404, message: 'Message not found' };
+    const channel = ChannelModel.getById(message.channel_id);
+    assertChannelAccess(channel, user);
+    if (!hasRole(user, MANAGE_ROLES)) {
+      throw { status: 403, message: 'Only leaders, teachers and admins can unpin a message' };
+    }
+    db.prepare(`DELETE FROM message_pins WHERE message_id = ?`).run(messageId);
+    broadcastToChannel(channel, { type: 'message', action: 'unpinned', channelId: channel.id, messageId });
+    return this.pins(user, channel.id);
+  },
+
+  pins(user, channelId) {
+    const channel = ChannelModel.getById(channelId);
+    assertChannelAccess(channel, user);
+    return {
+      pins: db
+        .prepare(
+          `SELECT m.id, m.content, m.created_at, u.name AS user_name,
+                  p.pinned_at, pu.name AS pinned_by_name
+           FROM message_pins p
+           JOIN messages m ON m.id = p.message_id
+           LEFT JOIN users u ON u.id = m.user_id
+           LEFT JOIN users pu ON pu.id = p.pinned_by
+           WHERE p.channel_id = ?
+           ORDER BY p.pinned_at DESC`
+        )
+        .all(channelId),
+      canPin: hasRole(user, MANAGE_ROLES)
+    };
+  },
+
+  /** Search inside one channel the user can already read. */
+  search(user, channelId, query, { limit = 30 } = {}) {
+    const channel = ChannelModel.getById(channelId);
+    assertChannelAccess(channel, user);
+    const term = String(query || '').trim();
+    if (term.length < 2) {
+      throw { status: 400, message: 'Search for at least two characters' };
+    }
+    // LIKE rather than the FTS index: that index covers tasks, threads and
+    // announcements, and adding private conversation content to a corpus other
+    // queries read would be a leak waiting to happen.
+    return db
+      .prepare(
+        `SELECT m.id, m.content, m.created_at, u.name AS user_name
+         FROM messages m LEFT JOIN users u ON u.id = m.user_id
+         WHERE m.channel_id = ? AND m.content LIKE ? ESCAPE '\\'
+         ORDER BY m.created_at DESC
+         LIMIT ?`
+      )
+      .all(channelId, `%${term.replace(/[\\%_]/g, '\\$&')}%`, Math.min(limit, 100));
   },
 
   editMessage(user, messageId, content) {

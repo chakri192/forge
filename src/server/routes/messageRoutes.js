@@ -1,4 +1,5 @@
 import express from 'express';
+import { upload } from '../middleware/upload.js';
 import { z } from 'zod';
 import { requireAuth, requireLeaderOrTeacher } from '../middleware/auth.js';
 import { validate, messageSchemas } from '../middleware/validation.js';
@@ -6,6 +7,65 @@ import { MessageService } from '../services/messageService.js';
 import { ALLOWED_EMOJI } from '../models/Reaction.js';
 
 const router = express.Router();
+
+/**
+ * Attach a file to a conversation.
+ *
+ * Saved on this server, not linked from Discord's CDN: those URLs expire, so a
+ * conversation would quietly rot into broken images. The message body carries
+ * our own URL, which the authenticated /api/uploads route serves.
+ */
+router.post(
+  '/channels/:id/attachments',
+  requireAuth,
+  upload.single('file'),
+  (req, res, next) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: 'No file received' });
+      const url = `/uploads/${req.file.filename}`;
+      const caption = String(req.body?.caption || '').trim();
+      const content = caption ? `${caption} ${url}` : url;
+      res.status(201).json({
+        message: MessageService.postMessage(req.user, req.params.id, content),
+        file: { url, name: req.file.originalname, size: req.file.size }
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get('/channels/:id/pins', requireAuth, (req, res, next) => {
+  try {
+    res.json(MessageService.pins(req.user, req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/messages/:id/pin', requireAuth, (req, res, next) => {
+  try {
+    res.json(MessageService.pin(req.user, req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/messages/:id/pin', requireAuth, (req, res, next) => {
+  try {
+    res.json(MessageService.unpin(req.user, req.params.id));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/channels/:id/search', requireAuth, (req, res, next) => {
+  try {
+    res.json({ results: MessageService.search(req.user, req.params.id, req.query.q) });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get('/channels', requireAuth, validate({}), (req, res, next) => {
   try {

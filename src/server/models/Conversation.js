@@ -6,6 +6,27 @@ export function pairKey(a, b) {
   return [a, b].sort().join(':');
 }
 
+/**
+ * One scannable line.
+ *
+ * Both kinds of attachment link are stripped: a remote GIF URL, and our own
+ * `/uploads/<uuid>.png`. The second is easy to forget — it is not an http URL,
+ * so a naive check leaves a caption reading "first pass at the layout
+ * /uploads/7d709220-2753-49d9-a7b3-60a32fa306a8.png".
+ */
+const MEDIA_WORD = /(^https?:\/\/\S+|^\/uploads\/\S+)\.(gif|png|jpe?g|webp|avif)(\?\S*)?$/i;
+
+function summarise(content) {
+  const text = String(content || '').trim();
+  const stripped = text
+    .split(/\s+/)
+    .filter((word) => !MEDIA_WORD.test(word))
+    .join(' ')
+    .trim();
+  if (stripped) return stripped.length > 80 ? `${stripped.slice(0, 77)}…` : stripped;
+  return text ? 'Attachment' : '';
+}
+
 export const ConversationModel = {
   getById(id) {
     return db.prepare(`SELECT * FROM conversations WHERE id = ?`).get(id) || null;
@@ -36,8 +57,8 @@ export const ConversationModel = {
   },
 
   /**
-   * Conversations a user is in, newest activity first, with unread derived
-   * rather than counted.
+   * Conversations a user is in, newest activity first, with an unread count
+   * and one line of preview.
    */
   listFor(userId) {
     const rows = db
@@ -50,16 +71,34 @@ export const ConversationModel = {
       )
       .all(userId);
 
+    // Counted rather than flagged: "3 unread" and "unread" are different
+    // answers to the question of whether this is worth opening now.
+    const countUnread = db.prepare(
+      `SELECT COUNT(*) AS n FROM messages
+       WHERE channel_id = ? AND user_id != ? AND (? IS NULL OR created_at > ?)`
+    );
+    const lastMessage = db.prepare(
+      `SELECT m.content, m.created_at, u.name AS author
+       FROM messages m LEFT JOIN users u ON u.id = m.user_id
+       WHERE m.channel_id = ? ORDER BY m.created_at DESC LIMIT 1`
+    );
+
     return rows.map((row) => {
-      const others = this.participants(row.id).filter((u) => u.id !== userId);
+      const participants = this.participants(row.id);
+      const others = participants.filter((u) => u.id !== userId);
+      const preview = lastMessage.get(row.channel_id) || null;
+
       return {
         ...row,
-        participants: this.participants(row.id),
+        participants,
         // A dm has no title of its own — it is whoever else is in it.
         title: row.title || others.map((u) => u.name).join(', ') || 'Empty conversation',
-        unread: Boolean(
-          row.last_message_at && (!row.last_read_at || row.last_message_at > row.last_read_at)
-        )
+        unread: countUnread.get(row.channel_id, userId, row.last_read_at, row.last_read_at).n,
+        // The list is scanned, not read. A line of what was last said tells you
+        // whether to open it; a name and a timestamp do not.
+        preview: preview
+          ? { author: preview.author, at: preview.created_at, text: summarise(preview.content) }
+          : null
       };
     });
   },

@@ -757,3 +757,39 @@ export async function updateMeetingNote(noteId, payload) {
 export async function deleteMeetingNote(noteId) {
   return requestApi(`/notes/${encodeURIComponent(noteId)}`, { method: 'DELETE' });
 }
+
+/* --- pins, in-channel search, attachments -------------------------------- */
+
+export async function fetchChannelPins(channelId) {
+  return requestApi(`/channels/${encodeURIComponent(channelId)}/pins`);
+}
+
+export async function pinMessage(messageId) {
+  return requestApi(`/messages/${encodeURIComponent(messageId)}/pin`, { method: 'POST' });
+}
+
+export async function unpinMessage(messageId) {
+  return requestApi(`/messages/${encodeURIComponent(messageId)}/pin`, { method: 'DELETE' });
+}
+
+export async function searchChannel(channelId, query) {
+  return requestApi(`/channels/${encodeURIComponent(channelId)}/search?q=${encodeURIComponent(query)}`);
+}
+
+/** Multipart, so no Content-Type header — the browser sets the boundary. */
+export async function uploadToChannel(channelId, file, caption = '') {
+  const form = new FormData();
+  form.append('file', file);
+  if (caption) form.append('caption', caption);
+
+  const response = await fetch(`${BASE_URL}/channels/${encodeURIComponent(channelId)}/attachments`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: form
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.error || 'Upload failed');
+  }
+  return response.json();
+}

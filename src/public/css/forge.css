@@ -2794,3 +2794,71 @@ img[src*="/assets/logo/"]:not([data-decorative]) {
 .collab__timeline li { display: flex; justify-content: space-between; gap: var(--sp-3); font-size: var(--t-micro); }
 .collab__timeline-what { text-transform: capitalize; color: var(--ink-muted); }
 .collab__timeline-who { color: var(--ink-faint); }
+
+/* ============================================================
+   Pins, unread counts, in-channel search
+   ============================================================ */
+
+.convo-unread {
+  margin-left: auto;
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--r-full);
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.pinbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-sunken);
+}
+.pinbar .material-symbols-outlined { font-size: 15px; color: var(--ink-faint); }
+.pinbar__items { display: flex; gap: var(--sp-2); overflow-x: auto; scrollbar-width: none; }
+.pinbar__items::-webkit-scrollbar { display: none; }
+
+.pinbar__item {
+  flex: none;
+  max-width: 240px;
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-full);
+  background: var(--paper-raised);
+  color: var(--ink-muted);
+  font-size: var(--t-micro);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pinbar__item:hover { border-color: var(--accent-line); color: var(--accent); }
+
+/* Jumped-to message, so the eye lands in the right place. */
+.is-flash { animation: flash 1.2s var(--ease); }
+@keyframes flash {
+  0%, 100% { background: transparent; }
+  25% { background: var(--accent-soft); }
+}
+
+/* Visually hidden but reachable — the file input behind the attach button. */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-flash { animation: none; outline: 2px solid var(--accent); }
+}
