@@ -731,3 +731,29 @@ export async function createGroupConversation(payload) {
 export async function leaveConversation(conversationId) {
   return requestApi(`/conversations/${encodeURIComponent(conversationId)}/leave`, { method: 'POST' });
 }
+
+/* --- collaboration hub ---------------------------------------------------- */
+
+export async function fetchCollabHub(taskId) {
+  return requestApi(`/tasks/${encodeURIComponent(taskId)}/collab`);
+}
+
+export async function createMeetingNote(taskId, payload) {
+  return requestApi(`/tasks/${encodeURIComponent(taskId)}/notes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateMeetingNote(noteId, payload) {
+  return requestApi(`/notes/${encodeURIComponent(noteId)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteMeetingNote(noteId) {
+  return requestApi(`/notes/${encodeURIComponent(noteId)}`, { method: 'DELETE' });
+}

@@ -13,6 +13,7 @@ const VALID_TABS = new Set([
   'forum',
   'marketplace',
   'calendar',
+  'collab',
   'analytics',
   'review',
   'appearance',
